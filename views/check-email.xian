@@ -1,0 +1,12 @@
+<section class="page-hero-card">
+  <div class="page-hero-meta">
+    <h2 class="page-title">Check Your Email</h2>
+    <p class="page-subtitle">We've sent a verification link to the email address you provided. Click the link to verify your account. If you don't see the email, check your spam folder.</p>
+  </div>
+</section>
+<div class="card mt-6 p-6">
+  <p class="text-slate-200">If you didn't receive the email, you can request a new verification link from your account settings.</p>
+  <div class="mt-4">
+    <a href="/login" class="btn-primary">Back to Login</a>
+  </div>
+</div>

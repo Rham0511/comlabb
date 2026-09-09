@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        :root {
+            --primary: #06402B;
+            --accent: #22C55E;
+            --hover: #16A34A;
+            --success: #4ADE80;
+            --bg: #07150F;
+            --bg-secondary: #0A1D15;
+            --card-bg: rgba(11,26,19,0.92);
+            --card-bg-solid: #0B1A13;
+            --borders: rgba(6,78,59,0.60);
+            --glow: rgba(34,197,94,0.12);
+            --text: #F8FAFC;
+            --text-secondary: #B6D7C8;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 10% 10%, rgba(34, 197, 94, 0.14), transparent 24%),
+                radial-gradient(circle at 90% 0%, rgba(34, 197, 94, 0.10), transparent 20%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body.student-portal {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body.student-portal::before,
+        body.student-portal::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body.student-portal::before {
+            background-image:
+                linear-gradient(rgba(34, 197, 94, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, 0.035) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.45), transparent 85%);
+        }
+
+        body.student-portal::after {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.14), transparent 20%),
+                radial-gradient(circle at 80% 15%, rgba(34, 211, 238, 0.10), transparent 22%),
+                radial-gradient(circle at 50% 90%, rgba(34, 197, 94, 0.12), transparent 24%);
+            filter: blur(40px);
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(34,197,94,0.06), transparent 24%),
+                radial-gradient(circle at top right, rgba(34,197,94,0.04), transparent 20%),
+                var(--bg);
+        }
+
+        .page-shell {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .page-header-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0;
+            padding: 0.72rem 0.95rem;
+            min-height: 3.1rem;
+            border-radius: 1.1rem;
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            background: linear-gradient(135deg, rgba(8, 24, 18, 0.95), rgba(12, 34, 24, 0.92));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(1, 10, 8, 0.22);
+            backdrop-filter: blur(18px);
+        }
+
+        .page-header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.15;
+            color: #f8fafc;
+            letter-spacing: -0.01em;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--borders);
+            border-radius: 1.75rem;
+            box-shadow: inset 0 1px rgba(255,255,255,0.03), 0 24px 70px rgba(2, 8, 23, 0.28);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(34, 197, 94, 0.10), transparent 40%);
+            pointer-events: none;
+        }
+
+        .borrow-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            background: rgba(2, 6, 23, 0.76);
+            backdrop-filter: blur(6px);
+            z-index: 2000;
+        }
+
+        .borrow-modal-backdrop.open {
+            display: flex;
+        }
+
+        .borrow-modal {
+            width: min(1100px, 100%);
+            border-radius: 1.35rem;
+            background: linear-gradient(180deg, rgba(7, 21, 15, 0.98), rgba(9, 24, 18, 0.98));
+            border: 1px solid rgba(74, 222, 128, 0.28);
+            box-shadow: 0 30px 70px rgba(2, 8, 23, 0.55);
+            overflow: hidden;
+        }
+
+        .borrow-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.85rem;
+            padding: 1rem 1.1rem 0.9rem;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+            background: linear-gradient(180deg, rgba(5, 24, 18, 0.9), rgba(8, 22, 17, 0.55));
+        }
+
+        .borrow-modal-body {
+            padding: 0.75rem 0.9rem 0.9rem;
+        }
+
+        .borrow-form-grid {
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .borrow-form-field {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .borrow-form-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .borrow-form-field label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #bbf7d0;
+        }
+
+        .modal-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-weight: 700;
+            color: #d1fae5;
+            font-size: 0.84rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-top: 0.15rem;
+        }
+
+        .borrow-form-field select,
+        .borrow-form-field input,
+        .borrow-form-field textarea {
+            width: 100%;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(74, 222, 128, 0.35);
+            background: rgba(6, 16, 12, 0.9);
+            color: #f8fafc;
+            padding: 0.7rem 0.85rem;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .borrow-form-field textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 9px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.8);
+            border-radius: 999px;
+        }
+
+        .borrow-form-field select:focus,
+        .borrow-form-field input:focus,
+        .borrow-form-field textarea:focus {
+            border-color: rgba(74, 222, 128, 0.9);
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+        }
+
+        .borrow-inventory-card {
+            margin-top: 0.45rem;
+            padding: 0.7rem 0.8rem;
+            border-radius: 0.9rem;
+            background: rgba(8, 24, 18, 0.82);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            color: #d1fae5;
+            line-height: 1.5;
+        }
+
+        .equipment-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            padding: 0.32rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .equipment-status-badge.available {
+            background: rgba(2, 44, 34, 0.9);
+            color: #6ee7b7;
+            border: 1px solid rgba(74, 222, 128, 0.6);
+        }
+
+        .equipment-status-badge.unavailable {
+            background: rgba(69, 10, 10, 0.8);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.7);
+        }
+
+        .equipment-status-badge.neutral {
+            background: rgba(15, 23, 42, 0.72);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+        }
+
+        .equipment-status-badge.hidden {
+            display: none;
+        }
+
+        .borrow-action-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.1rem;
+        }
+
+        .borrow-btn {
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            background: linear-gradient(180deg, #16a34a, #15803d);
+            color: white;
+            font-weight: 700;
+            border-radius: 0.9rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: transform 0.18s ease, filter 0.18s ease;
+        }
+
+        .borrow-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.04);
+        }
+
+        .borrow-btn.secondary {
+            background: rgba(15, 23, 42, 0.72);
+            border-color: rgba(148, 163, 184, 0.35);
+            color: #e2e8f0;
+        }
+
+        .eyebrow {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 640px) {
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+            .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+
+        .summary-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.35rem;
+            border: 1px solid var(--borders);
+            padding: 1.15rem 1.1rem 1.1rem;
+            background: linear-gradient(180deg, rgba(34,197,94,.05), transparent), var(--card-bg-solid);
+            box-shadow: inset 0 1px rgba(255,255,255,0.03), 0 10px 25px rgba(2,6,8,0.22);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 0 18px var(--glow);
+        }
+
+        .summary-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%);
+            pointer-events: none;
+        }
+
+        .summary-card .card-icon {
+            display: inline-flex;
+            width: 2.8rem;
+            height: 2.8rem;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            margin-bottom: 0.8rem;
+            color: #f8fafc;
+            font-size: 1rem;
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.14);
+        }
+
+        .summary-card > p {
+            color: #a7f3d0;
+        }
+
+        .summary-card.total .card-icon { background: linear-gradient(135deg, rgba(167, 139, 250, 0.24), rgba(129, 140, 248, 0.16)); color: #ddd6fe; }
+        .summary-card.present .card-icon { background: linear-gradient(135deg, rgba(34, 197, 94, 0.24), rgba(22, 163, 74, 0.16)); color: #4ADE80; }
+        .summary-card.late .card-icon { background: linear-gradient(135deg, rgba(245, 158, 11, 0.24), rgba(217, 119, 6, 0.16)); color: #fde68a; }
+        .summary-card.absent .card-icon { background: linear-gradient(135deg, rgba(239, 68, 68, 0.24), rgba(220, 38, 38, 0.16)); color: #fecaca; }
+
+        .section-shell {
+            border-radius: 1.65rem;
+            border: 1px solid var(--borders);
+            background: var(--card-bg);
+            padding: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,.25), 0 0 0 1px rgba(34,197,94,.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-shell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(34, 197, 94, 0.06), transparent 36%, rgba(34, 211, 238, 0.04));
+            pointer-events: none;
+        }
+
+        .section-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.16rem;
+            font-weight: 700;
+            color: #d1fae5;
+        }
+
+        .section-header p {
+            margin-top: 0.25rem;
+            color: #94a3b8;
+            font-size: 0.92rem;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .filter-control {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: min(16rem, 100%);
+            padding: 0.78rem 0.95rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(34, 197, 94, 0.20);
+            background: #06100b;
+            border-color: rgba(6, 78, 59, 0.6);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .filter-control:focus-within {
+            border-color: #22C55E;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        }
+
+        .filter-control input,
+        .filter-control select {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #f8fafc;
+            width: 100%;
+            font-size: 0.95rem;
+            border-radius: 9999px;
+        }
+
+        .filter-control select {
+            cursor: pointer;
+            padding-right: 0.3rem;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .filter-control select option {
+            background: #020617;
+            color: #f8fafc;
+        }
+
+        .filter-control select:focus {
+            background: var(--card-bg);
+            color: #ffffff;
+        }
+
+        .filter-control input::placeholder { color: #7ca98f; }
+
+        .table-shell {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 1.15rem;
+            border: 1px solid rgba(6, 78, 59, 0.6);
+            background: #06100b;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .modern-table {
+            width: 100%;
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modern-table thead { background: #0e2219; }
+        .modern-table th {
+            padding: 0.95rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #6ee7b7;
+            text-align: left;
+        }
+        .modern-table td {
+            padding: 0.95rem 1rem;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            border-top: 1px solid rgba(6, 78, 59, 0.6);
+        }
+        .modern-table tbody tr {
+            transition: background-color 180ms ease;
+        }
+        .modern-table tbody tr:hover {
+            background: #0e2219;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 9999px;
+            padding: 0.34rem 0.68rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        .status-pill.present { background: rgba(34, 197, 94, 0.12); color: #86EFAC; }
+        .status-pill.late { background: rgba(245, 158, 11, 0.14); color: #fde68a; }
+        .status-pill.absent { background: rgba(239, 68, 68, 0.14); color: #fca5a5; }
+
+        .empty-state-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            padding: 2rem 1.25rem;
+            border-radius: 1.25rem;
+            border: 1px dashed rgba(52, 211, 153, 0.25);
+            background: linear-gradient(135deg, rgba(8, 19, 26, 0.94), rgba(17, 28, 40, 0.92));
+            color: #94a3b8;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .empty-state-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.95rem;
+            background: rgba(16, 185, 129, 0.14);
+            color: #bbf7d0;
+            font-size: 1.25rem;
+        }
+
+        .info-list {
+            display: grid;
+            gap: 0.7rem;
+            margin-top: 1rem;
+        }
+
+        .info-list .info-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.8rem 0.95rem;
+            border-radius: 1rem;
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            color: #cbd5e1;
+        }
+
+        .info-list .info-item strong {
+            color: #f8fafc;
+        }
+
+        .pill-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 9999px;
+            padding: 0.65rem 0.95rem;
+            background: rgba(34, 197, 94, 0.14);
+            color: #bbf7d0;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .avatar-circle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.28), rgba(34, 211, 238, 0.18));
+            color: #ecfdf5;
+            font-weight: 700;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 8px 20px rgba(34, 197, 94, 0.16);
+        }
+
+        .table-shell {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.2rem;
+        }
+
+        .attendance-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.35rem;
+            margin-top: 0.7rem;
+            padding-top: 0.55rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .attendance-pagination button {
+            min-width: 2.1rem;
+            height: 2.1rem;
+            padding: 0 0.7rem;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 197, 94, 0.16);
+            background: rgba(8, 18, 30, 0.78);
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 180ms ease;
+        }
+
+        .attendance-pagination button:hover:not(:disabled) {
+            background: rgba(34, 197, 94, 0.16);
+            color: #f8fafc;
+            border-color: rgba(34, 197, 94, 0.32);
+        }
+
+        .attendance-pagination button.active {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.92), rgba(34, 197, 94, 0.9));
+            color: #f8fafc;
+            border-color: rgba(34, 197, 94, 0.44);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.18);
+        }
+
+        .attendance-pagination button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+
+        .attendance-pagination .pagination-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            color: #94a3b8;
+            padding: 0 0.1rem;
+            font-weight: 700;
+        }
+
+        .modern-table {
+            width: 100%;
+            min-width: 100%;
+            display: table;
+        }
+
+        @media (max-width: 1280px) {
+            .page-shell {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.9rem;
+            }
+
+            .section-shell {
+                padding: 0.95rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            body.student-portal {
+                font-size: 15px;
+            }
+
+            header .page-shell {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                padding: 0.7rem 0.9rem;
+            }
+
+            header button[onclick="toggleSidebar()"] {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.6rem;
+                height: 2.6rem;
+                border-radius: 999px;
+                border: 1px solid rgba(34, 197, 94, 0.16);
+                background: rgba(8, 18, 30, 0.72);
+                color: #f8fafc;
+            }
+
+            .page-shell {
+                padding-left: 0.85rem;
+                padding-right: 0.85rem;
+            }
+
+            .glass-card {
+                border-radius: 1.25rem;
+                padding: 1rem;
+            }
+
+            .glass-card > div {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .section-shell {
+                border-radius: 1.25rem;
+                padding: 0.85rem;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filter-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .section-header {
+                align-items: flex-start;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .summary-card {
+                padding: 1rem;
+            }
+
+            .section-header h3 {
+                font-size: 1rem;
+            }
+
+            .eyebrow {
+                letter-spacing: 0.18em;
+            }
+
+            .avatar-circle {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            #greetingName {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .section-shell {
+                padding: 0.95rem;
+            }
+
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            body.student-portal {
+                font-size: 15px;
+            }
+
+            header .page-shell {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                padding: 0.7rem 0.9rem;
+            }
+
+            header button[onclick="toggleSidebar()"] {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.6rem;
+                height: 2.6rem;
+                border-radius: 999px;
+                border: 1px solid rgba(34, 197, 94, 0.16);
+                background: rgba(8, 18, 30, 0.72);
+                color: #f8fafc;
+            }
+
+            .page-shell {
+                padding-left: 0.85rem;
+                padding-right: 0.85rem;
+            }
+
+            .glass-card {
+                border-radius: 1.25rem;
+                padding: 1rem;
+            }
+
+            .glass-card > div {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .section-shell {
+                border-radius: 1.25rem;
+                padding: 0.85rem;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filter-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .section-header {
+                align-items: flex-start;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .summary-card {
+                padding: 1rem;
+            }
+
+            .section-header h3 {
+                font-size: 1rem;
+            }
+
+            .eyebrow {
+                letter-spacing: 0.18em;
+            }
+
+            .avatar-circle {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            #greetingName {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <main class="page-shell mx-auto flex w-full flex-col gap-5 px-3 py-3 md:px-4 md:py-4">
+            <section class="glass-card rounded-[1.75rem] p-4 md:p-6">
+                <div class="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
+                    <div class="flex flex-col items-center gap-4 md:flex-row md:items-center md:text-left">
+                        <div class="flex flex-col items-center gap-2 rounded-2xl border border-emerald-800/60 bg-[#06100b] px-3 py-2">
+                            <div class="relative flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-2xl font-semibold text-emerald-200 shadow-[0_0_30px_rgba(34,197,94,0.16)]" data-user-initials>ST</div>
+                            <span class="text-xs font-semibold text-emerald-200">Student</span>
+                        </div>
+                        <div>
+                            <p class="eyebrow">Welcome back,</p>
+                            <h2 class="mt-2 text-3xl font-semibold text-white" id="greetingName">Student</h2>
+                            <p class="mt-2 text-sm text-slate-400" data-profile-program>Program</p>
+                            <p class="text-sm text-slate-400" data-profile-year-section>Year & Section</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="summary-grid">
+                <article class="summary-card total">
+                    <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Total Classes</p>
+                    <h4 class="mt-2 text-2xl font-semibold text-white" data-total-classes>0</h4>
+                </article>
+                <article class="summary-card present">
+                    <div class="card-icon"><i class="fas fa-user-check"></i></div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Present</p>
+                    <h4 class="mt-2 text-2xl font-semibold text-white" data-present-count>0</h4>
+                </article>
+                <article class="summary-card late">
+                    <div class="card-icon"><i class="fas fa-clock"></i></div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Late</p>
+                    <h4 class="mt-2 text-2xl font-semibold text-white" data-late-count>0</h4>
+                </article>
+                <article class="summary-card absent">
+                    <div class="card-icon"><i class="fas fa-user-times"></i></div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Absent</p>
+                    <h4 class="mt-2 text-2xl font-semibold text-white" data-absent-count>0</h4>
+                </article>
+            </section>
+
+            <section id="attendance" class="section-shell">
+                <div class="section-header">
+                    <div>
+                        <h3>Attendance History</h3>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <label class="filter-control">
+                        <i class="fas fa-search text-slate-400"></i>
+                        <input id="attendanceSearch" type="text" placeholder="Search Subject" />
+                    </label>
+                    <label class="filter-control">
+                        <i class="fas fa-filter text-slate-400"></i>
+                        <select id="attendanceRange">
+                            <option value="all">All</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="table-shell">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Laboratory</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceHistoryBody">
+                            <tr><td colspan="5" class="empty-state">Loading attendance records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="attendancePagination" class="attendance-pagination" aria-label="Attendance history pagination"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="borrow-modal-backdrop" id="borrowEquipmentModal">
+        <div class="borrow-modal" role="dialog" aria-modal="true" aria-labelledby="borrowEquipmentModalTitle">
+            <div class="borrow-modal-header">
+                <div>
+                    <p class="eyebrow">Borrow Equipment</p>
+                    <h3 id="borrowEquipmentModalTitle" class="text-xl font-semibold text-white">Create a Borrow Request</h3>
+                </div>
+                <button type="button" id="closeBorrowEquipmentModal" class="borrow-btn secondary" aria-label="Close borrow form">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="borrow-modal-body scrollbar-thin scrollbar-thumb-emerald-800 scrollbar-track-transparent overflow-y-auto max-h-[70vh]">
+                <form id="studentBorrowForm">
+                    <div class="borrow-form-grid">
+                        <div class="borrow-form-field full">
+                            <div class="modal-section-title"><i class="fas fa-user"></i> Borrower Information</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="borrow-form-field">
+                                <label for="borrowerName">Borrower Name</label>
+                                <input id="borrowerName" type="text" readonly>
+                            </div>
+                            <div class="borrow-form-field">
+                                <label for="borrowerType">Borrower Type</label>
+                                <select id="borrowerType">
+                                    <option value="Student" selected>Student</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="borrow-form-field">
+                                <label for="departmentInfo">Department / Course / Office</label>
+                                <input id="departmentInfo" type="text" placeholder="e.g. BSIT • 4th Year">
+                            </div>
+                            <div class="borrow-form-field">
+                                <label for="instructorName">Instructor / Subject Teacher</label>
+                                <input id="instructorName" type="text" placeholder="e.g. Prof. Santos">
+                            </div>
+                        </div>
+
+                        <div class="borrow-form-field full">
+                            <div class="modal-section-title"><i class="fas fa-tools"></i> Equipment Information</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="borrow-form-field">
+                                <label for="borrowEquipmentIdInput">Equipment ID</label>
+                                <input id="borrowEquipmentIdInput" type="text" placeholder="e.g. SPK-003" required autocomplete="off">
+                                <div id="equipmentStatusRow" class="flex items-center gap-2 mt-1">
+                                    <span id="equipmentStatusBadge" class="equipment-status-badge neutral hidden">
+                                        <i class="fas fa-circle-info"></i>
+                                        <span>Enter equipment ID</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="borrow-form-field">
+                                <label>Quantity</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" id="quantityMinus" class="borrow-btn secondary px-3 py-2 text-sm">-</button>
+                                    <input id="quantityInput" type="number" min="1" value="1" class="text-center" readonly>
+                                    <button type="button" id="quantityPlus" class="borrow-btn px-3 py-2 text-sm">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="borrow-form-field full">
+                            <div id="borrowEquipmentInfo" class="borrow-inventory-card" aria-live="polite">
+                                <strong>Equipment:</strong>
+                                <span>Enter an equipment ID to see its availability.</span>
+                            </div>
+                        </div>
+
+                        <div class="borrow-form-field full">
+                            <div class="modal-section-title"><i class="fas fa-calendar-alt"></i> Borrow Details</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="borrow-form-field">
+                                <label for="borrowDate">Borrow Date</label>
+                                <input id="borrowDate" type="date" required>
+                            </div>
+                            <div class="borrow-form-field">
+                                <label for="borrowStartTime">Borrow Start Time</label>
+                                <input id="borrowStartTime" type="time" required>
+                            </div>
+                            <div class="borrow-form-field">
+                                <label for="expectedReturnDate">Expected Return Date</label>
+                                <input id="expectedReturnDate" type="date" required>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="borrow-form-field">
+                                <label for="borrowEndTime">Expected Return Time</label>
+                                <input id="borrowEndTime" type="time" required>
+                            </div>
+                        </div>
+                        <div class="borrow-form-field full">
+                            <label for="borrowPurpose">Purpose / Reason</label>
+                            <textarea id="borrowPurpose" placeholder="Describe how you will use the equipment." required></textarea>
+                        </div>
+                    </div>
+                    <div class="borrow-action-row">
+                        <button type="button" id="cancelBorrowEquipmentRequest" class="borrow-btn secondary">Cancel</button>
+                        <button type="submit" class="borrow-btn">Submit Borrow Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+
+        const attendanceEndpoint = '/api/attendance/records';
+        const statsEndpoint = '/api/attendance/stats';
+        const state = {
+            records: [],
+            filteredRecords: [],
+            currentPage: 1,
+            rowsPerPage: 3,
+            equipment: []
+        };
+
+        const ATTENDANCE_POLL_INTERVAL = 15000; // 15s
+        const ATTENDANCE_STORAGE_KEY = 'comlab_attendance_records_v1';
+
+        function loadAttendanceFromStorage() {
+            try {
+                const raw = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.warn('Unable to load attendance from localStorage', e.message);
+                return [];
+            }
+        }
+
+        function saveAttendanceToStorage(records) {
+            try {
+                localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(records));
+            } catch (e) {
+                console.warn('Unable to save attendance to localStorage', e.message);
+            }
+        }
+
+        function normalizeAttendanceValue(value) {
+            return String(value ?? '').trim().toLowerCase();
+        }
+
+        function getAttendanceIdentity(record) {
+            if (record?.id) return `id:${normalizeAttendanceValue(record.id)}`;
+
+            const studentId = record?.studentId || record?.student_number || record?.studentNumber || '';
+            const sessionToken = record?.sessionToken || record?.token || '';
+            const dateValue = record?.date || record?.createdAt || record?.updatedAt || '';
+            const subjectValue = record?.subject || '';
+            const labValue = record?.lab || '';
+
+            if (studentId || sessionToken) {
+                return [
+                    'session',
+                    normalizeAttendanceValue(studentId),
+                    normalizeAttendanceValue(sessionToken),
+                    normalizeAttendanceValue(dateValue),
+                    normalizeAttendanceValue(subjectValue),
+                    normalizeAttendanceValue(labValue)
+                ].join('|');
+            }
+
+            return [
+                normalizeAttendanceValue(dateValue),
+                normalizeAttendanceValue(record?.timeIn || record?.time || ''),
+                normalizeAttendanceValue(subjectValue),
+                normalizeAttendanceValue(labValue)
+            ].join('|');
+        }
+
+        function deduplicateAttendanceRecords(records) {
+            const unique = [];
+            const seen = new Set();
+
+            (Array.isArray(records) ? records : []).forEach((record) => {
+                const identity = getAttendanceIdentity(record);
+                if (!seen.has(identity)) {
+                    seen.add(identity);
+                    unique.push(record);
+                }
+            });
+
+            return unique.sort((a, b) => (b.date || b.createdAt || '').localeCompare(a.date || a.createdAt || ''));
+        }
+
+        function mergeAttendanceRecords(existing, incoming) {
+            return deduplicateAttendanceRecords([...(existing || []), ...(incoming || [])]);
+        }
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').split('@')[0].trim();
+            if (!value) return 'ST';
+            return value.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'ST';
+        }
+
+        function formatDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value || '—';
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function formatTime(value) {
+            return value || '—';
+        }
+
+        function hydratePage() {
+            const user = window.__CURRENT_USER__ || {};
+            const displayName = user.name || 'Student';
+            const initials = user.initials || getInitials(displayName, user.email || '');
+
+            document.getElementById('greetingName').textContent = displayName;
+            document.querySelectorAll('[data-user-name]').forEach((element) => {
+                element.textContent = displayName;
+            });
+            document.querySelectorAll('[data-user-role]').forEach((element) => {
+                element.textContent = (user.role || 'Student').toString().charAt(0).toUpperCase() + (user.role || 'Student').toString().slice(1).toLowerCase();
+            });
+            document.querySelectorAll('[data-user-initials]').forEach((element) => {
+                element.textContent = initials;
+            });
+            document.querySelectorAll('[data-profile-program]').forEach((element) => {
+                element.textContent = user.program || user.course || 'Program';
+            });
+            document.querySelectorAll('[data-profile-year-section]').forEach((element) => {
+                element.textContent = user.yearSection || 'Year & Section';
+            });
+        }
+
+        function getStatusClass(status) {
+            const value = (status || '').toLowerCase();
+            if (value === 'late') return 'late';
+            if (value === 'absent') return 'absent';
+            return 'present';
+        }
+
+        function applyAttendanceFilters() {
+            const searchValue = document.getElementById('attendanceSearch').value.toLowerCase();
+            const rangeValue = document.getElementById('attendanceRange').value;
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+            startOfWeek.setHours(0, 0, 0, 0);
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const filtered = state.records.filter((item) => {
+                const recordDate = new Date(item.date || item.createdAt || item.updatedAt || now);
+                const matchesSearch = !searchValue || `${item.subject || ''} ${item.lab || ''}`.toLowerCase().includes(searchValue);
+                const matchesRange = rangeValue === 'week'
+                    ? recordDate >= startOfWeek
+                    : rangeValue === 'month'
+                        ? recordDate >= startOfMonth
+                        : true;
+                return matchesSearch && matchesRange;
+            }).sort((a, b) => (b.date || b.createdAt || '').localeCompare(a.date || a.createdAt || ''));
+
+            state.filteredRecords = deduplicateAttendanceRecords(filtered);
+            const totalPages = Math.max(1, Math.ceil(state.filteredRecords.length / state.rowsPerPage));
+            state.currentPage = Math.min(state.currentPage, totalPages);
+            renderAttendanceTable(state.filteredRecords);
+        }
+
+        function renderPaginationControls(totalRecords) {
+            const pagination = document.getElementById('attendancePagination');
+            if (!pagination) return;
+
+            const totalPages = Math.max(1, Math.ceil(totalRecords / state.rowsPerPage));
+            if (totalRecords <= state.rowsPerPage) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            const maxVisiblePages = 3;
+            let startPage = Math.max(1, state.currentPage - 1);
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            const pageButtons = [];
+            for (let page = startPage; page <= endPage; page += 1) {
+                pageButtons.push(`
+                    <button type="button" class="${page === state.currentPage ? 'active' : ''}" data-page="${page}" ${page === state.currentPage ? 'aria-current="page"' : ''}>${page}</button>
+                `);
+            }
+
+            pagination.innerHTML = `
+                <button type="button" data-action="prev" ${state.currentPage === 1 ? 'disabled' : ''}>Prev</button>
+                ${pageButtons.join('')}
+                <button type="button" data-action="next" ${state.currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            `;
+
+            pagination.querySelectorAll('button[data-page]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    state.currentPage = Number(button.getAttribute('data-page'));
+                    renderAttendanceTable(state.filteredRecords);
+                });
+            });
+
+            const prevButton = pagination.querySelector('button[data-action="prev"]');
+            const nextButton = pagination.querySelector('button[data-action="next"]');
+
+            prevButton?.addEventListener('click', () => {
+                if (state.currentPage > 1) {
+                    state.currentPage -= 1;
+                    renderAttendanceTable(state.filteredRecords);
+                }
+            });
+
+            nextButton?.addEventListener('click', () => {
+                if (state.currentPage < totalPages) {
+                    state.currentPage += 1;
+                    renderAttendanceTable(state.filteredRecords);
+                }
+            });
+        }
+
+        function renderAttendanceTable(records) {
+            const tbody = document.getElementById('attendanceHistoryBody');
+            if (!tbody) return;
+
+            const totalRecords = records.length;
+            if (!totalRecords) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state-card">
+                                <div class="empty-state-icon"><i class="fas fa-calendar-xmark"></i></div>
+                                <h4 class="text-lg font-semibold text-white">No attendance records available.</h4>
+                                <p>Scan your attendance QR code to record your attendance.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                renderPaginationControls(0);
+                return;
+            }
+
+            const startIndex = (state.currentPage - 1) * state.rowsPerPage;
+            const pageRecords = records.slice(startIndex, startIndex + state.rowsPerPage);
+            tbody.innerHTML = pageRecords.map((record) => `
+                <tr>
+                    <td>${formatDate(record.date)}</td>
+                    <td>${record.subject || '—'}</td>
+                    <td>${record.lab || '—'}</td>
+                    <td>${formatTime(record.timeIn || record.time || '')}</td>
+                    <td><span class="status-pill ${getStatusClass(record.status)}">${record.status || 'Present'}</span></td>
+                </tr>
+            `).join('');
+
+            renderPaginationControls(totalRecords);
+        }
+
+        async function fetchAttendanceStats() {
+            try {
+                const response = await fetch(statsEndpoint, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load attendance summary.');
+                const stats = await response.json();
+                document.querySelector('[data-total-classes]').textContent = stats.total ?? 0;
+                document.querySelector('[data-present-count]').textContent = stats.present ?? 0;
+                document.querySelector('[data-late-count]').textContent = stats.late ?? 0;
+                document.querySelector('[data-absent-count]').textContent = stats.absent ?? 0;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function fetchAttendanceRecords() {
+            try {
+                const response = await fetch(attendanceEndpoint, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load attendance records.');
+
+                const records = await response.json();
+                const incoming = Array.isArray(records) ? records : [];
+                const dedupedIncoming = deduplicateAttendanceRecords(incoming);
+
+                state.records = dedupedIncoming;
+                saveAttendanceToStorage(state.records);
+                applyAttendanceFilters();
+            } catch (error) {
+                console.error(error);
+                const persisted = deduplicateAttendanceRecords(loadAttendanceFromStorage());
+                if (persisted.length) {
+                    state.records = persisted;
+                    applyAttendanceFilters();
+                } else {
+                    state.records = [];
+                    applyAttendanceFilters();
+                }
+            }
+        }
+
+        function showBorrowToast(message, isError = false) {
+            const existing = document.querySelector('.borrow-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `borrow-toast${isError ? ' error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            window.setTimeout(() => toast.remove(), 3400);
+        }
+
+        async function loadBorrowEquipmentOptions() {
+            try {
+                const response = await fetch('/api/equipment', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load equipment inventory.');
+                const payload = await response.json();
+                state.equipment = Array.isArray(payload) ? payload : [];
+                updateSelectedEquipmentInfo();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function setEquipmentStatusBadge(type, message) {
+            const badge = document.getElementById('equipmentStatusBadge');
+            if (!badge) return;
+            badge.className = 'equipment-status-badge';
+            badge.classList.add(type);
+            if (type === 'neutral') badge.classList.add('neutral');
+            badge.innerHTML = `<i class="${type === 'available' ? 'fas fa-check-circle' : type === 'unavailable' ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'}"></i><span>${message}</span>`;
+        }
+
+        function updateSelectedEquipmentInfo() {
+            const input = document.getElementById('borrowEquipmentIdInput');
+            const info = document.getElementById('borrowEquipmentInfo');
+            const submitButton = document.querySelector('#studentBorrowForm button[type="submit"]');
+            if (!input || !info || !submitButton) return;
+
+            const equipmentId = String(input.value || '').trim();
+            if (!equipmentId) {
+                info.innerHTML = '<strong>Equipment:</strong><span>Enter an equipment ID to see its availability.</span>';
+                setEquipmentStatusBadge('neutral', 'Enter equipment ID');
+                submitButton.disabled = true;
+                submitButton.style.opacity = '0.5';
+                submitButton.style.cursor = 'not-allowed';
+                return;
+            }
+
+            const item = state.equipment.find((entry) => String(entry.equipmentId || entry.id).toLowerCase() === equipmentId.toLowerCase());
+            if (!item) {
+                info.innerHTML = '<strong>Equipment:</strong><span>Equipment ID not found.</span>';
+                setEquipmentStatusBadge('neutral', 'Equipment ID not found');
+                submitButton.disabled = true;
+                submitButton.style.opacity = '0.5';
+                submitButton.style.cursor = 'not-allowed';
+                return;
+            }
+
+            const availability = String(item.status || 'Serviceable').toLowerCase();
+            const quantity = Number(item.quantity ?? item.availableQuantity ?? 0);
+            const isAvailable = availability !== 'lost' && availability !== 'unserviceable' && availability !== 'borrowed' && availability !== 'in use' && availability !== 'maintenance' && quantity > 0;
+
+            if (isAvailable) {
+                info.innerHTML = `
+                    <div><strong>Equipment:</strong> ${item.name || 'Unknown equipment'} (${item.equipmentId || item.id || 'N/A'})</div>
+                    <div><strong>Availability:</strong> Available</div>
+                    <div><strong>Inventory:</strong> ${quantity} unit${quantity === 1 ? '' : 's'}</div>
+                `;
+                setEquipmentStatusBadge('available', `${item.name || 'Equipment'} (${item.equipmentId || item.id || 'N/A'}) - Available`);
+                submitButton.disabled = false;
+                submitButton.style.opacity = '1';
+                submitButton.style.cursor = 'pointer';
+                return;
+            }
+
+            const reason = availability.includes('maintenance') ? 'Maintenance - Unavailable' : availability.includes('borrow') || availability.includes('use') ? 'Currently Borrowed - Unavailable' : 'Unavailable';
+            info.innerHTML = `
+                <div><strong>Equipment:</strong> ${item.name || 'Unknown equipment'} (${item.equipmentId || item.id || 'N/A'})</div>
+                <div><strong>Availability:</strong> ${reason}</div>
+                <div><strong>Inventory:</strong> ${quantity} unit${quantity === 1 ? '' : 's'}</div>
+            `;
+            setEquipmentStatusBadge('unavailable', reason);
+            submitButton.disabled = true;
+            submitButton.style.opacity = '0.5';
+            submitButton.style.cursor = 'not-allowed';
+        }
+
+        function toggleBorrowEquipmentModal(forceOpen) {
+            const modal = document.getElementById('borrowEquipmentModal');
+            if (!modal) return;
+
+            const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !modal.classList.contains('open');
+            if (shouldOpen) {
+                openBorrowEquipmentModal();
+                if (window.location.hash !== '#borrow-equipment') {
+                    window.location.hash = '#borrow-equipment';
+                }
+                return;
+            }
+
+            closeBorrowEquipmentModal();
+            if (window.location.hash === '#borrow-equipment') {
+                history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+            }
+        }
+
+        function openBorrowEquipmentModal() {
+            const modal = document.getElementById('borrowEquipmentModal');
+            if (!modal) return;
+            if (modal.classList.contains('open')) return;
+
+            modal.classList.add('open');
+
+            const submitButton = document.querySelector('#studentBorrowForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.style.opacity = '0.5';
+                submitButton.style.cursor = 'not-allowed';
+            }
+
+            const borrowerNameInput = document.getElementById('borrowerName');
+            if (borrowerNameInput && !borrowerNameInput.value) {
+                borrowerNameInput.value = window.__CURRENT_USER__?.name || 'Student';
+            }
+
+            const departmentInfoInput = document.getElementById('departmentInfo');
+            if (departmentInfoInput && !departmentInfoInput.value) {
+                const program = window.__CURRENT_USER__?.program || window.__CURRENT_USER__?.course || 'BSIT';
+                const yearSection = window.__CURRENT_USER__?.yearSection || window.__CURRENT_USER__?.year || '4th Year';
+                departmentInfoInput.value = `${program} • ${yearSection}`;
+            }
+
+            if (!document.getElementById('borrowDate').value) {
+                const today = new Date();
+                document.getElementById('borrowDate').value = today.toISOString().split('T')[0];
+            }
+            if (!document.getElementById('expectedReturnDate').value) {
+                document.getElementById('expectedReturnDate').value = document.getElementById('borrowDate').value;
+            }
+            if (!document.getElementById('borrowStartTime').value) {
+                document.getElementById('borrowStartTime').value = '09:00';
+            }
+            if (!document.getElementById('borrowEndTime').value) {
+                document.getElementById('borrowEndTime').value = '11:00';
+            }
+            const quantityInput = document.getElementById('quantityInput');
+            if (quantityInput) quantityInput.value = '1';
+        }
+
+        function closeBorrowEquipmentModal() {
+            const modal = document.getElementById('borrowEquipmentModal');
+            if (!modal) return;
+            modal.classList.remove('open');
+            document.getElementById('studentBorrowForm')?.reset();
+            const borrowerNameInput = document.getElementById('borrowerName');
+            if (borrowerNameInput) borrowerNameInput.value = window.__CURRENT_USER__?.name || 'Student';
+            const borrowerTypeInput = document.getElementById('borrowerType');
+            if (borrowerTypeInput) borrowerTypeInput.value = 'Student';
+            const quantityInput = document.getElementById('quantityInput');
+            if (quantityInput) quantityInput.value = '1';
+            updateSelectedEquipmentInfo();
+        }
+
+        async function submitStudentBorrowRequest(event) {
+            event.preventDefault();
+            const borrowerName = document.getElementById('borrowerName').value.trim();
+            const borrowerType = document.getElementById('borrowerType').value || 'Student';
+            const departmentInfo = document.getElementById('departmentInfo').value.trim();
+            const instructorName = document.getElementById('instructorName').value.trim();
+            const equipmentIdInput = document.getElementById('borrowEquipmentIdInput');
+            const equipmentId = equipmentIdInput ? equipmentIdInput.value.trim() : '';
+            const borrowDate = document.getElementById('borrowDate').value;
+            const borrowStartTime = document.getElementById('borrowStartTime').value;
+            const expectedReturnDate = document.getElementById('expectedReturnDate').value;
+            const borrowEndTime = document.getElementById('borrowEndTime').value;
+            const borrowPurpose = document.getElementById('borrowPurpose').value.trim();
+            const quantity = Number(document.getElementById('quantityInput').value || 1);
+
+            if (!borrowerName || !borrowerType) {
+                showBorrowToast('Please confirm the borrower details.', true);
+                return;
+            }
+            if (!equipmentId) {
+                showBorrowToast('Please enter an equipment ID.', true);
+                return;
+            }
+            if (!borrowDate || !borrowStartTime || !expectedReturnDate || !borrowEndTime) {
+                showBorrowToast('Please complete the borrowing date and time fields.', true);
+                return;
+            }
+            if (expectedReturnDate < borrowDate) {
+                showBorrowToast('Expected return date cannot be earlier than the borrow date.', true);
+                return;
+            }
+            if (borrowEndTime <= borrowStartTime) {
+                showBorrowToast('End time must be later than start time.', true);
+                return;
+            }
+            if (!borrowPurpose) {
+                showBorrowToast('Please provide the purpose of the borrowing request.', true);
+                return;
+            }
+
+            const selectedItem = state.equipment.find((entry) => String(entry.equipmentId || entry.id).toLowerCase() === equipmentId.toLowerCase());
+            if (!selectedItem) {
+                showBorrowToast('Equipment ID not found.', true);
+                return;
+            }
+
+            const status = String(selectedItem.status || 'Serviceable').toLowerCase();
+            const availableQty = Number(selectedItem.quantity ?? selectedItem.availableQuantity ?? 0);
+            if (status === 'lost' || status === 'unserviceable' || status === 'borrowed' || status === 'in use' || status === 'maintenance' || availableQty <= 0) {
+                showBorrowToast('Equipment is not available for the selected date and time.', true);
+                return;
+            }
+
+            if (quantity < 1 || quantity > availableQty) {
+                showBorrowToast('Requested quantity exceeds the available inventory.', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/borrow-records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        borrowerName,
+                        borrowerType,
+                        departmentInfo,
+                        instructorName,
+                        instructor_name: instructorName,
+                        equipmentId: selectedItem.equipmentId || selectedItem.id,
+                        equipmentName: selectedItem.name,
+                        quantity,
+                        borrowDate,
+                        borrowStartTime,
+                        expectedReturnDate,
+                        expectedReturnTime: borrowEndTime,
+                        purpose: borrowPurpose,
+                        processedBy: window.__CURRENT_USER__?.name || 'Administrator'
+                    })
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.error || 'Unable to submit borrow request.');
+                }
+
+                showBorrowToast('Borrow request submitted successfully.');
+                closeBorrowEquipmentModal();
+            } catch (error) {
+                console.error(error);
+                showBorrowToast(error.message || 'Unable to submit borrow request.', true);
+            }
+        }
+
+        window.openBorrowEquipmentModal = openBorrowEquipmentModal;
+        window.closeBorrowEquipmentModal = closeBorrowEquipmentModal;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            hydratePage();
+            state.records = [];
+            state.filteredRecords = [];
+            state.currentPage = 1;
+            applyAttendanceFilters();
+
+            const borrowModal = document.getElementById('borrowEquipmentModal');
+            const borrowForm = document.getElementById('studentBorrowForm');
+            document.getElementById('openBorrowEquipmentButton')?.addEventListener('click', openBorrowEquipmentModal);
+            document.getElementById('closeBorrowEquipmentModal')?.addEventListener('click', closeBorrowEquipmentModal);
+            document.getElementById('cancelBorrowEquipmentRequest')?.addEventListener('click', closeBorrowEquipmentModal);
+            document.getElementById('borrowEquipmentIdInput')?.addEventListener('input', updateSelectedEquipmentInfo);
+            document.getElementById('borrowEquipmentIdInput')?.addEventListener('blur', updateSelectedEquipmentInfo);
+            document.getElementById('quantityMinus')?.addEventListener('click', () => {
+                const input = document.getElementById('quantityInput');
+                if (!input) return;
+                const next = Math.max(1, Number(input.value || 1) - 1);
+                input.value = String(next);
+            });
+            document.getElementById('quantityPlus')?.addEventListener('click', () => {
+                const input = document.getElementById('quantityInput');
+                if (!input) return;
+                const next = Math.max(1, Number(input.value || 1) + 1);
+                input.value = String(next);
+            });
+            borrowForm?.addEventListener('submit', submitStudentBorrowRequest);
+
+            const triggerBorrowModalFromHash = () => {
+                const shouldOpen = window.location.pathname === '/student/borrow-equipment' ||
+                    new URLSearchParams(window.location.search).get('borrowModal') === '1' ||
+                    window.location.hash === '#borrow-equipment' ||
+                    window.location.hash.includes('borrow-equipment');
+
+                if (!shouldOpen) {
+                    const modal = document.getElementById('borrowEquipmentModal');
+                    if (modal && modal.classList.contains('open')) {
+                        closeBorrowEquipmentModal();
+                    }
+                    return;
+                }
+
+                requestAnimationFrame(() => {
+                    const modal = document.getElementById('borrowEquipmentModal');
+                    if (modal && !modal.classList.contains('open')) {
+                        openBorrowEquipmentModal();
+                    }
+                });
+            };
+
+            triggerBorrowModalFromHash();
+            window.addEventListener('hashchange', triggerBorrowModalFromHash);
+
+            document.addEventListener('click', (event) => {
+                const trigger = event.target.closest('.nav-item[href*="borrow-equipment"], .nav-item[data-open-borrow-modal="true"]');
+                if (!trigger) return;
+                event.preventDefault();
+
+                const modal = document.getElementById('borrowEquipmentModal');
+                if (modal && modal.classList.contains('open')) {
+                    toggleBorrowEquipmentModal(false);
+                    return;
+                }
+
+                toggleBorrowEquipmentModal(true);
+            });
+
+            await Promise.all([
+                fetchAttendanceStats(),
+                fetchAttendanceRecords(),
+                loadBorrowEquipmentOptions()
+            ]);
+
+            setInterval(async () => {
+                await Promise.all([
+                    fetchAttendanceStats(),
+                    fetchAttendanceRecords(),
+                    loadBorrowEquipmentOptions()
+                ]);
+            }, ATTENDANCE_POLL_INTERVAL);
+
+            window.addEventListener('attendanceRecorded', async () => {
+                await Promise.all([
+                    fetchAttendanceStats(),
+                    fetchAttendanceRecords(),
+                    loadBorrowEquipmentOptions()
+                ]);
+            });
+
+            document.getElementById('attendanceSearch')?.addEventListener('input', applyAttendanceFilters);
+            document.getElementById('attendanceRange')?.addEventListener('change', applyAttendanceFilters);
+            window.addEventListener('resize', () => {
+                applyAttendanceFilters();
+            });
+
+            window.addEventListener('focus', async () => {
+                await Promise.all([
+                    fetchAttendanceStats(),
+                    fetchAttendanceRecords(),
+                    loadBorrowEquipmentOptions()
+                ]);
+            });
+
+            if (borrowModal) {
+                borrowModal.addEventListener('click', (event) => {
+                    if (event.target === borrowModal) {
+                        closeBorrowEquipmentModal();
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="/js/student-sidebar-config.js" defer></script>
+    <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

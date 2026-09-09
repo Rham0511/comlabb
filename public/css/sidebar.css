@@ -1,0 +1,1161 @@
+:root {
+    --sidebar-width: 280px;
+    --primary: #06402B;
+    --accent: #22C55E;
+    --hover: #16A34A;
+    --success: #4ADE80;
+    --bg: #07150F;
+    --bg-secondary: #0A1D15;
+    --card-bg: rgba(20,45,35,0.78);
+    --card-bg-solid: #0F241B;
+    --card-hover: #123124;
+    --borders: rgba(74,222,128,0.18);
+    --glow: rgba(34,197,94,0.12);
+    --text: #F8FAFC;
+    --text-secondary: #B6D7C8;
+    --sidebar-bg: linear-gradient(180deg, var(--bg) 0%, var(--bg-secondary) 100%);
+    --sidebar-border: rgba(74,222,128,0.18);
+    --sidebar-text: var(--text-secondary);
+    --sidebar-text-active: var(--text);
+    --sidebar-hover-bg: rgba(11, 42, 30, 0.78);
+    --sidebar-active-bg: linear-gradient(135deg, rgba(15, 55, 38, 0.95), rgba(10, 40, 28, 0.95));
+    --sidebar-highlight: rgba(74, 222, 128, 0.18);
+    --sidebar-shadow: 0 20px 70px var(--glow);
+}
+
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+    background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.22), transparent 18%),
+                radial-gradient(circle at bottom right, rgba(74, 222, 128, 0.12), transparent 22%),
+                var(--sidebar-bg);
+    overflow-x: hidden;
+}
+
+body.app-shell {
+    min-height: 100vh;
+}
+
+/* Layered page background and secondary backdrop behind content */
+body.app-shell .main-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Large soft gradient and light source layers behind the main container */
+body.app-shell .main-container::before {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(600px 400px at 10% 10%, rgba(34,197,94,0.06), transparent 12%),
+                radial-gradient(900px 600px at 90% 85%, rgba(34,197,94,0.03), transparent 12%);
+    mix-blend-mode: screen;
+    filter: blur(18px) saturate(1.05);
+}
+
+/* Subtle vignette and depth to focus content */
+body.app-shell .main-container::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(closest-side, rgba(0,0,0,0) 60%, rgba(0,0,0,0.22) 100%);
+    mix-blend-mode: multiply;
+}
+
+/* Secondary backdrop behind page content blocks to create hierarchy */
+body.app-shell .page-content {
+    padding: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+body.app-shell .page-content::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    right: -1.5rem;
+    top: -1.5rem;
+    bottom: -1.5rem;
+    z-index: 1;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 6px 30px rgba(2,6,12,0.30);
+    pointer-events: none;
+    filter: blur(0.6px);
+}
+
+.sidebar {
+    background: var(--sidebar-bg);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    overflow-y: auto;
+    box-shadow: var(--sidebar-shadow);
+    border-right: 1px solid var(--sidebar-border);
+    z-index: 1200;
+    transition: transform 0.3s ease, width 0.3s ease;
+    backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(0);
+    box-sizing: border-box;
+}
+
+.sidebar.mobile-closed {
+    transform: translateX(-100%);
+}
+
+.sidebar.mobile-open {
+    transform: translateX(0);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.68);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1100;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.student-portal.sidebar-open {
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 1.4rem 1.2rem;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+
+/* Profile block shown on student sidebar to reflect signed-in user */
+.sidebar-profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+.sidebar-profile-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.sidebar-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(6,182,212,0.06));
+    border: 1px solid var(--borders);
+    color: var(--text);
+    font-weight: 700;
+}
+.sidebar-profile-name {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+.sidebar-profile-role {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.sidebar-logout {
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+.sidebar-logout:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--text);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+}
+
+.sidebar-logo i {
+    font-size: 1.75rem;
+    color: var(--accent);
+}
+
+.sidebar-logo-text {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sidebar-tagline {
+    font-size: 0.75rem;
+    color: #86EFAC;
+    margin-top: 0.25rem;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 0.5rem 0.8rem 1rem;
+    position: sticky;
+    bottom: 0;
+    background: rgba(2, 10, 20, 0.95);
+    backdrop-filter: blur(14px);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.2rem;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-left: 3px solid transparent;
+    margin: 0.3rem 0;
+    border-radius: 0.85rem;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+
+.nav-item i {
+    width: 1.3rem;
+    text-align: center;
+    color: #4ADE80;
+    font-size: 1.05rem;
+}
+
+.nav-item:hover {
+    background: var(--sidebar-hover-bg);
+    color: #D1FAE5;
+    border-left-color: rgba(74, 222, 128, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.nav-item.active {
+    background: var(--sidebar-active-bg);
+    color: #D1FAE5;
+    border-left-color: rgba(74, 222, 128, 0.22);
+    font-weight: 600;
+    border: 1px solid rgba(74, 222, 128, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(6,64,43,0.12);
+}
+
+.sidebar-back-link {
+    border-left-color: rgba(52, 211, 153, 0.25);
+}
+
+.sidebar-back-link:hover,
+.sidebar-back-link:focus-visible {
+    background: var(--sidebar-hover-bg);
+    color: var(--sidebar-text-active);
+}
+
+.main-container {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* Strong enforcement: keep sidebar consistent across all pages */
+/* Sidebar text and layout: avoid overriding icon fonts */
+.sidebar {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--sidebar-text);
+}
+
+/* keep box-sizing universal inside sidebar but do not force text font on icons */
+.sidebar * {
+    box-sizing: border-box !important;
+}
+
+/* Apply unified typography only to text elements, not icon <i> elements */
+.sidebar .nav-item,
+.sidebar .sidebar-logo-text,
+.sidebar .sidebar-tagline {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar {
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    max-width: var(--sidebar-width) !important;
+    background: var(--sidebar-bg) !important;
+    border-right: 1px solid var(--sidebar-border) !important;
+}
+
+/* Ensure Font Awesome icons render correctly inside the sidebar */
+.sidebar i[class*="fa-"],
+.sidebar i[class^="fa"] {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+}
+
+/* Force the sidebar to be fixed and visible above other page elements */
+#sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    z-index: 1200 !important;
+    display: block !important;
+}
+
+.sidebar .nav-item {
+    padding: 0.85rem 1.2rem !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    letter-spacing: -0.01em !important;
+    gap: 0.75rem !important;
+    border-radius: 0.85rem !important;
+}
+
+body.app-shell .sidebar .nav-item i {
+    font-size: 1.05rem !important;
+    width: 1.3rem !important;
+    color: #4ADE80 !important;
+}
+
+body.app-shell .sidebar .nav-item:hover {
+    background: var(--sidebar-hover-bg) !important;
+    color: #D1FAE5 !important;
+    border-left-color: rgba(74, 222, 128, 0.16) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03) !important;
+}
+
+body.app-shell .sidebar .nav-item.active {
+    background: var(--sidebar-active-bg) !important;
+    color: #D1FAE5 !important;
+    border-left-color: rgba(74, 222, 128, 0.22) !important;
+    border: 1px solid rgba(74, 222, 128, 0.18) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(6,64,43,0.12) !important;
+}
+
+@media (max-width: 1023px) {
+    body.student-portal .main-container {
+        margin-left: 0 !important;
+    }
+
+    body.student-portal .sidebar {
+        width: min(82vw, 280px) !important;
+        min-width: min(82vw, 280px) !important;
+        max-width: min(82vw, 280px) !important;
+        transform: translateX(-100%) !important;
+    }
+
+    body.student-portal .sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    body.student-portal .sidebar {
+        width: min(88vw, 280px) !important;
+        min-width: min(88vw, 280px) !important;
+        max-width: min(88vw, 280px) !important;
+    }
+
+    body.student-portal .sidebar-header {
+        padding: 1.1rem 1rem;
+    }
+
+    body.student-portal .sidebar-profile {
+        padding: 0.8rem 1rem;
+    }
+
+    body.student-portal .nav-item {
+        padding: 0.8rem 1rem;
+    }
+
+    body.student-portal .sidebar-logo-text {
+        font-size: 1.12rem;
+    }
+
+    body.student-portal .sidebar-tagline {
+        font-size: 0.7rem;
+    }
+}
+
+/* Theme unification for feature and static admin pages
+   Target only pages using the `.page-content` wrapper so Dashboard remains unchanged */
+body.app-shell .page-content {
+    background: linear-gradient(180deg, rgba(4,10,14,0.52), rgba(2,6,12,0.64));
+    padding: 1.5rem !important;
+    color: #d9f5e0;
+    min-height: 100vh;
+}
+
+/* Glassmorphism cards: replace white cards with dark translucent panels */
+body.app-shell .page-content .bg-white,
+body.app-shell .page-content .rounded-lg.bg-white,
+body.app-shell .page-content .rounded-3xl.bg-white {
+    background: rgba(13,23,34,0.72) !important;
+    border: 1px solid rgba(52,211,153,0.25) !important;
+    box-shadow: 0 8px 30px rgba(2,6,12,0.6), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+    color: #e6fff0 !important;
+}
+
+/* Card hover and spacing consistency */
+body.app-shell .page-content .card,
+body.app-shell .page-content .card-hover,
+body.app-shell .page-content .rounded-lg {
+    border-radius: 0.85rem !important;
+}
+body.app-shell .page-content .card-hover:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 0 18px rgba(34,197,94,0.18) !important;
+}
+
+/* Typography scale consistent with dashboard */
+body.app-shell .page-content h1,
+body.app-shell .page-content h2,
+body.app-shell .page-content h3,
+body.app-shell .page-content .page-title,
+body.app-shell .page-content .card-title {
+    color: #dfffe8 !important;
+    font-weight: 700 !important;
+}
+
+/* Tables: dark mode */
+body.app-shell .page-content table {
+    background: transparent !important;
+    color: #d9f5e0 !important;
+}
+body.app-shell .page-content table thead th {
+    background: transparent !important;
+    color: #9fe9b9 !important;
+    border-bottom: 1px solid rgba(34,197,94,0.08) !important;
+}
+body.app-shell .page-content table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+body.app-shell .page-content table tbody tr:hover {
+    background: rgba(34,197,94,0.02) !important;
+}
+
+/* Inputs, selects, search boxes */
+body.app-shell .page-content .search-box input,
+body.app-shell .page-content input,
+body.app-shell .page-content select,
+body.app-shell .page-content textarea {
+    background: rgba(10,18,22,0.6) !important;
+    border: 1px solid rgba(34,197,94,0.08) !important;
+    color: #d9f5e0 !important;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.6) !important;
+    border-radius: 0.75rem !important;
+}
+body.app-shell .page-content .search-box input::placeholder,
+body.app-shell .page-content input::placeholder,
+body.app-shell .page-content textarea::placeholder {
+    color: rgba(149,249,179,0.6) !important;
+}
+
+/* Buttons */
+body.app-shell .page-content .btn-primary,
+body.app-shell .page-content .btn-primary:hover {
+    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.14) !important;
+    border-radius: 0.75rem !important;
+}
+
+/* Dropdowns and selects */
+body.app-shell .page-content select {
+    padding: 0.6rem 0.9rem !important;
+}
+
+body.app-shell select,
+body.app-shell select option,
+body.app-shell select optgroup {
+    color: #f8fafc !important;
+}
+
+body.app-shell select option {
+    background-color: #0a121e !important;
+    color: #f8fafc !important;
+}
+
+body.app-shell select option:hover,
+body.app-shell select option:focus,
+body.app-shell select option:checked,
+body.app-shell select option[selected] {
+    background: linear-gradient(180deg, rgba(16,185,129,0.25), rgba(16,185,129,0.4)) !important;
+    color: #f8fafc !important;
+}
+
+/* Small UI elements (badges) */
+body.app-shell .page-content .badge-pending,
+body.app-shell .page-content .badge-under-repair,
+body.app-shell .page-content .badge-resolved {
+    background: rgba(255,255,255,0.04) !important;
+    color: inherit !important;
+}
+
+/* Ensure icons inside page-content use the same sizing and color */
+body.app-shell .page-content i {
+    color: #86EFAC !important;
+    font-size: 1.05rem !important;
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        margin-left: 0;
+    }
+    .sidebar.mobile-closed {
+        transform: translateX(-100%);
+    }
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+}
+
+@media (min-width: 768px) {
+    .sidebar.mobile-closed,
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+}
+
+.top-header {
+    background: linear-gradient(180deg, rgba(15, 36, 27, 0.96), rgba(10, 29, 21, 0.96));
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Override light utility classes used in static pages (header, modals, cards) */
+body.app-shell .main-container header.bg-white,
+body.app-shell .main-container header.bg-white.shadow-sm,
+body.app-shell header.bg-white {
+    background: rgba(3,10,18,0.95) !important;
+    border-bottom: 1px solid rgba(52, 211, 153, 0.2) !important;
+    color: #e9fff2 !important;
+}
+
+/* Ensure .modal-content from static pages follows the dashboard card style */
+body.app-shell .modal .modal-content,
+body.app-shell .modal-content {
+    background: rgba(3,8,12,0.86) !important;
+    color: #e7fff2 !important;
+    border: 1px solid rgba(34,197,94,0.06) !important;
+    box-shadow: 0 30px 80px rgba(2,6,12,0.7) !important;
+}
+
+/* Force badge and small utility colors to match dark theme */
+body.app-shell .page-content .badge-serviceable,
+body.app-shell .page-content .badge-unserviceable,
+body.app-shell .page-content .badge {
+    background: rgba(255,255,255,0.03) !important;
+    color: #c8ffd9 !important;
+    padding: 0.35rem 0.6rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+}
+
+/* Neutralize explicit light text classes inside page-content/main-container */
+body.app-shell .main-container .text-gray-900,
+body.app-shell .main-container .text-gray-700,
+body.app-shell .main-container .text-gray-600,
+body.app-shell .page-content .text-gray-900,
+body.app-shell .page-content .text-gray-700,
+body.app-shell .page-content .text-gray-600 {
+    color: inherit !important;
+}
+
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-meta {
+    margin-left: 0.75rem;
+}
+
+.menu-toggle {
+    display: none;
+    position: fixed !important;
+    top: 1rem;
+    left: 1rem;
+    z-index: 50;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #86efac;
+    cursor: pointer;
+}
+
+/* Mobile/Tablet hamburger: visible up to 1023px (tablet breakpoint) */
+@media (max-width: 1023px) {
+    .menu-toggle {
+        display: inline-flex !important;
+        position: fixed !important;
+        left: 1rem;
+        top: 1rem;
+        z-index: 50;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: rgba(6, 24, 17, 0.7);
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(2,6,12,0.5);
+        border: 1px solid rgba(74,222,128,0.08);
+        backdrop-filter: blur(8px);
+    }
+
+    .header-left {
+        padding-left: 3.5rem;
+    }
+
+    .sidebar-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        z-index: 1302;
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(3,10,12,0.6);
+        color: #dfffe8;
+        font-size: 1.25rem;
+        border: 1px solid rgba(74,222,128,0.06);
+    }
+
+    .page-header-card {
+        padding-left: 88px;
+    }
+
+    .page-header-card > div:first-child {
+        min-width: 0;
+    }
+}
+
+.header-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #f8fff5;
+}
+
+.header-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #d9f5e0;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    padding: 0.65rem 1rem;
+    border-radius: 0.85rem;
+    background: rgba(17, 28, 40, 0.7);
+    text-decoration: none;
+    transition: all 0.25s ease;
+    font-size: 0.9rem;
+}
+
+.header-back-link:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #f8fff5;
+    border-color: var(--sidebar-highlight);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding: 0.55rem 0.85rem 0.55rem 2.3rem;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: 0.75rem;
+    width: 200px;
+    transition: all 0.3s ease;
+    background: rgba(15, 23, 42, 0.88);
+    color: #d9f5e0;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.25);
+    font-size: 0.9rem;
+}
+
+.search-box input::placeholder {
+    color: #94f9b3;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #22C55E;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.search-box i {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #86efac;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #86EFAC;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.icon-btn:hover {
+    color: #4ADE80;
+}
+
+.icon-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #22C55E;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem;
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    cursor: pointer;
+    transition: background 0.3s ease, border 0.3s ease;
+}
+
+.user-profile:hover {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.22);
+    font-size: 0.85rem;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #ecfdf5;
+    font-size: 0.9rem;
+}
+
+.user-role {
+    color: #86EFAC;
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .main-container {
+        margin-left: 0;
+    }
+
+    .top-header {
+        padding: 1rem;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .search-box input {
+        width: 130px;
+    }
+
+    .header-right {
+        gap: 1rem;
+    }
+
+    .user-info {
+        display: none;
+    }
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+/* Additional global overrides to ensure Dashboard visual language applies
+   across all modules: buttons, secondary controls, modals, lists, pagination */
+
+/* Secondary buttons and link-buttons */
+body.app-shell .page-content .btn-secondary,
+body.app-shell .page-content .btn-link {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+    color: #c9f8d9 !important;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: 0.65rem !important;
+    transition: all 0.18s ease !important;
+}
+body.app-shell .page-content .btn-secondary:hover,
+body.app-shell .page-content .btn-link:hover {
+    background: rgba(34,197,94,0.06) !important;
+    border-color: rgba(34,197,94,0.12) !important;
+}
+
+/* Tables: alternate row shading, compact spacing */
+body.app-shell .page-content table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+}
+body.app-shell .page-content table tbody tr {
+    background: rgba(3,8,12,0.5) !important;
+    border-radius: 0.75rem !important;
+}
+body.app-shell .page-content table td,
+body.app-shell .page-content table th {
+    padding: 0.85rem 1rem !important;
+    vertical-align: middle !important;
+}
+
+/* Forms and controls: compact consistent spacing */
+body.app-shell .page-content .form-row {
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+}
+body.app-shell .page-content .form-group {
+    margin-bottom: 0.85rem !important;
+}
+
+/* Modal dialogs: dark backdrop and card */
+body.app-shell .modal,
+body.app-shell .dialog {
+    background: rgba(3,8,12,0.72) !important;
+    border: 1px solid rgba(34,197,94,0.06) !important;
+    box-shadow: 0 30px 80px rgba(2,6,12,0.7) !important;
+    color: #e6fff0 !important;
+    border-radius: 0.85rem !important;
+}
+
+/* List groups and panels */
+body.app-shell .page-content .list-group,
+body.app-shell .page-content .panel {
+    background: rgba(3,8,12,0.45) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    border-radius: 0.75rem !important;
+}
+
+/* Pagination controls */
+body.app-shell .page-content .pagination a,
+body.app-shell .page-content .pagination button {
+    background: rgba(255,255,255,0.02) !important;
+    color: #cfffe0 !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    padding: 0.45rem 0.65rem !important;
+    border-radius: 0.6rem !important;
+}
+body.app-shell .page-content .pagination a.active,
+body.app-shell .page-content .pagination button.active {
+    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.14) !important;
+}
+
+/* Empty states */
+body.app-shell .page-content .empty-state {
+    text-align: center !important;
+    color: rgba(223,255,232,0.9) !important;
+    padding: 2rem !important;
+}
+
+/* Ensure utility backgrounds (cards created with common utility classes) are dark */
+body.app-shell .page-content .bg-light,
+body.app-shell .page-content .panel-light,
+body.app-shell .page-content .card-light {
+    background: rgba(3,8,12,0.5) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    color: #eafef0 !important;
+}
+
+/* Convert Tailwind gray utility card backgrounds to dashboard cards */
+body.app-shell .page-content .bg-gray-50,
+body.app-shell .page-content .bg-gray-100,
+body.app-shell .page-content .rounded-3xl.bg-gray-50,
+body.app-shell .page-content .rounded-3xl.bg-gray-100,
+body.app-shell .page-content .rounded-2xl.bg-gray-50,
+body.app-shell .page-content .rounded-2xl.bg-gray-100 {
+    background: rgba(3,8,12,0.52) !important;
+    border: 1px solid rgba(34,197,94,0.06) !important;
+    color: #e8fff3 !important;
+    box-shadow: 0 12px 40px rgba(2,6,12,0.6) !important;
+}
+
+/* Neutralize light borders used for panels */
+body.app-shell .page-content .border-gray-200,
+body.app-shell .page-content .border-gray-100,
+body.app-shell .page-content .border {
+    border-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Subtle dividers */
+body.app-shell .page-content hr {
+    border: none !important;
+    height: 1px !important;
+    background: rgba(255,255,255,0.03) !important;
+    margin: 1rem 0 !important;
+}
+
+/* Utility: ensure link colors in page content use the accent */
+body.app-shell .page-content a {
+    color: #b8ffd3 !important;
+    text-decoration: none !important;
+}
+body.app-shell .page-content a:hover {
+    text-decoration: underline !important;
+}
+
+/* Dashboard-style card wrapper used across modules */
+/* Reuse Dashboard's exact card component across the app */
+.card,
+.page-content .card {
+    background: rgba(20, 45, 35, 0.78) !important;
+    border-radius: 1.5rem !important;
+    padding: 1.2rem !important;
+    box-shadow: inset 0 1px rgba(255,255,255,0.03), 0 10px 30px rgba(34, 197, 94, 0.12) !important;
+    transition: all 0.3s ease !important;
+    border: 1px solid rgba(74, 222, 128, 0.18) !important;
+    backdrop-filter: blur(20px) !important;
+    color: #e5f9e0 !important;
+}
+
+/* Tight variant for small control bars */
+.card.sm {
+    padding: 0.6rem 0.9rem !important;
+    border-radius: 1rem !important;
+}
+
+/* Elevated look for dashboard cards: subtle glow and lift on hover */
+body.app-shell .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+body.app-shell .card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 0 18px rgba(34, 197, 94, 0.18) !important;
+    border-color: #34D399 !important;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #86EFAC;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.04);
+}
+
+.card-icon.green {
+    background: rgba(22, 163, 74, 0.16);
+    color: #4ADE80;
+}
+
+.card-icon.blue {
+    background: rgba(34, 211, 238, 0.12);
+    color: #38bdf8;
+}
+
+.card-icon.red {
+    background: rgba(239, 68, 68, 0.14);
+    color: #f87171;
+}
+
+.card-icon.amber {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fbbf24;
+}
+
+/* Make tables appear inset with softly elevated rows */
+body.app-shell .page-content table tbody tr {
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)) !important;
+    border-radius: 0.6rem !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45) inset !important;
+}
+
+/* Chart and table card variants should match the Dashboard card visuals */
+.chart-card, .table-card {
+    background: rgba(20, 45, 35, 0.78) !important;
+    border-radius: 1.5rem !important;
+    padding: 1.2rem !important;
+    box-shadow: inset 0 1px rgba(255,255,255,0.03), 0 10px 30px rgba(34, 197, 94, 0.12) !important;
+    border: 1px solid rgba(74, 222, 128, 0.18) !important;
+    color: #e5f9e0 !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.chart-card {
+    padding: 1.4rem !important;
+}
+
+.table-card {
+    padding: 1.4rem !important;
+}
+
+/* Emerald overrides for remaining navy/black tones (preserve layout)
+   These rules target common components that previously used dark navy/black
+   colors and apply the unified emerald palette. */
+body, .main-container, .page-content {
+    color: var(--text) !important;
+}
+
+.section-shell,
+.filter-control,
+.table-shell,
+.glass-card,
+.summary-card,
+.modern-table tbody tr,
+.details-modal-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--borders) !important;
+    color: var(--text) !important;
+    box-shadow: inset 0 1px rgba(255,255,255,0.03) !important;
+}
+
+.modern-table thead {
+    background: var(--card-hover) !important;
+}
+
+.modern-table th { color: var(--text-secondary) !important; }
+.modern-table td { color: var(--text) !important; }
+.modern-table tbody tr:hover { background: var(--card-hover) !important; }
+
+.filter-control input,
+.filter-control select { color: var(--text) !important; }
+.filter-control select:focus { background: var(--card-bg) !important; color: var(--text) !important; }
+
+.details-modal { background: rgba(2,6,6,0.72) !important; }
+

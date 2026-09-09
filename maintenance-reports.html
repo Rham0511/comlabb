@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        /* Dark theme local utilities for Maintenance Reports */
+        body {
+            background: #080f0c;
+            color: #f8fafc;
+        }
+
+        .main-container {
+            background: linear-gradient(180deg, rgba(8,15,12,0.98), rgba(7,11,9,0.96));
+        }
+
+        .gradient-green { background: linear-gradient(135deg,#16A34A 0%,#059669 100%); }
+        .btn-primary { background: linear-gradient(135deg,#059669 0%,#10b981 100%); color:#fff; transition:all 0.25s ease; border:1px solid rgba(74,222,128,.22); box-shadow:0 12px 24px rgba(5,150,105,.18); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow:0 16px 30px rgba(16,185,129,0.24); background: linear-gradient(135deg,#10b981 0%,#34d399 100%); }
+        .btn-secondary { background: rgba(13,23,18,0.84); border: 1px solid rgba(74,222,128,.18); color: #dcfce7; transition: all 0.2s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+        .btn-secondary:hover { background: rgba(16,34,26,0.96); border-color: rgba(74,222,128,.28); color: #f0fdf4; }
+        .form-control { width: 100%; padding: 0.95rem 1rem; border-radius: 1rem; border: 1px solid rgba(74,222,128,.16); background: linear-gradient(180deg, rgba(13,23,18,0.92), rgba(8,15,12,0.94)); color: #f8fafc; outline: none; transition: all 0.2s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+        .form-control::placeholder { color: rgba(203,213,225,0.72); }
+        .form-control:focus { border-color: rgba(74,222,128,.28); box-shadow: 0 0 0 4px rgba(16,185,129,0.12); background: linear-gradient(180deg, rgba(13,23,18,0.98), rgba(7,11,9,0.98)); }
+        .card-hover { transition: all 0.3s ease; background: radial-gradient(circle at top left, rgba(16,185,129,0.08), transparent 70%), rgba(13,23,18,0.8); border: 1px solid rgba(16,185,129,0.2); box-shadow: 0 20px 45px rgba(2,8,12,0.35); backdrop-filter: blur(16px) saturate(1.04); }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 26px 58px rgba(2,8,12,0.42); }
+        .badge-pending { background: rgba(245,158,11,0.12); color: #f9d29a; padding:0.375rem 0.75rem; border-radius:0.75rem; font-weight:600; }
+        .badge-under-repair { background: rgba(59,130,246,0.12); color:#9ac9ff; padding:0.375rem 0.75rem; border-radius:0.75rem; font-weight:600; }
+        .badge-resolved { background: rgba(34,197,94,0.12); color:#bfffd8; padding:0.375rem 0.75rem; border-radius:0.75rem; font-weight:600; }
+        .status-row-pending { border-left: 4px solid rgba(245,158,11,0.3); }
+        .status-row-under-repair { border-left: 4px solid rgba(59,130,246,0.3); }
+        .status-row-resolved { border-left: 4px solid rgba(34,197,94,0.3); }
+        .modal { display:none; position:fixed; z-index:9999; top:0; left:0; width:100vw; height:100vh; min-height:100%; background-color: rgba(0,0,0,0.72); }
+        .modal.show { display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+        .modal-content { margin:auto; background: rgba(3,8,12,0.96); border-radius:1.5rem; padding:2rem; max-width:760px; width:100%; max-width:760px; box-shadow:0 35px 90px rgba(2,6,12,0.75); color:#e8fff3; max-height:calc(100vh - 3rem); overflow-y:auto; backdrop-filter: blur(20px); }
+        .modal-content h3 { color: #ffffff; }
+        .modal-content label { color: rgba(226,239,230,0.9); }
+        .modal-form-input, .modal-form-select, .modal-form-textarea { width: 100%; padding: 0.95rem 1rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #eefbf0; outline: none; transition: all 0.2s ease; }
+        .modal-form-input::placeholder, .modal-form-textarea::placeholder { color: rgba(255,255,255,0.55); }
+        .modal-form-input:focus, .modal-form-select:focus, .modal-form-textarea:focus { border-color: rgba(34,197,94,0.8); box-shadow: 0 0 0 4px rgba(16,185,129,0.1); background: rgba(255,255,255,0.08); }
+        .table-row-hover:hover { background-color: rgba(34,197,94,0.04); }
+        .action-btn { padding:0.5rem 0.75rem; border-radius:0.375rem; font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.2s ease; background: rgba(255,255,255,0.03); color:#e8fff3; border:1px solid rgba(255,255,255,0.05); }
+        .action-btn i { margin-right: 0.4rem; }
+        .action-btn-view { background: rgba(59,130,246,0.1); color:#cfe6ff; }
+        .action-btn-view:hover { background: rgba(59,130,246,0.18); }
+        .action-btn-update { background: rgba(245,158,11,0.12); color:#fff5c2; }
+        .action-btn-update:hover { background: rgba(245,158,11,0.18); }
+        .page-content { background: linear-gradient(180deg, rgba(8,15,12,0.98), rgba(7,11,9,0.96)); }
+        .page-content table td { color: #f8fafc; }
+        .page-content table thead { background: linear-gradient(180deg, rgba(13,23,18,0.96), rgba(9,16,13,0.96)); }
+        .page-content table thead th { color: #d1fae5; border-bottom: 1px solid rgba(74,222,128,.16); }
+        .page-content table tbody tr { border-bottom: 1px solid rgba(74,222,128,.08); }
+        .page-content .report-empty-state { border: 1px solid rgba(74,222,128,.16); background: rgba(13,23,18,0.74); color: #cbd5e1; border-radius: 1.1rem; }
+        .page-content .report-action-pill { border-radius: 999px; padding: 0.6rem 0.95rem; border: 1px solid rgba(74,222,128,.18); background: rgba(13,23,18,0.85); color: #dcfce7; }
+        .page-content .report-action-pill i { color: #bbf7d0; }
+    </style>
+</head>
+<body class="app-shell">
+    <div id="shared-sidebar"></div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Header -->
+        <header class="top-header">
+            <div class="flex items-center justify-between p-4 md:p-6">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-700 hover:text-gray-900">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl font-bold">Reports</h2>
+                            <p class="text-sm"><a href="#" class="text-green-600 hover:text-green-700">Dashboard</a> / Reports</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button class="relative text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    <div class="ml-auto flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" id="adminAvatar">AD</div>
+                        <div class="min-w-0">
+                            <div class="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200" id="adminUserRole">Admin</div>
+                            <div class="text-sm font-semibold text-white" id="adminUserName">Admin User</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="page-content p-4 md:p-6">
+            <section class="card-hover rounded-[1.75rem] border border-emerald-900/30 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.08),_transparent_70%)] bg-[#0d1712]/80 p-5 md:p-6 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-400">Reporting Center</p>
+                        <h2 class="text-2xl font-semibold text-white mt-2">Generate practical reports for your assigned lab</h2>
+                        <p class="text-sm text-slate-400 mt-2">Select a report type, apply the date and search filters, then export a polished PDF for your administrator review.</p>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100 min-w-[220px]">
+                        <div class="font-semibold">Current scope</div>
+                        <div id="scopeBadge" class="text-emerald-200"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card-hover rounded-[1.5rem] border border-emerald-900/30 bg-[#0d1712]/80 p-4 md:p-5 md:pr-6 xl:pr-8 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Report Type</label>
+                        <select id="reportType" class="form-control rounded-2xl py-3">
+                            <option value="maintenance">Maintenance Activity</option>
+                            <option value="attendance">Attendance Summary</option>
+                            <option value="inventory">Equipment Inventory</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Date From</label>
+                        <input id="dateFrom" type="date" class="form-control rounded-2xl py-3">
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Report Period</label>
+                            <input id="dateTo" type="date" class="form-control rounded-2xl py-3">
+                        </div>
+                        <div class="flex flex-col sm:flex-row xl:flex-col gap-2 md:gap-3 mt-1">
+                            <button type="button" class="btn-secondary report-action-pill text-sm font-semibold flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto xl:w-full">
+                                <i class="fas fa-file-export"></i>
+                                <span>Export PDF</span>
+                            </button>
+                            <button type="button" class="btn-secondary report-action-pill text-sm font-semibold flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto xl:w-full">
+                                <i class="fas fa-print"></i>
+                                <span>Print Report</span>
+                            </button>
+                            <button id="generateReportBtn" type="button" class="btn-primary text-white px-6 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto xl:w-full">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Generate Report</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Search</label>
+                        <input id="searchInput" type="text" placeholder="Search records" class="form-control rounded-2xl py-3">
+                    </div>
+                </div>
+            </section>
+
+            <section id="reportPreviewCard" class="card-hover rounded-[1.5rem] border border-emerald-900/30 bg-[#0d1712]/80 overflow-hidden">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-emerald-900/30 px-5 py-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white" id="reportTitle">Maintenance Activity Report</h3>
+                        <p class="text-sm text-emerald-100/70" id="reportSubtitle">Preview will update as you change the filters.</p>
+                    </div>
+                    <div class="text-sm text-emerald-100/70" id="resultCount">0 records</div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-[#0d1712]/90 border-b border-emerald-900/30">
+                            <tr id="previewHead"></tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="report-empty-state mx-4 my-4 px-6 py-16 text-center text-emerald-100/70">
+                    No report generated yet. Select a report type and filters, then click Generate Report.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').split('@')[0].trim();
+            if (!value) return 'AD';
+            return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'AD';
+        }
+
+        function hydrateAdminProfile() {
+            const user = window.__CURRENT_USER__ || {};
+            const displayName = user.name || 'Administrator';
+            const initials = user.initials || getInitials(displayName, user.email || '');
+            const roleText = 'Admin';
+
+            const adminNameElement = document.getElementById('adminUserName');
+            const adminRoleElement = document.getElementById('adminUserRole');
+            const adminAvatarElement = document.getElementById('adminAvatar');
+
+            if (adminNameElement) adminNameElement.textContent = displayName;
+            if (adminRoleElement) adminRoleElement.textContent = roleText;
+            if (adminAvatarElement) adminAvatarElement.textContent = initials;
+        }
+
+        window.__CURRENT_USER__ = typeof window.__CURRENT_USER__ !== 'undefined' ? window.__CURRENT_USER__ : __CURRENT_USER_JSON__;
+        hydrateAdminProfile();
+
+        function setActive(event) {
+            event.preventDefault();
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(item => item.classList.remove('active'));
+            const target = event.target.closest('.nav-item');
+            if (target) target.classList.add('active');
+
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('mobile-open');
+            }
+        }
+
+        const adminScope = {
+            campus: localStorage.getItem('assignedCampus') || 'Calapan Campus',
+            laboratory: localStorage.getItem('assignedLaboratory') || 'Computer Laboratory 1'
+        };
+
+        document.getElementById('scopeBadge').textContent = `${adminScope.campus} • ${adminScope.laboratory}`;
+
+        const reportData = {
+            maintenance: [
+                { date: '2026-07-01', equipment: 'Monitor #12', issue: 'Screen flickering', status: 'Pending', reporter: 'Sarah Torres', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-03', equipment: 'Keyboard #05', issue: 'Keys unresponsive', status: 'Under Repair', reporter: 'Mark Santos', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-05', equipment: 'Projector #08', issue: 'Fan noise', status: 'Resolved', reporter: 'Maria Garcia', campus: 'Victoria Campus', laboratory: 'Networking Lab' }
+            ],
+            attendance: [
+                { date: '2026-07-02', student: 'Ana Cruz', section: 'BSIT 3A', status: 'Present', room: 'Computer Laboratory 1', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-02', student: 'Jared Lim', section: 'BSIT 3A', status: 'Absent', room: 'Computer Laboratory 1', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-04', student: 'Rina Santos', section: 'BSCS 2B', status: 'Present', room: 'Networking Lab', campus: 'Victoria Campus', laboratory: 'Networking Lab' }
+            ],
+            inventory: [
+                { date: '2026-06-30', asset: 'Laptop #14', condition: 'Operational', owner: 'John Reyes', status: 'Assigned', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-01', asset: 'Printer #02', condition: 'Needs Service', owner: 'Sarah Torres', status: 'Pending', campus: 'Calapan Campus', laboratory: 'Computer Laboratory 1' },
+                { date: '2026-07-03', asset: 'Router #09', condition: 'Operational', owner: 'Mark Santos', status: 'Available', campus: 'Victoria Campus', laboratory: 'Networking Lab' }
+            ]
+        };
+
+        const reportConfig = {
+            maintenance: {
+                title: 'Maintenance Activity Report',
+                subtitle: 'Focused on maintenance issues for your assigned campus and laboratory.',
+                columns: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'equipment', label: 'Equipment' },
+                    { key: 'issue', label: 'Issue' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'reporter', label: 'Reporter' }
+                ]
+            },
+            attendance: {
+                title: 'Attendance Summary Report',
+                subtitle: 'Daily attendance entries from your assigned laboratory space.',
+                columns: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'student', label: 'Student' },
+                    { key: 'section', label: 'Section' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'room', label: 'Room' }
+                ]
+            },
+            inventory: {
+                title: 'Equipment Inventory Report',
+                subtitle: 'Current inventory overview for your assigned campus and laboratory.',
+                columns: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'asset', label: 'Asset' },
+                    { key: 'condition', label: 'Condition' },
+                    { key: 'owner', label: 'Assigned To' },
+                    { key: 'status', label: 'Status' }
+                ]
+            }
+        };
+
+        const reportType = document.getElementById('reportType');
+        const dateFrom = document.getElementById('dateFrom');
+        const dateTo = document.getElementById('dateTo');
+        const searchInput = document.getElementById('searchInput');
+        const previewHead = document.getElementById('previewHead');
+        const previewBody = document.getElementById('previewBody');
+        const emptyState = document.getElementById('emptyState');
+        const reportTitle = document.getElementById('reportTitle');
+        const reportSubtitle = document.getElementById('reportSubtitle');
+        const resultCount = document.getElementById('resultCount');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        let filteredRows = [];
+
+        function getFilteredRows() {
+            const selectedType = reportType.value;
+            const from = dateFrom.value;
+            const to = dateTo.value;
+            const search = searchInput.value.trim().toLowerCase();
+
+            return reportData[selectedType].filter((row) => {
+                const matchesScope = row.campus === adminScope.campus && row.laboratory === adminScope.laboratory;
+                const matchesFrom = !from || row.date >= from;
+                const matchesTo = !to || row.date <= to;
+                const searchableText = Object.values(row).join(' ').toLowerCase();
+                const matchesSearch = !search || searchableText.includes(search);
+                return matchesScope && matchesFrom && matchesTo && matchesSearch;
+            });
+        }
+
+        function renderPreview() {
+            const config = reportConfig[reportType.value];
+            const rows = getFilteredRows();
+            filteredRows = rows;
+
+            reportTitle.textContent = config.title;
+            reportSubtitle.textContent = config.subtitle;
+            resultCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'}`;
+
+            previewHead.innerHTML = config.columns.map((column) => `<th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">${column.label}</th>`).join('');
+            previewBody.innerHTML = '';
+
+            if (!rows.length) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            rows.forEach((row) => {
+                const cells = config.columns.map((column) => `<td class="px-6 py-4 text-sm text-slate-300">${row[column.key] || '—'}</td>`).join('');
+                previewBody.insertAdjacentHTML('beforeend', `<tr class="border-b border-slate-800/70 hover:bg-emerald-500/5">${cells}</tr>`);
+            });
+        }
+
+        function generatePdfReport() {
+            renderPreview();
+            if (!filteredRows.length) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            window.print();
+        }
+
+        [reportType, dateFrom, dateTo, searchInput].forEach((element) => {
+            element.addEventListener('input', renderPreview);
+            element.addEventListener('change', renderPreview);
+        });
+
+        generateReportBtn.addEventListener('click', generatePdfReport);
+        renderPreview();
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = event.target.closest('[onclick="toggleSidebar()"]');
+            if (sidebar && !sidebar.contains(event.target) && !hamburger && window.innerWidth < 768) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && window.innerWidth >= 768) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+    </script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #reportPreviewCard, #reportPreviewCard * {
+                visibility: visible;
+            }
+            #reportPreviewCard {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: 0;
+                box-shadow: none;
+                background: white;
+                color: #111827;
+            }
+            #reportPreviewCard .text-slate-400,
+            #reportPreviewCard .text-slate-300 {
+                color: #111827 !important;
+            }
+            #reportPreviewCard .bg-slate-950\/90 {
+                background: #f3f4f6 !important;
+            }
+            #reportPreviewCard .border-slate-800,
+            #reportPreviewCard .border-slate-800\/70 {
+                border-color: #d1d5db !important;
+            }
+            #reportPreviewCard .hover\:bg-emerald-500\/5 {
+                background: transparent !important;
+            }
+        }
+    </style>
+    <script>
+        window.sidebarConfig = {
+            iconClass: 'fas fa-wrench',
+            logoText: 'ComLab',
+            tagline: 'Maintenance Module',
+            items: [
+                { label: 'Damage Reports', href: '/maintenance-reports', icon: 'fas fa-triangle-exclamation' },
+                { label: 'Maintenance Queue', href: '/page/maintenance-queue', icon: 'fas fa-tools' },
+                { label: 'Repair History', href: '/page/repair-history', icon: 'fas fa-history' },
+                { label: 'Statistics', href: '/page/statistics', icon: 'fas fa-chart-bar' }
+            ]
+        };
+    </script>
+    <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

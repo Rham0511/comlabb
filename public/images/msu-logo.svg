@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="msuLogoTitle">
+  <title id="msuLogoTitle">Mindoro State University logo</title>
+  <rect width="120" height="120" rx="20" fill="#0f766e" />
+  <circle cx="60" cy="45" r="24" fill="#10b981" opacity="0.9" />
+  <path d="M60 22 L72 60 L60 53 L48 60 Z" fill="#0f766e" />
+  <path d="M58 66 L58 88" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  <path d="M66 66 L66 88" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  <text x="60" y="108" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#ffffff">MSU</text>
+</svg>

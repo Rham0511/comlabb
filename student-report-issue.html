@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        body {
+            background: #020617;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        body.student-portal {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            margin-left: calc(var(--sidebar-width, 280px) + 0.75rem);
+            width: calc(100% - var(--sidebar-width, 280px) - 0.75rem);
+            box-sizing: border-box;
+            background:
+                radial-gradient(circle at top left, rgba(16, 185, 129, 0.16), transparent 24%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-secondary) 100%);
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+            box-sizing: border-box;
+        }
+
+        .page-header-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0.35rem 0 0;
+            padding: 0.9rem 1rem;
+            border-radius: 1.2rem;
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            background: linear-gradient(135deg, rgba(8, 24, 18, 0.95), rgba(12, 34, 24, 0.92));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(1, 10, 8, 0.24);
+            backdrop-filter: blur(18px);
+        }
+
+        .page-header-title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #f8fafc;
+            letter-spacing: -0.01em;
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(10, 31, 19, 0.95), rgba(8, 25, 16, 0.9));
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 1.5rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 40px rgba(2, 10, 8, 0.24);
+            backdrop-filter: blur(18px);
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .form-label {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #d7fbe3;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            border-radius: 1rem;
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            background: linear-gradient(135deg, rgba(12, 34, 24, 0.88), rgba(7, 22, 15, 0.9));
+            color: #f8fafc;
+            padding: 0.9rem 1rem;
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+            transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: #7ca98f;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            border-color: rgba(74, 222, 128, 0.4);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+            background: linear-gradient(135deg, rgba(14, 40, 28, 0.92), rgba(8, 26, 17, 0.92));
+        }
+
+        .form-textarea {
+            min-height: 8.5rem;
+            resize: vertical;
+        }
+
+        .submit-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(74, 222, 128, 0.22);
+            border-radius: 999px;
+            padding: 0.8rem 1.2rem;
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.95), rgba(34, 197, 94, 0.9));
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 10px 24px rgba(34, 197, 94, 0.16);
+            transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22);
+            filter: brightness(1.03);
+        }
+
+        @media (max-width: 1023px) {
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .page-shell {
+                padding-left: 0.85rem;
+                padding-right: 0.85rem;
+            }
+
+            header .page-shell {
+                flex-wrap: wrap;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            header .page-shell > div {
+                width: 100%;
+            }
+
+            .glass-card {
+                padding: 1.15rem;
+            }
+
+            .avatar-circle {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            header .page-shell {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .page-shell {
+                padding-left: 0.7rem;
+                padding-right: 0.7rem;
+            }
+
+            .glass-card {
+                padding: 1rem;
+            }
+
+            .page-shell main {
+                gap: 1rem;
+            }
+
+            input,
+            textarea {
+                font-size: 0.95rem;
+            }
+
+            button[type="submit"] {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <header class="sticky top-0 z-30 pt-2 pb-0 md:pt-3 md:pb-0">
+            <div class="page-shell">
+                <div class="page-header-card">
+                    <button id="mobileMenuToggle" type="button" onclick="toggleSidebar()" class="menu-toggle block lg:hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-slate-200 hover:text-white" aria-label="Open navigation">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="min-w-0 flex-1 pl-14 lg:pl-0">
+                        <div>
+                            <h1 class="page-header-title">Report Damaged Equipment</h1>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex shrink-0 items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" data-user-initials>VS</div>
+                        <span class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200" data-user-role>Student</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="page-shell flex w-full flex-col gap-4 pt-2 pb-0">
+            <section class="glass-card rounded-[1.5rem] p-5 md:p-6">
+                <h2 class="text-2xl font-semibold text-white">Submit a damage report</h2>
+                <div id="formMessage" class="mt-4 hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"></div>
+                <form id="damageReportForm" class="mt-6 space-y-4">
+                    <div class="form-field">
+                        <label class="form-label">Equipment ID</label>
+                        <input id="equipmentInput" class="form-input" placeholder="Enter equipment ID" required />
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Damage Description</label>
+                        <textarea id="damageDescription" class="form-textarea" placeholder="Describe the damage" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-button">Submit Report</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+
+        function getStudentInitials(user) {
+            const candidateName = (user && (user.name || user.fullName || user.displayName)) || '';
+            const emailBase = ((user && user.email) || '').split('@')[0].trim();
+            const sourceName = candidateName.trim() || emailBase;
+            if (!sourceName) return 'ST';
+
+            const parts = sourceName.split(/\s+/).filter(Boolean);
+            if (!parts.length) return 'ST';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase() || 'ST';
+
+            return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'ST';
+        }
+
+        const currentStudent = window.__CURRENT_USER__ || {};
+        const studentInitials = currentStudent.initials || getStudentInitials(currentStudent);
+        const roleLabel = ((currentStudent.role || 'student').toString() || 'student').charAt(0).toUpperCase() + ((currentStudent.role || 'student').toString() || 'student').slice(1).toLowerCase();
+
+        document.querySelectorAll('[data-user-initials]').forEach((element) => {
+            element.textContent = studentInitials;
+        });
+        document.querySelectorAll('[data-user-role]').forEach((element) => {
+            element.textContent = roleLabel;
+        });
+    </script>
+    <script src="/js/student-sidebar-config.js" defer></script>
+    <script src="/js/sidebar-component.js" defer></script>
+    <script>
+        const form = document.getElementById('damageReportForm');
+        const equipmentInput = document.getElementById('equipmentInput');
+        const damageDescription = document.getElementById('damageDescription');
+        const formMessage = document.getElementById('formMessage');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        const setSubmitEnabled = (enabled) => {
+            if (!submitButton) return;
+            submitButton.disabled = !enabled;
+            submitButton.classList.toggle('opacity-60', !enabled);
+            submitButton.classList.toggle('cursor-not-allowed', !enabled);
+        };
+
+        const showMessage = (message, type = 'info') => {
+            const styles = {
+                success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200',
+                warning: 'border-amber-500/20 bg-amber-500/10 text-amber-200',
+                error: 'border-red-500/20 bg-red-500/10 text-red-200',
+                info: 'border-slate-700/20 bg-slate-900/80 text-slate-200'
+            };
+
+            formMessage.textContent = message;
+            formMessage.className = `mt-4 rounded-2xl border px-4 py-3 text-sm ${styles[type] || styles.info}`;
+            formMessage.classList.remove('hidden');
+        };
+
+        const formatReportRestriction = (message) => {
+            if (!message) return 'Report Not Allowed: Unable to determine the current laboratory session for this equipment.';
+            return message.startsWith('Report Not Allowed:') ? message : `Report Not Allowed: ${message}`;
+        };
+
+        const initializeAttendanceRestriction = async (equipmentId = null) => {
+            setSubmitEnabled(false);
+
+            if (!equipmentId) {
+                    showMessage('Enter an equipment ID to verify your PRESENT or LATE attendance status for the session.', 'info');
+                return;
+            }
+
+            showMessage('Checking attendance status for this equipment session...', 'info');
+
+            try {
+                const response = await fetch(`/api/student/maintenance-context?equipmentId=${encodeURIComponent(equipmentId)}`);
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    showMessage(payload.error || 'Unable to verify attendance status.', 'error');
+                    return;
+                }
+
+                const equipmentMeta = payload.equipmentMeta || null;
+                const allowed = payload.canSubmitReport === true;
+                const status = payload.attendanceStatus || 'Invalid';
+                const message = payload.attendanceMessage || 'You must be marked PRESENT or LATE for the laboratory session before reporting damaged equipment.';
+
+                if (equipmentMeta) {
+                    const equipmentText = `Equipment: ${equipmentMeta.name || equipmentMeta.equipmentId || 'Unknown'} (${equipmentMeta.equipmentId || equipmentId})`;
+                    const campusText = `Campus: ${equipmentMeta.campus || 'Unknown'}`;
+                    const statusText = `Status: ${equipmentMeta.status || 'Available'}`;
+                    const reportText = `Report Status: ${equipmentMeta.reportStatus || (allowed ? 'Allowed' : 'Not Allowed')}`;
+                    const formattedMessage = allowed ? message : formatReportRestriction(message);
+
+                    if (!allowed) {
+                        showMessage(`${equipmentText} | ${campusText} | ${statusText} | ${reportText} | ${formattedMessage}`, ['Absent', 'Invalid'].includes(status) ? 'error' : 'warning');
+                        setSubmitEnabled(false);
+                        return;
+                    }
+
+                    showMessage(`${equipmentText} | ${campusText} | ${statusText} | ${reportText} | ${message}`, 'success');
+                    setSubmitEnabled(true);
+                    return;
+                }
+
+                if (!allowed) {
+                    showMessage(formatReportRestriction(message), ['Absent', 'Invalid'].includes(status) ? 'error' : 'warning');
+                    setSubmitEnabled(false);
+                    return;
+                }
+
+                showMessage(`Attendance status: ${status}. ${message}`, 'success');
+                setSubmitEnabled(true);
+            } catch (error) {
+                console.error('Attendance check failed:', error);
+                showMessage('Unable to verify attendance status. Please try again later.', 'error');
+            }
+        };
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (submitButton.disabled) return;
+
+            if (!equipmentInput.value.trim()) {
+                showMessage('Please enter an equipment ID.', 'error');
+                return;
+            }
+
+            if (!damageDescription.value.trim()) {
+                showMessage('Please describe the damage before submitting.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/maintenance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        equipmentId: equipmentInput.value.trim(),
+                        description: damageDescription.value.trim()
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Unable to submit report');
+                }
+
+                form.reset();
+                setSubmitEnabled(false);
+                showMessage('Your equipment report was submitted successfully.', 'success');
+            } catch (error) {
+                console.error(error);
+                showMessage(error.message || 'Unable to submit report.', 'error');
+            }
+        });
+
+        equipmentInput.addEventListener('input', (event) => {
+            initializeAttendanceRestriction(event.target.value.trim());
+        });
+
+        initializeAttendanceRestriction();
+    </script>
+</body>
+</html>

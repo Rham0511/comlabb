@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance | ComLab Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        :root {
+            --accent: #22C55E;
+            --accent-strong: #16A34A;
+            --accent-soft: rgba(34,197,94,.12);
+            --border: rgba(34,197,94,.15);
+            --shadow: 0 12px 35px rgba(6,64,43,.18);
+            --shadow-hover: 0 18px 40px rgba(34,197,94,.18);
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(74,222,128,.10), transparent 26%),
+                linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+            color: #f8fafc;
+            font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body.student-portal {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body.student-portal .main-container {
+            min-height: 100vh;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .glass-card {
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px) saturate(1.04);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 100%);
+            box-shadow: 0 10px 24px rgba(6,64,43,.16);
+        }
+
+        .btn-secondary {
+            background: rgba(10,29,21,.96);
+            border: 1px solid rgba(74,222,128,.16);
+        }
+
+        .eyebrow {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.72);
+            margin: 0;
+        }
+
+        body.student-portal .main-container > .top-header {
+            display: flex !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            margin: 1rem 1rem 0 !important;
+            width: calc(100% - 2rem) !important;
+            max-width: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .top-header-card {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(15, 79, 60, 0.35);
+            background: rgba(13, 23, 18, 0.92);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(20px) saturate(1.08);
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .top-header-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%);
+            pointer-events: none;
+        }
+
+        .top-header-card .header-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+
+        .top-header-card .header-actions {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0.75rem !important;
+            flex-wrap: wrap !important;
+            width: auto;
+        }
+
+        @media (max-width: 767px) {
+            .top-header-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .top-header-card .header-actions {
+                width: 100%;
+                justify-content: stretch !important;
+            }
+            .top-header-card .header-actions > * {
+                width: 100%;
+            }
+        }
+
+        body.student-portal .main-container > .top-header .header-title {
+            font-size: 2rem !important;
+            font-weight: 800 !important;
+            color: #f8fafc !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.02em !important;
+            margin: 0 !important;
+            text-shadow: 0 2px 10px rgba(6,64,43,.16) !important;
+            font-family: Inter, 'Segoe UI', Roboto, sans-serif !important;
+        }
+
+        body.student-portal .main-container > .top-header .header-subtitle {
+            color: #cbd5e1 !important;
+            font-size: 0.98rem !important;
+            max-width: 44rem !important;
+            line-height: 1.6 !important;
+            margin: 0 !important;
+            font-family: Inter, 'Segoe UI', Roboto, sans-serif !important;
+        }
+
+        /* no additional outer top-header action styles */
+
+        body.student-portal .main-container > .top-header .header-search {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.6rem !important;
+            min-width: min(18rem, 100%) !important;
+            padding: 0.72rem 0.9rem !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(74,222,128,.16) !important;
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96)) !important;
+            color: #f8fafc !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03) !important;
+        }
+
+        .header-search i {
+            color: #bbf7d0;
+        }
+
+        .header-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #f8fafc;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .header-search input::placeholder {
+            color: #86efac;
+        }
+
+        body.student-portal .main-container > .top-header .header-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            padding: 0.68rem 0.95rem !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(74,222,128,.16) !important;
+            background: rgba(74,222,128,.08) !important;
+            color: #d1fae5 !important;
+            font-size: 0.92rem !important;
+            font-weight: 600 !important;
+            line-height: 1.4 !important;
+            box-shadow: 0 8px 20px rgba(6,64,43,.12) !important;
+        }
+
+        .summary-card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            padding: 1rem 1rem 1.05rem;
+            border-radius: 1.15rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(34,197,94,.24);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .summary-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%);
+            pointer-events: none;
+        }
+
+        .summary-card .card-icon {
+            display: inline-flex;
+            width: 2.7rem;
+            height: 2.7rem;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.95rem;
+            margin-bottom: 0.75rem;
+            color: #f8fafc;
+            font-size: 1.05rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .summary-card.present .card-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.16));
+            color: #bbf7d0;
+        }
+        .summary-card.late .card-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.24), rgba(217, 119, 6, 0.16));
+            color: #fde68a;
+        }
+        .summary-card.absent .card-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(220, 38, 38, 0.16));
+            color: #fecaca;
+        }
+        .summary-card.total .card-icon {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.22), rgba(129, 140, 248, 0.16));
+            color: #ddd6fe;
+        }
+        .summary-card.percentage .card-icon {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(37, 99, 235, 0.16));
+            color: #bfdbfe;
+        }
+
+        .section-shell {
+            border-radius: 1.5rem;
+            border: 1px solid rgba(74,222,128,.15);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            padding: 0.8rem 0.9rem 0.85rem;
+            box-shadow: 0 12px 35px rgba(6,64,43,.18);
+        }
+
+        .section-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding-bottom: 0.35rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.16rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .section-header p {
+            margin-top: 0.25rem;
+            color: #94a3b8;
+            font-size: 0.92rem;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.35rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .filter-control {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: min(14rem, 100%);
+            padding: 0.7rem 0.85rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(74,222,128,.16);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+
+        .filter-control input,
+        .filter-control select {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #f8fafc;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .filter-control input::placeholder {
+            color: #64748b;
+        }
+
+        .table-shell {
+            margin-top: 0.25rem;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 1px solid rgba(74,222,128,.12);
+            background: rgba(74,222,128,.04);
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modern-table thead {
+            background: linear-gradient(180deg, rgba(18,49,36,.95), rgba(20,59,42,.95));
+        }
+
+        .modern-table th {
+            padding: 0.9rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            text-align: left;
+        }
+
+        .modern-table td {
+            padding: 0.9rem 1rem;
+            font-size: 0.95rem;
+            color: #f8fafc;
+            border-top: 1px solid rgba(74,222,128,.1);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 9999px;
+            padding: 0.32rem 0.6rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .status-pill.present {
+            background: rgba(16, 185, 129, 0.12);
+            color: #86efac;
+        }
+
+        .status-pill.late {
+            background: rgba(245, 158, 11, 0.14);
+            color: #fde68a;
+        }
+
+        .status-pill.absent {
+            background: rgba(239, 68, 68, 0.14);
+            color: #fca5a5;
+        }
+
+        .empty-state-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            padding: 2rem 1.25rem;
+            border-radius: 1.25rem;
+            border: 1px dashed rgba(74,222,128,.2);
+            background: rgba(10,29,21,.95);
+            color: #bbf7d0;
+        }
+
+        .empty-state-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.95rem;
+            background: rgba(16, 185, 129, 0.14);
+            color: #bbf7d0;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <header class="top-header">
+            <div class="top-header-card">
+                <div class="header-actions">
+                    <div class="header-search">
+                        <i class="fas fa-search"></i>
+                        <input id="attendanceSearch" type="text" placeholder="Search attendance records..." />
+                    </div>
+                    <div class="header-pill">
+                        <i class="fas fa-chart-line"></i>
+                        Live tracking
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="mx-auto flex w-full max-w-screen-2xl flex-col gap-4 px-3 py-3 md:px-4 md:py-4">
+            <section class="glass-card rounded-[1.5rem] p-4 md:p-5">
+                <div class="flex flex-col gap-2">
+                    <h2 class="text-2xl font-semibold text-white">Attendance Summary</h2>
+                </div>
+
+                <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <div class="summary-card total">
+                        <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Total Classes</p>
+                        <h4 class="mt-2 text-2xl font-semibold text-white" data-total-classes>0</h4>
+                    </div>
+                    <div class="summary-card present">
+                        <div class="card-icon"><i class="fas fa-user-check"></i></div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Present</p>
+                        <h4 class="mt-2 text-2xl font-semibold text-white" data-present-count>0</h4>
+                    </div>
+                    <div class="summary-card late">
+                        <div class="card-icon"><i class="fas fa-clock"></i></div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Late</p>
+                        <h4 class="mt-2 text-2xl font-semibold text-white" data-late-count>0</h4>
+                    </div>
+                    <div class="summary-card absent">
+                        <div class="card-icon"><i class="fas fa-user-times"></i></div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Absent</p>
+                        <h4 class="mt-2 text-2xl font-semibold text-white" data-absent-count>0</h4>
+                    </div>
+                    <div class="summary-card percentage">
+                        <div class="card-icon"><i class="fas fa-percent"></i></div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Attendance Percentage</p>
+                        <h4 class="mt-2 text-2xl font-semibold text-white" data-attendance-percentage>0%</h4>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-shell">
+                <div class="section-header">
+                    <div>
+                        <h3>Complete record</h3>
+                    </div>
+                </div>
+
+                <div class="table-shell">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Time</th>
+                                <th>Laboratory</th>
+                                <th>Instructor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceHistoryBody">
+                            <tr><td colspan="6" class="empty-state">Loading attendance records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+
+        const attendanceEndpoint = '/api/attendance/records';
+        const statsEndpoint = '/api/attendance/stats';
+        let attendanceRecords = [];
+        let refreshIntervalId = null;
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').split('@')[0].trim();
+            if (!value) return 'U';
+            return value.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'U';
+        }
+
+        function formatRole(role) {
+            if (!role) return 'User';
+            return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+        }
+
+        function hydrateStudentProfile() {
+            const user = window.__CURRENT_USER__ || {};
+            const displayName = user.name || '';
+            const role = formatRole(user.role || 'student');
+            const email = user.email || '';
+            const initials = user.initials || getInitials(displayName, email);
+
+            document.querySelectorAll('[data-user-name]').forEach((element) => {
+                element.textContent = displayName || 'Student Portal';
+            });
+            document.querySelectorAll('[data-user-role]').forEach((element) => {
+                element.textContent = role;
+            });
+            document.querySelectorAll('[data-user-initials]').forEach((element) => {
+                element.textContent = initials;
+            });
+        }
+
+        function getStatusClass(status) {
+            const value = (status || '').toLowerCase();
+            if (value === 'late') return 'late';
+            if (value === 'absent') return 'absent';
+            return 'present';
+        }
+
+        function formatDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function renderAttendanceTable(records) {
+            const tbody = document.getElementById('attendanceHistoryBody');
+            if (!tbody) return;
+
+            if (!records.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state-card">
+                                <div class="empty-state-icon"><i class="fas fa-calendar-xmark"></i></div>
+                                <h4 class="text-lg font-semibold text-white">No attendance records available.</h4>
+                                <p>Your attendance history will appear here once attendance is recorded.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            records.forEach((record) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(record.date)}</td>
+                    <td>${record.subject}</td>
+                    <td>${record.timeIn || record.time || ''}</td>
+                    <td>${record.lab || ''}</td>
+                    <td>${record.instructor || ''}</td>
+                    <td><span class="status-pill ${getStatusClass(record.status)}">${record.status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSummary(records) {
+            const total = records.length;
+            const present = records.filter((item) => (item.status || '').toLowerCase() === 'present').length;
+            const late = records.filter((item) => (item.status || '').toLowerCase() === 'late').length;
+            const absent = records.filter((item) => (item.status || '').toLowerCase() === 'absent').length;
+            const percentage = total ? Math.round((present / total) * 100) : 0;
+
+            document.querySelector('[data-total-classes]').textContent = total;
+            document.querySelector('[data-present-count]').textContent = present;
+            document.querySelector('[data-late-count]').textContent = late;
+            document.querySelector('[data-absent-count]').textContent = absent;
+            document.querySelector('[data-attendance-percentage]').textContent = `${percentage}%`;
+        }
+
+        async function fetchAttendanceStats() {
+            try {
+                const response = await fetch(statsEndpoint, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load attendance summary.');
+                const stats = await response.json();
+                document.querySelector('[data-total-classes]').textContent = stats.total ?? 0;
+                document.querySelector('[data-present-count]').textContent = stats.present ?? 0;
+                document.querySelector('[data-late-count]').textContent = stats.late ?? 0;
+                document.querySelector('[data-absent-count]').textContent = stats.absent ?? 0;
+                document.querySelector('[data-attendance-percentage]').textContent = `${stats.percentage ?? 0}%`;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function fetchAttendanceRecords() {
+            try {
+                const response = await fetch(attendanceEndpoint, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load attendance records.');
+                const records = await response.json();
+                attendanceRecords = Array.isArray(records) ? records : [];
+                applyAttendanceFilters(false);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function applyAttendanceFilters(updateStats = true) {
+            const searchValue = document.getElementById('attendanceSearch').value.toLowerCase();
+
+            const filtered = attendanceRecords
+                .filter((item) => {
+                    const value = `${item.subject || ''} ${item.instructor || ''} ${item.lab || ''}`.toLowerCase();
+                    return !searchValue || value.includes(searchValue);
+                })
+                .sort((a, b) => (b.date || '').localeCompare(a.date));
+
+            renderAttendanceTable(filtered);
+            if (updateStats) {
+                updateSummary(filtered);
+            }
+        }
+
+        function startAttendanceUpdater() {
+            if (refreshIntervalId) clearInterval(refreshIntervalId);
+            refreshIntervalId = window.setInterval(async () => {
+                await fetchAttendanceRecords();
+                await fetchAttendanceStats();
+            }, 4500);
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            hydrateStudentProfile();
+            await fetchAttendanceRecords();
+            await fetchAttendanceStats();
+
+            const searchInput = document.getElementById('attendanceSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => applyAttendanceFilters(false));
+            }
+
+            window.addEventListener('focus', async () => {
+                await fetchAttendanceRecords();
+                await fetchAttendanceStats();
+            });
+
+            startAttendanceUpdater();
+        });
+    </script>
+    <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

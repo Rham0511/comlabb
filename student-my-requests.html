@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        body {
+            background: #020617;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        body.student-portal {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(16, 185, 129, 0.16), transparent 24%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-secondary) 100%);
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+            box-sizing: border-box;
+        }
+
+        .page-header-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.9rem 1rem;
+            border-radius: 1.2rem;
+            border: 1px solid rgba(74, 222, 128, 0.28);
+            background: linear-gradient(135deg, rgba(8, 24, 18, 0.95), rgba(12, 34, 24, 0.92));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 30px rgba(1, 10, 8, 0.24);
+            backdrop-filter: blur(18px);
+        }
+
+        .page-header-title {
+            font-size: clamp(2rem, 2vw + 1.2rem, 2.125rem);
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .glass-card > h2 {
+            font-size: 1.5rem;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .requests-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.65rem;
+            margin-top: 1.25rem;
+        }
+
+        .requests-filter-control {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: min(16rem, 100%);
+            padding: 0.78rem 0.95rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(6, 78, 59, 0.5);
+            background: rgba(14, 34, 25, 0.6);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+        }
+
+        .requests-filter-control input,
+        .requests-filter-control select {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #f8fafc;
+            font-size: 0.94rem;
+            font-weight: 500;
+        }
+
+        .requests-filter-control input::placeholder {
+            color: #7ca98f;
+            font-size: 0.94rem;
+        }
+
+        .requests-table-shell {
+            overflow-x: auto;
+            margin-top: 0.8rem;
+            border-radius: 1.15rem;
+            border: 1px solid rgba(6, 78, 59, 0.5);
+            background: rgba(14, 34, 25, 0.4);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .requests-table {
+            width: 100%;
+            min-width: 920px;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .requests-table thead {
+            background: #0e2219;
+        }
+
+        .requests-table th {
+            padding: 0.85rem 1rem;
+            color: #6ee7b7;
+            font-size: 0.9rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            vertical-align: middle;
+            text-align: left;
+            line-height: 1.45;
+        }
+
+        .requests-table th.col-status,
+        .requests-table th.col-dates {
+            text-align: center;
+        }
+
+        .requests-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(6, 78, 59, 0.4);
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            vertical-align: middle;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+        /* Column width hints to keep layout balanced per design requirements */
+        .requests-table th.col-equipment,
+        .requests-table td.col-equipment { width: 18%; }
+        .requests-table th.col-description,
+        .requests-table td.col-description { width: 30%; }
+        .requests-table th.col-status,
+        .requests-table td.col-status { width: 15%; }
+        .requests-table th.col-dates,
+        .requests-table td.col-dates { width: 18.5%; }
+
+        /* Slightly tighter horizontal padding for status and date columns while keeping comfortable spacing */
+        .requests-table th.col-status, .requests-table td.col-status { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .requests-table th.col-dates, .requests-table td.col-dates { padding-left: 0.9rem; padding-right: 0.9rem; }
+
+        /* Equipment name / id grouping */
+        .equipment-cell .equipment-name {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #ffffff;
+        }
+        .equipment-cell .equipment-id {
+            margin-top: 0.18rem;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            letter-spacing: 0.04em;
+            color: #9ae6b4;
+            opacity: 0.8;
+        }
+
+        /* Status badge alignment */
+        .status-cell { text-align: center; }
+        .status-badge {
+            display: inline-block;
+            min-width: 80px;
+            padding: 0.28rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            line-height: 1.3;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        /* Date cell alignment */
+        .date-cell {
+            text-align: center;
+            font-size: 0.9rem;
+            white-space: normal;
+            line-height: 1.5;
+        }
+
+        /* Keep description readable */
+        .description-cell {
+            text-align: left;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        /* Reduce large gaps on smaller screens; allow horizontal scroll */
+        @media (max-width: 1023px) {
+            .requests-table { min-width: 800px; }
+        }
+
+        @media (max-width: 640px) {
+            .requests-table { min-width: 720px; }
+            .requests-table th, .requests-table td { padding: 0.6rem 0.75rem; }
+        }
+
+        .requests-table tbody tr:hover {
+            background: #0e2219;
+        }
+
+        .requests-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.35rem;
+            padding: 0.7rem 0.8rem;
+            border-top: 1px solid rgba(6, 78, 59, 0.4);
+        }
+
+        .requests-pagination button {
+            min-width: 2.1rem;
+            height: 2.1rem;
+            padding: 0 0.7rem;
+            border: 1px solid rgba(6, 78, 59, 0.5);
+            border-radius: 999px;
+            background: rgba(14, 34, 25, 0.6);
+            color: #d1fae5;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .requests-pagination button.active {
+            border-color: #10b981;
+            background: #10b981;
+            color: #020617;
+            font-weight: 700;
+        }
+
+        .requests-pagination button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+
+        .glass-card {
+            background: rgba(6, 16, 11, 0.92);
+            border: 1px solid rgba(6, 78, 59, 0.6);
+            border-radius: 1.6rem;
+            box-shadow: 0 24px 60px rgba(2, 8, 23, 0.3);
+            backdrop-filter: blur(18px);
+        }
+
+        @media (max-width: 1023px) {
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            header .page-shell {
+                flex-wrap: wrap;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .page-header-card {
+                padding-left: 1rem;
+                padding-right: 1rem;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .page-header-card > .flex {
+                min-width: 0;
+                flex: 1 1 0%;
+                width: 100%;
+            }
+
+            .page-header-card .page-header-title {
+                max-width: none;
+                word-break: normal;
+                overflow-wrap: break-word;
+                white-space: normal;
+                min-width: 0;
+            }
+
+            .page-header-card .ml-auto {
+                margin-left: 0 !important;
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            header .page-shell > div {
+                width: 100%;
+            }
+
+            .glass-card {
+                padding: 1.15rem;
+            }
+
+            .avatar-circle {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            header .page-shell {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .page-shell {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .page-header-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-header-card > .flex,
+            .page-header-card .ml-auto {
+                width: 100%;
+            }
+
+            .page-header-card .ml-auto {
+                justify-content: flex-start;
+            }
+
+            .page-header-card .page-header-title {
+                overflow-wrap: break-word;
+                word-break: normal;
+                white-space: normal;
+                line-height: 1.1;
+            }
+
+            .glass-card {
+                padding: 1rem;
+            }
+
+            .page-shell main {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <header class="sticky top-0 z-30 pt-2 pb-0 md:pt-3 md:pb-0">
+            <div class="page-shell">
+                <div class="page-header-card">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h1 class="page-header-title text-2xl font-semibold text-white md:text-3xl">My Reports</h1>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" data-user-initials>VS</div>
+                        <span class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200" data-user-role>Student</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="page-shell flex w-full flex-col gap-4 pt-2 pb-0">
+            <section class="glass-card rounded-[1.5rem] p-5 md:p-6">
+                <h2 class="text-2xl font-semibold text-white">Your requests</h2>
+
+                <div class="requests-controls">
+                    <label class="requests-filter-control">
+                        <i class="fas fa-search text-emerald-300"></i>
+                        <input id="maintenanceSearch" type="text" placeholder="Search Equipment / Issue" />
+                    </label>
+                    <label class="requests-filter-control">
+                        <i class="fas fa-filter text-emerald-300"></i>
+                        <select id="maintenanceStatusFilter" aria-label="Filter maintenance requests">
+                            <option value="all">All</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="requestsState" class="requests-table-shell text-sm text-emerald-100/70">
+                    Loading your requests...
+                </div>
+            </section>
+            <section class="glass-card rounded-[1.5rem] p-5 md:p-6">
+                <h2 class="text-2xl font-semibold text-white">Borrow requests</h2>
+                <div id="borrowRequestsState" class="requests-table-shell mt-4 text-sm text-emerald-100/70">Loading borrow requests...</div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+
+        function getStudentInitials(user) {
+            const candidateName = (user && (user.name || user.fullName || user.displayName)) || '';
+            const emailBase = ((user && user.email) || '').split('@')[0].trim();
+            const sourceName = candidateName.trim() || emailBase;
+            if (!sourceName) return 'ST';
+
+            const parts = sourceName.split(/\s+/).filter(Boolean);
+            if (!parts.length) return 'ST';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase() || 'ST';
+
+            return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'ST';
+        }
+
+        const currentUser = window.__CURRENT_USER__ || {};
+        const initials = currentUser.initials || getStudentInitials(currentUser);
+        const roleLabel = ((currentUser.role || 'student').toString() || 'student').charAt(0).toUpperCase() + ((currentUser.role || 'student').toString() || 'student').slice(1).toLowerCase();
+
+        document.querySelectorAll('[data-user-initials]').forEach((element) => {
+            element.textContent = initials;
+        });
+        document.querySelectorAll('[data-user-role]').forEach((element) => {
+            element.textContent = roleLabel;
+        });
+    </script>
+    <script src="/js/student-sidebar-config.js" defer></script>
+    <script src="/js/sidebar-component.js" defer></script>
+    <script>
+        const requestsState = document.getElementById('requestsState');
+        const maintenanceSearch = document.getElementById('maintenanceSearch');
+        const maintenanceStatusFilter = document.getElementById('maintenanceStatusFilter');
+        const requestsStateData = {
+            records: [],
+            currentPage: 1,
+            rowsPerPage: 5
+        };
+        const borrowRequestsStateData = {
+            records: [],
+            currentPage: 1,
+            rowsPerPage: 5
+        };
+
+        const statusClasses = {
+            Pending: 'bg-amber-500/15 text-amber-300',
+            'In Progress': 'bg-blue-500/15 text-blue-300',
+            Resolved: 'bg-emerald-500/15 text-emerald-300',
+            Rejected: 'bg-red-500/15 text-red-300'
+        };
+
+        const getStatusClass = (status) => {
+            const normalized = (status || '').toString().trim();
+            if (!normalized) return 'bg-emerald-950/70 text-emerald-200';
+            const key = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+            return statusClasses[key] || 'bg-emerald-950/70 text-emerald-200';
+        };
+
+        const formatDate = (value) => {
+            if (!value) return '—';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        };
+
+        const renderRequestsPagination = (totalRecords) => {
+            const totalPages = Math.max(1, Math.ceil(totalRecords / requestsStateData.rowsPerPage));
+            if (totalRecords <= requestsStateData.rowsPerPage) return '';
+
+            const maxVisiblePages = 3;
+            let startPage = Math.max(1, requestsStateData.currentPage - 1);
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            const pages = [];
+            for (let page = startPage; page <= endPage; page += 1) {
+                pages.push(`<button type="button" class="${page === requestsStateData.currentPage ? 'active' : ''}" data-request-page="${page}" ${page === requestsStateData.currentPage ? 'aria-current="page"' : ''}>${page}</button>`);
+            }
+
+            return `
+                <div class="requests-pagination" aria-label="Maintenance requests pagination">
+                    <button type="button" data-request-action="prev" ${requestsStateData.currentPage === 1 ? 'disabled' : ''}>Prev</button>
+                    ${pages.join('')}
+                    <button type="button" data-request-action="next" ${requestsStateData.currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                </div>
+            `;
+        };
+
+        const renderRequests = () => {
+            const searchValue = maintenanceSearch.value.trim().toLowerCase();
+            const statusValue = maintenanceStatusFilter.value;
+            const filteredRecords = requestsStateData.records.filter((item) => {
+                const searchable = `${item.equipmentName || ''} ${item.equipmentId || item.equipment_id || ''} ${item.description || ''}`.toLowerCase();
+                const matchesSearch = !searchValue || searchable.includes(searchValue);
+                const itemStatus = (item.status || '').toString().trim();
+                const matchesStatus = statusValue === 'all' || itemStatus === statusValue;
+                return matchesSearch && matchesStatus;
+            });
+
+            const totalPages = Math.max(1, Math.ceil(filteredRecords.length / requestsStateData.rowsPerPage));
+            requestsStateData.currentPage = Math.min(requestsStateData.currentPage, totalPages);
+            const startIndex = (requestsStateData.currentPage - 1) * requestsStateData.rowsPerPage;
+            const pageRecords = filteredRecords.slice(startIndex, startIndex + requestsStateData.rowsPerPage);
+
+            if (!filteredRecords.length) {
+                requestsState.innerHTML = '<div class="p-4 text-sm text-emerald-100/70">No reports match your filters.</div>';
+                return;
+            }
+
+            requestsState.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="requests-table text-left">
+                        <thead>
+                            <tr>
+                                <th class="col-equipment">Equipment</th>
+                                <th class="col-description">Damage Description</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-dates">Date Reported</th>
+                                <th class="col-dates">Resolved Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pageRecords.map((item) => `
+                                <tr>
+                                    <td class="col-equipment equipment-cell">
+                                        <div class="equipment-name">${item.equipmentName || item.equipment_id || '—'}</div>
+                                        <div class="equipment-id">${item.equipmentId || item.equipment_id || '—'}</div>
+                                    </td>
+                                    <td class="col-description description-cell">${item.description || '—'}</td>
+                                    <td class="col-status status-cell"><span class="status-badge ${statusClasses[item.status] || 'bg-emerald-950/70 text-emerald-200'}">${item.status || 'Pending'}</span></td>
+                                    <td class="col-dates date-cell">${formatDate(item.dateReported || item.date || item.created_at || item.createdAt)}</td>
+                                    <td class="col-dates date-cell">${formatDate(item.dateResolved || item.resolvedDate)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ${renderRequestsPagination(filteredRecords.length)}
+            `;
+
+            requestsState.querySelectorAll('[data-request-page]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    requestsStateData.currentPage = Number(button.dataset.requestPage);
+                    renderRequests();
+                });
+            });
+
+            requestsState.querySelector('[data-request-action="prev"]')?.addEventListener('click', () => {
+                requestsStateData.currentPage -= 1;
+                renderRequests();
+            });
+            requestsState.querySelector('[data-request-action="next"]')?.addEventListener('click', () => {
+                requestsStateData.currentPage += 1;
+                renderRequests();
+            });
+        };
+
+        const loadRequests = async () => {
+            try {
+                const response = await fetch('/api/maintenance');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Unable to load requests');
+                }
+
+                requestsStateData.records = Array.isArray(data) ? data : [];
+                requestsStateData.currentPage = 1;
+                renderRequests();
+            } catch (error) {
+                console.error(error);
+                requestsState.innerHTML = '<div class="text-sm text-red-300">Unable to load your requests right now.</div>';
+            }
+        };
+
+        maintenanceSearch.addEventListener('input', () => {
+            requestsStateData.currentPage = 1;
+            renderRequests();
+        });
+        maintenanceStatusFilter.addEventListener('change', () => {
+            requestsStateData.currentPage = 1;
+            renderRequests();
+        });
+
+        loadRequests();
+
+        const renderBorrowRequestsPagination = (totalRecords) => {
+            const totalPages = Math.max(1, Math.ceil(totalRecords / borrowRequestsStateData.rowsPerPage));
+            if (totalRecords <= borrowRequestsStateData.rowsPerPage) return '';
+
+            const maxVisiblePages = 3;
+            let startPage = Math.max(1, borrowRequestsStateData.currentPage - 1);
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            const pages = [];
+            for (let page = startPage; page <= endPage; page += 1) {
+                pages.push(`<button type="button" class="${page === borrowRequestsStateData.currentPage ? 'active' : ''}" data-borrow-page="${page}" ${page === borrowRequestsStateData.currentPage ? 'aria-current="page"' : ''}>${page}</button>`);
+            }
+
+            return `
+                <div class="requests-pagination" aria-label="Borrow requests pagination">
+                    <button type="button" data-borrow-action="prev" ${borrowRequestsStateData.currentPage === 1 ? 'disabled' : ''}>Prev</button>
+                    ${pages.join('')}
+                    <button type="button" data-borrow-action="next" ${borrowRequestsStateData.currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                </div>
+            `;
+        };
+
+        const renderBorrowRequests = () => {
+            const target = document.getElementById('borrowRequestsState');
+            const rows = borrowRequestsStateData.records;
+            const totalPages = Math.max(1, Math.ceil(rows.length / borrowRequestsStateData.rowsPerPage));
+            borrowRequestsStateData.currentPage = Math.min(borrowRequestsStateData.currentPage, totalPages);
+            const startIndex = (borrowRequestsStateData.currentPage - 1) * borrowRequestsStateData.rowsPerPage;
+            const pageRecords = rows.slice(startIndex, startIndex + borrowRequestsStateData.rowsPerPage);
+
+            if (!rows.length) {
+                target.textContent = 'No borrow requests found.';
+                return;
+            }
+
+            target.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="requests-table text-left">
+                        <thead>
+                            <tr>
+                                <th>Equipment</th>
+                                <th>Laboratory</th>
+                                <th>Borrow date</th>
+                                <th>Expected return</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pageRecords.map((record) => {
+                                const statusText = record.status || 'Pending';
+                                const statusClass = getStatusClass(statusText);
+                                const reasonText = String(statusText).toLowerCase() === 'rejected' ? (record.remarks || 'No reason provided') : '—';
+                                return `<tr><td><strong>${record.equipmentName || '—'}</strong><br><span class="equipment-id">${record.equipmentId || '—'}</span></td><td>${record.laboratoryRoom || record.campus || '—'}</td><td>${record.borrowDate || '—'} ${record.borrowStartTime || ''}</td><td>${record.expectedReturnDate || '—'} ${record.expectedReturnTime || ''}</td><td><span class="status-badge ${statusClass}">${statusText}</span></td><td>${reasonText}</td></tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ${renderBorrowRequestsPagination(rows.length)}
+            `;
+
+            target.querySelectorAll('[data-borrow-page]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    borrowRequestsStateData.currentPage = Number(button.dataset.borrowPage);
+                    renderBorrowRequests();
+                });
+            });
+
+            target.querySelector('[data-borrow-action="prev"]')?.addEventListener('click', () => {
+                borrowRequestsStateData.currentPage -= 1;
+                renderBorrowRequests();
+            });
+            target.querySelector('[data-borrow-action="next"]')?.addEventListener('click', () => {
+                borrowRequestsStateData.currentPage += 1;
+                renderBorrowRequests();
+            });
+        };
+
+        const loadBorrowRequests = async () => {
+            const target = document.getElementById('borrowRequestsState');
+            try {
+                const response = await fetch('/api/borrow-records', { cache: 'no-store' });
+                const records = response.ok ? await response.json() : [];
+                const rows = (Array.isArray(records) ? records : []).filter((record) => ['pending', 'approved', 'rejected', 'returned', 'overdue', 'lost'].includes(String(record.status || '').toLowerCase()));
+                borrowRequestsStateData.records = rows;
+                borrowRequestsStateData.currentPage = 1;
+                renderBorrowRequests();
+            } catch (error) {
+                target.textContent = 'Unable to load borrow requests right now.';
+            }
+        };
+        loadBorrowRequests();
+    </script>
+</body>
+</html>

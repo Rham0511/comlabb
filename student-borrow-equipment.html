@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Borrow Equipment | ComLab Student Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/sidebar.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07150F;
+      --bg-secondary: #0A1D15;
+      --panel: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+      --panel-strong: linear-gradient(180deg, rgba(15,36,27,.98), rgba(10,29,21,.98));
+      --panel-soft: rgba(74,222,128,.06);
+      --border: rgba(74,222,128,.15);
+      --text: #F8FAFC;
+      --muted: #B6D7C8;
+      --accent: #22C55E;
+      --accent-strong: #16A34A;
+      --accent-soft: rgba(74,222,128,.12);
+      --warning: #FBBF24;
+      --warning-soft: rgba(250,204,21,.14);
+      --danger: #F87171;
+      --danger-soft: rgba(248,113,113,.14);
+      --info: #4ADE80;
+      --info-soft: rgba(74,222,128,.12);
+      --shadow: 0 12px 35px rgba(6,64,43,.18);
+      --shadow-hover: 0 18px 40px rgba(34,197,94,.18);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 24%), radial-gradient(circle at bottom right, rgba(74,222,128,.10), transparent 26%), linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+      color: var(--text);
+      font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.55;
+    }
+
+    .page-shell {
+      padding: 1.5rem 1.5rem 2rem;
+      margin-left: 280px;
+      min-height: 100vh;
+    }
+
+    .page-header-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-radius: 1.4rem;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+
+    .eyebrow {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(110, 231, 183, 0.72);
+      margin: 0 0 0.4rem;
+    }
+
+    .page-header-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f8fafc;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    .page-header-subtitle {
+      margin: 0.35rem 0 0;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      max-width: 52rem;
+    }
+
+    .panel-card {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 1.25rem;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-body {
+      padding: 1.25rem 1.3rem 1.35rem;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #d1fae5;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.85rem;
+    }
+
+    .borrow-form-grid {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .borrow-form-field {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .borrow-form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .borrow-form-field label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #bbf7d0;
+    }
+
+    .borrow-form-field input,
+    .borrow-form-field select,
+    .borrow-form-field textarea {
+      width: 100%;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(74, 222, 128, 0.35);
+      background: rgba(6, 16, 12, 0.9);
+      color: #f8fafc;
+      padding: 0.7rem 0.85rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .borrow-form-field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .borrow-form-field input:focus,
+    .borrow-form-field select:focus,
+    .borrow-form-field textarea:focus {
+      border-color: rgba(74, 222, 128, 0.9);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+    }
+
+    .borrow-inventory-card {
+      margin-top: 0.2rem;
+      padding: 0.8rem 0.9rem;
+      border-radius: 0.9rem;
+      background: rgba(8, 24, 18, 0.82);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      color: #d1fae5;
+      line-height: 1.5;
+    }
+
+    .equipment-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border-radius: 999px;
+      padding: 0.32rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .equipment-status-badge.available {
+      background: rgba(2, 44, 34, 0.9);
+      color: #6ee7b7;
+      border: 1px solid rgba(74, 222, 128, 0.6);
+    }
+
+    .equipment-status-badge.unavailable {
+      background: rgba(69, 10, 10, 0.8);
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, 0.7);
+    }
+
+    .equipment-status-badge.neutral {
+      background: rgba(15, 23, 42, 0.8);
+      color: #bfdbfe;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .borrow-btn {
+      border: 1px solid rgba(74,222,128,.2);
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      color: #f0fdf4;
+      border-radius: 999px;
+      padding: 0.78rem 1.1rem;
+      font-weight: 700;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 24px rgba(6,64,43,.16);
+    }
+
+    .borrow-btn.secondary {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #e2e8f0;
+      box-shadow: none;
+    }
+
+    .borrow-action-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .borrow-toast {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      z-index: 3000;
+      background: rgba(8, 24, 18, 0.96);
+      color: #ecfdf5;
+      border: 1px solid rgba(74, 222, 128, 0.22);
+      box-shadow: 0 18px 40px rgba(6, 64, 43, 0.2);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      font-size: 0.9rem;
+      max-width: 320px;
+    }
+
+    .borrow-toast.error {
+      border-color: rgba(248, 113, 113, 0.4);
+      color: #fee2e2;
+    }
+
+    @media (max-width: 1023px) {
+      .page-shell {
+        margin-left: 0;
+        padding: 4.5rem 1rem 2rem;
+      }
+    }
+  </style>
+</head>
+<body class="student-portal">
+  <div id="shared-sidebar"></div>
+
+  <div class="page-shell">
+    <main class="panel-card">
+      <div class="panel-body">
+        <form id="studentBorrowForm">
+          <div class="borrow-form-grid">
+            <div class="borrow-form-field full">
+              <div class="section-title"><i class="fas fa-user"></i> Borrower Information</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="borrow-form-field">
+                <label for="borrowerName">Borrower Name</label>
+                <input id="borrowerName" type="text" readonly>
+              </div>
+              <div class="borrow-form-field">
+                <label for="borrowerType">Borrower Type</label>
+                <select id="borrowerType">
+                  <option value="Student" selected>Student</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="borrow-form-field">
+                <label for="departmentInfo">Department / Course / Office</label>
+                <input id="departmentInfo" type="text" placeholder="e.g. BSIT • 4th Year">
+              </div>
+              <div class="borrow-form-field">
+                <label for="instructorName">Instructor / Subject Teacher</label>
+                <input id="instructorName" type="text" placeholder="e.g. Prof. Santos">
+              </div>
+            </div>
+
+            <div class="borrow-form-field full">
+              <div class="section-title"><i class="fas fa-tools"></i> Equipment Information</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="borrow-form-field">
+                <label for="borrowEquipmentIdInput">Equipment ID</label>
+                <input id="borrowEquipmentIdInput" type="text" placeholder="e.g. SPK-003" required autocomplete="off">
+                <div id="equipmentStatusRow" class="flex items-center gap-2 mt-1">
+                  <span id="equipmentStatusBadge" class="equipment-status-badge neutral">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Enter equipment ID</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="borrow-form-field">
+                <label>Quantity</label>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="quantityMinus" class="borrow-btn secondary px-3 py-2 text-sm">-</button>
+                  <input id="quantityInput" type="number" min="1" value="1" class="text-center" readonly>
+                  <button type="button" id="quantityPlus" class="borrow-btn px-3 py-2 text-sm">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="borrow-form-field full">
+              <div id="borrowEquipmentInfo" class="borrow-inventory-card" aria-live="polite">
+                <strong>Equipment:</strong>
+                <span>Enter an equipment ID to see its availability.</span>
+              </div>
+            </div>
+
+            <div class="borrow-form-field full">
+              <div class="section-title"><i class="fas fa-calendar-alt"></i> Borrow Details</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="borrow-form-field">
+                <label for="borrowDate">Borrow Date</label>
+                <input id="borrowDate" type="date" required>
+              </div>
+              <div class="borrow-form-field">
+                <label for="borrowStartTime">Borrow Start Time</label>
+                <input id="borrowStartTime" type="time" required>
+              </div>
+              <div class="borrow-form-field">
+                <label for="expectedReturnDate">Expected Return Date</label>
+                <input id="expectedReturnDate" type="date" required>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="borrow-form-field">
+                <label for="borrowEndTime">Expected Return Time</label>
+                <input id="borrowEndTime" type="time" required>
+              </div>
+            </div>
+
+            <div class="borrow-form-field full">
+              <label for="borrowPurpose">Purpose / Reason</label>
+              <textarea id="borrowPurpose" placeholder="Describe how you will use the equipment." required></textarea>
+            </div>
+          </div>
+
+          <div class="borrow-action-row">
+            <button type="button" id="cancelBorrowEquipmentRequest" class="borrow-btn secondary">Cancel</button>
+            <button type="submit" class="borrow-btn">Submit Borrow Request</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+    const state = { equipment: [] };
+
+    function setEquipmentStatusBadge(type, message) {
+      const badge = document.getElementById('equipmentStatusBadge');
+      if (!badge) return;
+      badge.className = 'equipment-status-badge';
+      badge.classList.add(type);
+      badge.innerHTML = `<i class="${type === 'available' ? 'fas fa-check-circle' : type === 'unavailable' ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'}"></i><span>${message}</span>`;
+    }
+
+    function updateSelectedEquipmentInfo() {
+      const input = document.getElementById('borrowEquipmentIdInput');
+      const info = document.getElementById('borrowEquipmentInfo');
+      const submitButton = document.querySelector('#studentBorrowForm button[type="submit"]');
+      if (!input || !info || !submitButton) return;
+
+      const equipmentId = String(input.value || '').trim();
+      if (!equipmentId) {
+        info.innerHTML = '<strong>Equipment:</strong><span>Enter an equipment ID to see its availability.</span>';
+        setEquipmentStatusBadge('neutral', 'Enter equipment ID');
+        submitButton.disabled = true;
+        submitButton.style.opacity = '0.5';
+        submitButton.style.cursor = 'not-allowed';
+        return;
+      }
+
+      const item = state.equipment.find((entry) => String(entry.equipmentId || entry.id).toLowerCase() === equipmentId.toLowerCase());
+      if (!item) {
+        info.innerHTML = '<strong>Equipment:</strong><span>Equipment ID not found.</span>';
+        setEquipmentStatusBadge('neutral', 'Equipment ID not found');
+        submitButton.disabled = true;
+        submitButton.style.opacity = '0.5';
+        submitButton.style.cursor = 'not-allowed';
+        return;
+      }
+
+      const availability = String(item.status || 'Serviceable').toLowerCase();
+      const quantity = Number(item.quantity ?? item.availableQuantity ?? 0);
+      const isAvailable = availability !== 'lost' && availability !== 'unserviceable' && availability !== 'borrowed' && availability !== 'in use' && availability !== 'maintenance' && quantity > 0;
+
+      if (isAvailable) {
+        info.innerHTML = `
+          <div><strong>Equipment:</strong> ${item.name || 'Unknown equipment'} (${item.equipmentId || item.id || 'N/A'})</div>
+          <div><strong>Availability:</strong> Available</div>
+          <div><strong>Inventory:</strong> ${quantity} unit${quantity === 1 ? '' : 's'}</div>
+        `;
+        setEquipmentStatusBadge('available', `${item.name || 'Equipment'} (${item.equipmentId || item.id || 'N/A'}) - Available`);
+        submitButton.disabled = false;
+        submitButton.style.opacity = '1';
+        submitButton.style.cursor = 'pointer';
+        return;
+      }
+
+      const reason = availability.includes('maintenance') ? 'Maintenance - Unavailable' : availability.includes('borrow') || availability.includes('use') ? 'Currently Borrowed - Unavailable' : 'Unavailable';
+      info.innerHTML = `
+        <div><strong>Equipment:</strong> ${item.name || 'Unknown equipment'} (${item.equipmentId || item.id || 'N/A'})</div>
+        <div><strong>Availability:</strong> ${reason}</div>
+        <div><strong>Inventory:</strong> ${quantity} unit${quantity === 1 ? '' : 's'}</div>
+      `;
+      setEquipmentStatusBadge('unavailable', reason);
+      submitButton.disabled = true;
+      submitButton.style.opacity = '0.5';
+      submitButton.style.cursor = 'not-allowed';
+    }
+
+    function showBorrowToast(message, isError = false) {
+      const existing = document.querySelector('.borrow-toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = `borrow-toast${isError ? ' error' : ''}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3400);
+    }
+
+    async function loadBorrowEquipmentOptions() {
+      try {
+        const response = await fetch('/api/equipment', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Unable to load equipment inventory.');
+        const payload = await response.json();
+        state.equipment = Array.isArray(payload) ? payload : [];
+        updateSelectedEquipmentInfo();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function hydrateBorrowPage() {
+      const user = window.__CURRENT_USER__ || {};
+      const displayName = user.name || 'Student';
+      const borrowerName = document.getElementById('borrowerName');
+      const departmentInfo = document.getElementById('departmentInfo');
+      const borrowerType = document.getElementById('borrowerType');
+      if (borrowerName) borrowerName.value = displayName;
+      if (borrowerType) borrowerType.value = 'Student';
+      if (departmentInfo && !departmentInfo.value) {
+        const program = user.program || user.course || 'BSIT';
+        const yearSection = user.yearSection || user.year || '4th Year';
+        departmentInfo.value = `${program} • ${yearSection}`;
+      }
+      const today = new Date();
+      const dateInput = document.getElementById('borrowDate');
+      const returnDateInput = document.getElementById('expectedReturnDate');
+      const startInput = document.getElementById('borrowStartTime');
+      const endInput = document.getElementById('borrowEndTime');
+      if (dateInput && !dateInput.value) dateInput.value = today.toISOString().split('T')[0];
+      if (returnDateInput && !returnDateInput.value) returnDateInput.value = today.toISOString().split('T')[0];
+      if (startInput && !startInput.value) startInput.value = '09:00';
+      if (endInput && !endInput.value) endInput.value = '11:00';
+      const quantityInput = document.getElementById('quantityInput');
+      if (quantityInput) quantityInput.value = '1';
+    }
+
+    async function submitStudentBorrowRequest(event) {
+      event.preventDefault();
+      const borrowerName = document.getElementById('borrowerName').value.trim();
+      const borrowerType = document.getElementById('borrowerType').value || 'Student';
+      const departmentInfo = document.getElementById('departmentInfo').value.trim();
+      const instructorName = document.getElementById('instructorName').value.trim();
+      const equipmentIdInput = document.getElementById('borrowEquipmentIdInput');
+      const equipmentId = equipmentIdInput ? equipmentIdInput.value.trim() : '';
+      const borrowDate = document.getElementById('borrowDate').value;
+      const borrowStartTime = document.getElementById('borrowStartTime').value;
+      const expectedReturnDate = document.getElementById('expectedReturnDate').value;
+      const borrowEndTime = document.getElementById('borrowEndTime').value;
+      const borrowPurpose = document.getElementById('borrowPurpose').value.trim();
+      const quantity = Number(document.getElementById('quantityInput').value || 1);
+
+      if (!borrowerName || !borrowerType) {
+        showBorrowToast('Please confirm the borrower details.', true);
+        return;
+      }
+      if (!equipmentId) {
+        showBorrowToast('Please enter an equipment ID.', true);
+        return;
+      }
+      if (!borrowDate || !borrowStartTime || !expectedReturnDate || !borrowEndTime) {
+        showBorrowToast('Please complete the borrowing date and time fields.', true);
+        return;
+      }
+      if (expectedReturnDate < borrowDate) {
+        showBorrowToast('Expected return date cannot be earlier than the borrow date.', true);
+        return;
+      }
+      if (borrowEndTime <= borrowStartTime) {
+        showBorrowToast('End time must be later than start time.', true);
+        return;
+      }
+      if (!borrowPurpose) {
+        showBorrowToast('Please provide the purpose of the borrowing request.', true);
+        return;
+      }
+
+      const selectedItem = state.equipment.find((entry) => String(entry.equipmentId || entry.id).toLowerCase() === equipmentId.toLowerCase());
+      if (!selectedItem) {
+        showBorrowToast('Equipment ID not found.', true);
+        return;
+      }
+
+      const status = String(selectedItem.status || 'Serviceable').toLowerCase();
+      const availableQty = Number(selectedItem.quantity ?? selectedItem.availableQuantity ?? 0);
+      if (status === 'lost' || status === 'unserviceable' || status === 'borrowed' || status === 'in use' || status === 'maintenance' || availableQty <= 0) {
+        showBorrowToast('Equipment is not available for the selected date and time.', true);
+        return;
+      }
+
+      if (quantity < 1 || quantity > availableQty) {
+        showBorrowToast('Requested quantity exceeds the available inventory.', true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/borrow-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            borrowerName,
+            borrowerType,
+            departmentInfo,
+            instructorName,
+            equipmentId: selectedItem.equipmentId || selectedItem.id,
+            equipmentName: selectedItem.name,
+            quantity,
+            borrowDate,
+            borrowStartTime,
+            expectedReturnDate,
+            expectedReturnTime: borrowEndTime,
+            purpose: borrowPurpose,
+            processedBy: window.__CURRENT_USER__?.name || 'Administrator'
+          })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Unable to submit borrow request.');
+        }
+
+        showBorrowToast('Borrow request submitted successfully.');
+        document.getElementById('studentBorrowForm').reset();
+        hydrateBorrowPage();
+        updateSelectedEquipmentInfo();
+      } catch (error) {
+        console.error(error);
+        showBorrowToast(error.message || 'Unable to submit borrow request.', true);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      hydrateBorrowPage();
+      document.getElementById('borrowEquipmentIdInput')?.addEventListener('input', updateSelectedEquipmentInfo);
+      document.getElementById('quantityMinus')?.addEventListener('click', () => {
+        const input = document.getElementById('quantityInput');
+        if (!input) return;
+        input.value = String(Math.max(1, Number(input.value || 1) - 1));
+      });
+      document.getElementById('quantityPlus')?.addEventListener('click', () => {
+        const input = document.getElementById('quantityInput');
+        if (!input) return;
+        input.value = String(Math.max(1, Number(input.value || 1) + 1));
+      });
+      document.getElementById('cancelBorrowEquipmentRequest')?.addEventListener('click', () => {
+        window.location.href = '/student/dashboard';
+      });
+      document.getElementById('studentBorrowForm')?.addEventListener('submit', submitStudentBorrowRequest);
+      await loadBorrowEquipmentOptions();
+      updateSelectedEquipmentInfo();
+      window.setActive && setActive('/student/borrow-equipment');
+      window.markActiveItem && markActiveItem();
+      const nav = document.querySelector('.nav-item[href="/student/borrow-equipment"]');
+      if (nav) nav.classList.add('active');
+    });
+  </script>
+
+  <script src="/js/student-sidebar-config.js" defer></script>
+  <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

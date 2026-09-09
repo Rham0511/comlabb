@@ -1,0 +1,3155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Technician Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        :root {
+            --emerald-950: #06402B;
+            --emerald-700: #16A34A;
+            --emerald-500: #22C55E;
+            --emerald-300: #4ADE80;
+            --emerald-glass: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            --emerald-border: 1px solid rgba(74,222,128,.15);
+            --emerald-shadow: 0 12px 35px rgba(6,64,43,.18);
+            --emerald-glow: 0 18px 40px rgba(34,197,94,.18);
+            --emerald-soft: rgba(74,222,128,.08);
+            --emerald-muted: rgba(74,222,128,.12);
+        }
+
+        .gradient-green {
+            background: linear-gradient(135deg, var(--emerald-700) 0%, var(--emerald-500) 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--emerald-700) 0%, var(--emerald-500) 100%);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            border-radius: 1.25rem;
+            padding: 0.85rem 1.1rem;
+            box-shadow: 0 10px 28px rgba(6, 64, 43, 0.18);
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 32px rgba(34, 197, 94, 0.24);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--emerald-glow);
+        }
+        .status-serviceable {
+            background: rgba(74, 222, 128, 0.12);
+            color: #bbf7d0;
+            border-left: 4px solid var(--emerald-500);
+        }
+        .status-unserviceable {
+            background: rgba(248, 113, 113, 0.12);
+            color: #fecaca;
+            border-left: 4px solid #F87171;
+        }
+        .status-under-repair {
+            background: rgba(250, 204, 21, 0.12);
+            color: #fde68a;
+            border-left: 4px solid #FBBF24;
+        }
+        .badge-serviceable {
+            background: rgba(74, 222, 128, 0.14);
+            color: #dcfce7;
+            padding: 0.35rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(74, 222, 128, 0.16);
+        }
+        .badge-unserviceable {
+            background: rgba(248, 113, 113, 0.14);
+            color: #fee2e2;
+            padding: 0.35rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+        .badge-under-repair {
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef3c7;
+            padding: 0.35rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(250, 204, 21, 0.2);
+        }
+        .glass {
+            background: var(--emerald-glass);
+            backdrop-filter: blur(16px) saturate(1.04);
+            border: var(--emerald-border);
+            box-shadow: var(--emerald-shadow);
+        }
+
+        body.technician-portal {
+            color: #f8fafc;
+            background:
+                radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(74, 222, 128, 0.10), transparent 26%),
+                linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+        }
+
+        body.technician-portal .main-container {
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .tech-card {
+            background: var(--emerald-glass);
+            border: var(--emerald-border);
+            box-shadow: var(--emerald-shadow);
+            border-radius: 20px;
+            backdrop-filter: blur(14px) saturate(1.05);
+        }
+
+        .tech-card-soft {
+            background: linear-gradient(180deg, rgba(15,36,27,.94), rgba(10,29,21,.94));
+            border: var(--emerald-border);
+            box-shadow: var(--emerald-shadow);
+            border-radius: 20px;
+            backdrop-filter: blur(14px) saturate(1.05);
+        }
+
+        .tech-title {
+            letter-spacing: -0.035em;
+        }
+
+        .tech-summary-card {
+            border-radius: 20px;
+            border: var(--emerald-border);
+            background: linear-gradient(180deg, rgba(15,36,27,.94), rgba(10,29,21,.94));
+            padding: 0.8rem 0.9rem;
+            box-shadow: var(--emerald-shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .tech-summary-card p:first-child {
+            font-size: 0.72rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.72);
+        }
+
+        .tech-summary-card h4 {
+            margin-top: 0.3rem;
+            color: #fff;
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+
+        .tech-summary-card p:last-child {
+            margin-top: 0.3rem;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .tech-section-title {
+            color: #f8fafc;
+            letter-spacing: -0.02em;
+        }
+
+        .tech-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            border-radius: 9999px;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            min-height: 2rem;
+            border: 1px solid rgba(74,222,128,.16);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+        }
+
+        #borrow-requests {
+            font-size: 0.9375rem;
+        }
+
+        #borrow-requests h2 {
+            font-size: 2.125rem !important;
+            line-height: 1.15 !important;
+            font-weight: 700 !important;
+        }
+
+        #borrow-requests > div {
+            gap: 1.5rem;
+        }
+
+        #borrow-requests [id^="borrowSummary"] {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        #borrow-requests label {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+
+        #borrow-requests input,
+        #borrow-requests select {
+            min-height: 2.75rem;
+            font-size: 0.9375rem;
+        }
+
+        #borrow-requests table thead th {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            font-weight: 600;
+            padding-top: 0.875rem;
+            padding-bottom: 0.875rem;
+        }
+
+        #borrow-requests table tbody td {
+            font-size: 0.9375rem;
+            line-height: 1.45;
+            padding-top: 0.875rem;
+            padding-bottom: 0.875rem;
+        }
+
+        #borrow-requests table tbody td .text-xs {
+            font-size: 0.8125rem;
+        }
+
+        #borrow-requests [data-borrow-view],
+        #borrow-requests [data-borrow-approve],
+        #borrow-requests [data-borrow-reject],
+        #borrow-requests [data-borrow-page] {
+            font-size: 0.875rem;
+        }
+
+        #borrow-requests .borrow-records-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        #borrow-requests .borrow-records-table th,
+        #borrow-requests .borrow-records-table td {
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        #borrow-requests .borrow-records-table th {
+            padding-top: 0.875rem;
+            padding-bottom: 0.875rem;
+            background: transparent;
+            border-top: 1px solid rgba(74, 222, 128, 0.16);
+            border-bottom: 1px solid rgba(74, 222, 128, 0.16);
+        }
+
+        #borrow-requests .borrow-records-table th:first-child {
+            border-left: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 0.75rem 0 0 0.75rem;
+        }
+
+        #borrow-requests .borrow-records-table th:last-child {
+            border-right: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 0 0.75rem 0.75rem 0;
+        }
+
+        #borrow-requests .borrow-records-table th:nth-child(1),
+        #borrow-requests .borrow-records-table td:nth-child(1) { width: 15%; }
+
+        #borrow-requests .borrow-records-table th:nth-child(2),
+        #borrow-requests .borrow-records-table td:nth-child(2) { width: 16%; }
+
+        #borrow-requests .borrow-records-table th:nth-child(3),
+        #borrow-requests .borrow-records-table td:nth-child(3) { width: 13%; }
+
+        #borrow-requests .borrow-records-table th:nth-child(4),
+        #borrow-requests .borrow-records-table td:nth-child(4) { width: 12%; }
+
+        #borrow-requests .borrow-records-table th:nth-child(5),
+        #borrow-requests .borrow-records-table td:nth-child(5) { width: 14%; }
+
+        #borrow-requests .borrow-records-table th:nth-child(6),
+        #borrow-requests .borrow-records-table td:nth-child(6) {
+            width: 12%;
+            min-width: 6.5rem;
+        }
+
+        #borrow-requests .borrow-records-table th:nth-child(7),
+        #borrow-requests .borrow-records-table td:nth-child(7) {
+            width: 18%;
+            min-width: 9.5rem;
+            text-align: center;
+        }
+
+        #borrow-requests .borrow-records-table th:nth-child(7) {
+            width: 18%;
+            min-width: 9.5rem;
+            text-align: center;
+        }
+
+        #borrow-requests .borrow-records-table td:nth-child(7) .technician-borrow-actions {
+            justify-content: center;
+        }
+
+        #technicianBorrowDetailsModal {
+            font-size: 0.9375rem;
+        }
+
+        #technicianBorrowDetailsModal .borrow-details-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+        }
+
+        #technicianBorrowDetailsModal .borrow-details-section-label {
+            font-size: 0.72rem;
+            line-height: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.8);
+        }
+
+        #technicianBorrowDetailsModal .borrow-details-title {
+            margin-top: 0.55rem;
+            font-size: 1.9rem !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.04em;
+            font-weight: 800 !important;
+            color: #f8fafc !important;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-card {
+            background: rgba(13, 29, 24, 0.88);
+            border: 1px solid rgba(74, 222, 128, 0.14);
+            border-radius: 1.1rem;
+            padding: 1rem 1.1rem;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-card-header {
+            margin: 0 0 0.8rem 0;
+            font-size: 0.76rem;
+            line-height: 1.4;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.8);
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-grid {
+            display: grid;
+            gap: 0.8rem 1rem;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+            min-width: 0;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-field--wide {
+            grid-column: 1 / -1;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-label {
+            font-size: 0.72rem;
+            line-height: 1.4;
+            font-weight: 650;
+            letter-spacing: 0.08em;
+            text-transform: none;
+            color: rgba(125, 211, 162, 0.82);
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-value {
+            font-size: 0.98rem;
+            line-height: 1.5;
+            font-weight: 600;
+            color: #f8fafc;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-value--muted {
+            color: rgba(226, 232, 240, 0.92);
+            font-weight: 500;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-code {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            max-width: 100%;
+            padding: 0.32rem 0.62rem;
+            border-radius: 0.7rem;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(16, 185, 129, 0.08);
+            color: #dcfce7;
+            font-size: 0.78rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-section {
+            display: grid;
+            gap: 0.8rem;
+            margin-top: 1.15rem;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 2rem;
+            border-radius: 9999px;
+            padding: 0.42rem 0.85rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        #technicianBorrowDetailsModal .borrow-detail-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            #technicianBorrowDetailsModal .borrow-details-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            #technicianBorrowDetailsModal .borrow-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #technicianBorrowDetailsModal .borrow-detail-card {
+                padding: 0.9rem;
+            }
+        }
+
+        .technician-borrow-actions {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.375rem;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+        }
+
+        .technician-borrow-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            flex: 0 0 2.25rem;
+            padding: 0;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(15, 36, 27, 0.96), rgba(10, 29, 21, 0.96));
+            color: #d1fae5;
+            font-size: 0.9rem;
+            line-height: 1;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .technician-borrow-action-btn:hover {
+            border-color: rgba(74, 222, 128, 0.45);
+            background: rgba(34, 197, 94, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .technician-borrow-action-btn.approve {
+            border-color: rgba(74, 222, 128, 0.3);
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: #f0fdf4;
+        }
+
+        .technician-borrow-action-btn.reject {
+            border-color: rgba(248, 113, 113, 0.35);
+            background: rgba(239, 68, 68, 0.78);
+            color: #fff1f2;
+        }
+
+        .tech-availability-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .tech-availability-toolbar input,
+        .tech-availability-toolbar select {
+            min-height: 2.75rem;
+            width: 100%;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 0.75rem;
+            background: rgba(6, 16, 11, 0.86);
+            padding: 0.65rem 0.8rem;
+            color: #f8fafc;
+            font-size: 0.9375rem;
+        }
+
+        .tech-availability-group {
+            margin-top: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(74, 222, 128, 0.15);
+            border-radius: 0.9rem;
+        }
+
+        .tech-availability-group-heading {
+            padding: 0.75rem 1rem;
+            color: #bbf7d0;
+            background: rgba(6, 64, 43, 0.35);
+            font-size: 0.9375rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .tech-availability-category-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid rgba(74, 222, 128, 0.12);
+            color: #f0fdf4;
+            background: rgba(15, 36, 27, 0.72);
+            text-align: left;
+            font-size: 0.9375rem;
+            font-weight: 600;
+        }
+
+        .tech-availability-category-content {
+            display: none;
+            overflow-x: auto;
+        }
+
+        .tech-availability-category-content.expanded {
+            display: block;
+        }
+
+        .tech-availability-table {
+            width: 100%;
+            min-width: 48rem;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .tech-availability-table th,
+        .tech-availability-table td {
+            padding: 0.7rem 0.9rem;
+            border-top: 1px solid rgba(74, 222, 128, 0.1);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .tech-availability-table th {
+            color: rgba(187, 247, 208, 0.7);
+            background: rgba(6, 64, 43, 0.25);
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .tech-availability-state {
+            display: inline-flex;
+            border-radius: 9999px;
+            padding: 0.3rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+
+        .tech-availability-state.available { background: rgba(34, 197, 94, 0.16); color: #bbf7d0; }
+        .tech-availability-state.borrowed { background: rgba(251, 191, 36, 0.16); color: #fef3c7; }
+        .tech-availability-state.unavailable { background: rgba(248, 113, 113, 0.16); color: #fecaca; }
+
+        .tech-availability-history-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 9999px;
+            background: rgba(34, 197, 94, 0.1);
+            padding: 0.4rem 0.7rem;
+            color: #d1fae5;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        .tech-availability-empty {
+            padding: 2rem 1rem;
+            color: rgba(209, 250, 229, 0.65);
+            text-align: center;
+        }
+
+        .tech-availability-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1300 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            overflow-y: auto;
+        }
+
+        .tech-availability-modal.show { display: flex !important; }
+
+        .tech-availability-modal-card {
+            position: relative;
+            width: min(64rem, 100%);
+            margin: auto !important;
+            max-height: 90vh;
+            overflow: auto;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 1.25rem;
+            background: #081a12;
+            padding: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .tech-availability-toolbar { grid-template-columns: 1fr; }
+        }
+
+        .reporter-summary .recent-reports-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .reporter-summary .recent-reports-table th,
+        .reporter-summary .recent-reports-table td {
+            vertical-align: middle;
+        }
+
+        .reporter-summary .recent-reports-table th {
+            padding: 0.875rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.25rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .reporter-summary .recent-reports-table td {
+            padding: 0.875rem 0.75rem !important;
+            font-size: 0.9375rem !important;
+            line-height: 1.4;
+        }
+
+        .reporter-summary .recent-reports-table th:nth-child(1),
+        .reporter-summary .recent-reports-table td:nth-child(1) {
+            width: 25%;
+        }
+
+        .reporter-summary .recent-reports-table th:nth-child(2),
+        .reporter-summary .recent-reports-table td:nth-child(2) {
+            width: 25%;
+        }
+
+        .reporter-summary .recent-reports-table th:nth-child(3),
+        .reporter-summary .recent-reports-table td:nth-child(3) {
+            width: 20%;
+        }
+
+        .reporter-summary .recent-reports-table th:nth-child(4),
+        .reporter-summary .recent-reports-table td:nth-child(4) {
+            width: 30%;
+            white-space: nowrap;
+        }
+
+        .reporter-summary .recent-reports-table thead th {
+            padding: 0 !important;
+            border-top: 1px solid rgba(74, 222, 128, 0.16);
+            border-bottom: 1px solid rgba(74, 222, 128, 0.16);
+            background: linear-gradient(180deg, rgba(15, 36, 27, 0.9), rgba(10, 29, 21, 0.9));
+        }
+
+        .reporter-summary .recent-reports-table .recent-reports-header-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 2.75rem;
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            text-align: left;
+        }
+
+        .reporter-summary .recent-reports-table thead th:first-child {
+            border-left: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 0.75rem 0 0 0.75rem;
+        }
+
+        .reporter-summary .recent-reports-table thead th:last-child {
+            border-right: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 0 0.75rem 0.75rem 0;
+        }
+
+        .reporter-summary .recent-reports-table td:nth-child(3) .tech-badge {
+            font-size: 0.8125rem;
+            white-space: nowrap;
+        }
+
+        .tech-badge.green,
+        .tech-badge.resolved {
+            background: rgba(34, 197, 94, 0.16);
+            color: #dcfce7;
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .tech-badge.amber,
+        .tech-badge.pending {
+            background: rgba(251, 191, 36, 0.16);
+            color: #fef3c7;
+            border-color: rgba(251, 191, 36, 0.22);
+        }
+
+        .tech-badge.red {
+            background: rgba(248, 113, 113, 0.14);
+            color: #fee2e2;
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        .tech-badge.blue,
+        .tech-badge.in-progress {
+            background: rgba(74, 222, 128, 0.12);
+            color: #bbf7d0;
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .tech-progress {
+            height: 0.55rem;
+            border-radius: 9999px;
+            background: rgba(15, 23, 42, 0.9);
+            overflow: hidden;
+        }
+
+        .tech-progress > span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #16a34a 0%, #059669 100%);
+            box-shadow: 0 0 22px rgba(16, 185, 129, 0.4);
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-card {
+            position: relative;
+            overflow: hidden;
+            padding: 1.2rem 1.25rem 1.3rem;
+            border-radius: 20px;
+            background: var(--emerald-glass);
+            border: var(--emerald-border);
+            box-shadow: var(--emerald-shadow);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            backdrop-filter: blur(14px) saturate(1.04);
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 60%);
+            pointer-events: none;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(74, 222, 128, 0.22);
+            box-shadow: var(--emerald-glow);
+        }
+
+        .reporter-summary {
+            display: grid;
+            gap: 1rem;
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(15,36,27,.94), rgba(10,29,21,.94));
+            border: var(--emerald-border);
+            box-shadow: var(--emerald-shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .reporter-list {
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .reporter-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.95rem 1rem;
+            border-radius: 16px;
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.12);
+        }
+
+        .reporter-item strong {
+            color: #fff;
+            font-size: 0.96rem;
+        }
+
+        .reporter-item span {
+            color: #94a3b8;
+            font-size: 0.84rem;
+            letter-spacing: 0.02em;
+        }
+
+        .summary-card .icon-wrap {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 0.95rem;
+            margin-bottom: 0.75rem;
+            color: #bbf7d0;
+            background: rgba(74, 222, 128, 0.12);
+            font-size: 1rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+            border: 1px solid rgba(74, 222, 128, 0.14);
+        }
+
+        .summary-card p {
+            position: relative;
+            z-index: 1;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .summary-card h4 {
+            position: relative;
+            z-index: 1;
+            color: #ffffff;
+            margin-top: 0.2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .dashboard-table th, .dashboard-table td { border-color: rgba(74,222,128,0.14); }
+        .dashboard-table th {
+            font-size: 0.76rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 0.95rem 0.9rem;
+        }
+        .dashboard-table td {
+            padding: 0.95rem 0.9rem;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+        .dashboard-table tbody tr {
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .dashboard-table tbody tr:hover {
+            background: rgba(74, 222, 128, 0.08);
+        }
+        .dashboard-table th:last-child,
+        .dashboard-table td:last-child {
+            width: 10.5rem;
+            min-width: 10.5rem;
+        }
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            min-width: 9rem;
+        }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            width: 100%;
+            min-height: 2.9rem;
+            border-radius: 9999px;
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            color: #f8fafc;
+            border: 1px solid rgba(134, 239, 172, 0.24);
+            box-shadow: 0 10px 24px rgba(6, 64, 43, 0.22);
+        }
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(34, 197, 94, 0.24);
+            background: linear-gradient(135deg, #15803d 0%, #2fbf63 100%);
+        }
+        .action-btn.action-btn-in-progress {
+            background: rgba(74, 222, 128, 0.12);
+            color: #bbf7d0;
+            border-color: rgba(74, 222, 128, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .action-btn.action-btn-in-progress:hover {
+            background: rgba(74, 222, 128, 0.18);
+            box-shadow: 0 10px 24px rgba(6, 64, 43, 0.14);
+        }
+        .action-btn i {
+            font-size: 0.95rem;
+        }
+        .section-empty td { color: #94a3b8; }
+
+        .filter-shell {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            background: linear-gradient(180deg, rgba(15,36,27,.95), rgba(8,20,15,.95));
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 9999px;
+            padding: 0.45rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(3, 15, 10, 0.2);
+            backdrop-filter: blur(14px);
+        }
+
+        .status-filter-chip {
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            background: rgba(2, 8, 23, 0.36);
+            color: #d1fae5;
+            border-radius: 9999px;
+            padding: 0.72rem 1rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            min-width: 108px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .status-filter-chip:hover {
+            transform: translateY(-1px);
+            border-color: rgba(74, 222, 128, 0.24);
+            background: rgba(74, 222, 128, 0.06);
+        }
+
+        .status-filter-chip.active {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            border-color: transparent;
+            color: #f8fafc;
+            box-shadow: 0 10px 24px rgba(6, 64, 43, 0.22);
+        }
+
+        .pending-queue-list {
+            display: grid;
+            gap: 1.1rem;
+        }
+
+        .pending-report-card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(10, 29, 21, 0.96), rgba(6, 16, 11, 0.98));
+            padding: 1.2rem 1.2rem 1.05rem;
+            box-shadow: 0 16px 40px rgba(3, 15, 10, 0.26);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            backdrop-filter: blur(14px) saturate(1.04);
+        }
+
+        .pending-report-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 40%);
+            pointer-events: none;
+        }
+
+        .pending-report-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(74, 222, 128, 0.22);
+            box-shadow: 0 20px 48px rgba(6, 64, 43, 0.22);
+        }
+
+        .pending-report-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .pending-report-identity {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            min-width: 0;
+        }
+
+        .pending-report-icon {
+            width: 2.65rem;
+            height: 2.65rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(74, 222, 128, 0.12);
+            color: #bbf7d0;
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            flex-shrink: 0;
+        }
+
+        .pending-report-title-group {
+            min-width: 0;
+        }
+
+        .pending-report-title {
+            color: #f8fafc;
+            font-size: 1.16rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .pending-report-subtitle {
+            margin-top: 0.28rem;
+            color: rgba(148, 163, 184, 0.92);
+            font-size: 0.93rem;
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .pending-report-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .pending-report-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 0.95rem;
+        }
+
+        .pending-report-meta {
+            min-width: 0;
+            padding: 0.8rem 0.9rem;
+            border-radius: 16px;
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.12);
+        }
+
+        .pending-report-meta-label {
+            display: block;
+            color: #10b981;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 0.25rem;
+            font-weight: 700;
+        }
+
+        .pending-report-meta-value {
+            display: block;
+            color: #e2e8f0;
+            font-size: 0.98rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .pending-report-divider {
+            height: 1px;
+            margin: 0.95rem 0 1rem;
+            background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.15), transparent);
+        }
+
+        .pending-report-description {
+            padding: 0.95rem 1rem;
+            margin-bottom: 0.95rem;
+            border-radius: 16px;
+            border: 1px solid rgba(74, 222, 128, 0.12);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .pending-report-description-title {
+            margin-bottom: 0.35rem;
+            color: #86efac;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .pending-report-description p {
+            color: #f8fafc;
+            font-size: 0.98rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .pending-report-action-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .pending-report-status-field {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.45rem;
+            width: fit-content;
+            min-width: 180px;
+            max-width: 220px;
+        }
+
+        .pending-report-status-select {
+            width: min(220px, 100%);
+            min-width: 180px;
+            max-width: 220px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            color: #f8fafc;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            line-height: 1.2;
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+        }
+
+        .pending-report-status-select:focus {
+            border-color: rgba(74, 222, 128, 0.38);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        }
+
+        .pending-report-action-wrap .action-btn {
+            min-width: 10rem;
+            width: auto;
+        }
+
+        .pending-report-resolved-note {
+            margin-top: 0.4rem;
+            color: #86efac;
+            font-size: 0.86rem;
+            font-weight: 600;
+        }
+
+        .pending-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            padding: 2rem 1.2rem;
+            border-radius: 1.25rem;
+            border: 1px dashed rgba(16, 185, 129, 0.26);
+            background: rgba(2, 6, 23, 0.58);
+            text-align: center;
+        }
+
+        .pending-empty-illustration {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.4rem;
+            height: 3.4rem;
+            border-radius: 1rem;
+            background: rgba(16, 185, 129, 0.13);
+            color: #bbf7d0;
+        }
+
+        .pending-empty-state h3 {
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .pending-empty-state p {
+            color: #94a3b8;
+            font-size: 0.92rem;
+            max-width: 24rem;
+        }
+
+        .filter-shell input,
+        .filter-shell select {
+            border: 1px solid rgba(74, 222, 128, 0.16);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            color: #f8fafc;
+            border-radius: 9999px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.9rem;
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+
+        .filter-shell input::placeholder {
+            color: #86efac;
+        }
+
+        .empty-state-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 1.4rem 1rem;
+            border-radius: 20px;
+            border: 1px dashed rgba(74, 222, 128, 0.22);
+            background: linear-gradient(180deg, rgba(15,36,27,.9), rgba(10,29,21,.92));
+            text-align: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+        }
+
+        .empty-state-card i {
+            font-size: 1.4rem;
+            color: #bbf7d0;
+        }
+
+        @media (max-width: 1023px) {
+            .summary-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .summary-row {
+                grid-template-columns: 1fr;
+            }
+            .pending-report-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            .pending-report-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .pending-report-head-actions {
+                justify-content: flex-start;
+            }
+            .pending-report-status-field {
+                width: 100%;
+                max-width: 220px;
+                min-width: 0;
+            }
+            .pending-report-status-select {
+                width: 100%;
+                min-width: 0;
+            }
+            .pending-report-action-wrap .action-btn {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell technician-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <header class="sticky top-0 z-30">
+            <div class="mx-auto w-full max-w-screen-xl px-3 py-3 md:px-4 md:py-4">
+                <div class="flex w-full flex-col gap-3 rounded-[24px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(8,20,15,0.98),rgba(10,29,21,0.98))] p-4 shadow-[0_18px_40px_rgba(3,15,10,0.28)] backdrop-blur-xl md:flex-row md:items-end md:justify-between md:px-6 md:py-5">
+                    <div class="flex items-start gap-3 pl-14 lg:pl-0">
+                        <button id="mobileMenuToggle" type="button" onclick="toggleSidebar()" class="menu-toggle block lg:hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-slate-200 hover:text-white" aria-label="Open navigation">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div>
+                            <h1 id="technician-page-title" class="text-2xl font-semibold text-white md:text-3xl lg:text-[2.2rem] tech-title">Maintenance Dashboard</h1>
+                        </div>
+                    </div>
+                    <div class="inline-flex items-center gap-2 self-start rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2 text-sm font-semibold text-emerald-200 md:self-auto">
+                        <i class="fas fa-bell"></i>
+                        <span data-new-reports-badge>0</span>
+                        <span>pending reports</span>
+                        <span class="ml-2 border-l border-emerald-500/30 pl-2">Borrow requests: <strong data-borrow-notification-count>0</strong></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="mx-auto flex w-full max-w-screen-xl flex-col gap-3 px-3 py-0 md:px-4 md:py-0 lg:gap-4">
+            <section id="dashboard" class="nav-anchor tech-card p-4 md:p-6 lg:p-7 page-section active">
+                <div class="space-y-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold text-white sm:text-2xl lg:text-[2rem] tech-title">Good <span id="techGreeting">Morning</span>, <span data-tech-name>Technician</span></h2>
+
+                        </div>
+                    </div>
+
+                    <div class="summary-row">
+                        <div class="summary-card" aria-live="polite">
+                            <div class="icon-wrap"><i class="fas fa-file-circle-plus"></i></div>
+                            <p>Pending Reports</p>
+                            <h4><span data-new-reports>0</span></h4>
+                        </div>
+                        <div class="summary-card">
+                            <div class="icon-wrap"><i class="fas fa-screwdriver-wrench"></i></div>
+                            <p>In Progress Repairs</p>
+                            <h4><span data-in-progress-count>0</span></h4>
+                        </div>
+                        <div class="summary-card">
+                            <div class="icon-wrap"><i class="fas fa-circle-check"></i></div>
+                            <p>Resolved Today</p>
+                            <h4><span data-resolved-today-count>0</span></h4>
+                        </div>
+                        <div class="summary-card">
+                            <div class="icon-wrap"><i class="fas fa-clipboard-list"></i></div>
+                            <p>Total Resolved</p>
+                            <h4><span data-total-resolved-count>0</span></h4>
+                        </div>
+                    </div>
+
+                    <section class="tech-card-soft p-4 md:p-5 lg:p-6 reporter-summary">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.24em] text-emerald-300/70">Workflow</p>
+                                <h3 class="mt-1 text-lg font-semibold text-white">Recent Reports</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="recent-reports-table min-w-full text-left text-sm text-emerald-50/80">
+                                <thead class="text-xs uppercase tracking-[0.2em] text-emerald-200/70">
+                                    <tr>
+                                        <th><span class="recent-reports-header-box">Equipment</span></th>
+                                        <th><span class="recent-reports-header-box">Student</span></th>
+                                        <th><span class="recent-reports-header-box">Status</span></th>
+                                        <th><span class="recent-reports-header-box">Reported Date</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800" data-recent-reports-table>
+                                    <tr>
+                                        <td colspan="4" class="px-2 py-4 text-emerald-100/60">Loading recent reports...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="recentReportsPagination" class="mt-4 flex flex-wrap items-center justify-end gap-2"></div>
+                    </section>
+
+                </div>
+            </section>
+
+            <section id="equipment-availability" class="nav-anchor tech-card p-5 lg:p-7 page-section">
+                <div class="space-y-4">
+                    <div>
+                    </div>
+                    <div class="tech-availability-toolbar">
+                        <input id="technicianAvailabilitySearch" type="search" placeholder="Search equipment name or ID" aria-label="Search equipment">
+                        <select id="technicianAvailabilityLaboratory" aria-label="Filter by laboratory"><option value="">All Laboratories</option></select>
+                        <select id="technicianAvailabilityStatus" aria-label="Filter by equipment status">
+                            <option value="">All Statuses</option>
+                            <option value="Serviceable">Serviceable</option>
+                            <option value="Unserviceable">Unserviceable</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                        <select id="technicianAvailabilityState" aria-label="Filter by availability">
+                            <option value="">All Availability</option>
+                            <option value="AVAILABLE">Available</option>
+                            <option value="BORROWED">Borrowed</option>
+                            <option value="UNAVAILABLE">Unavailable</option>
+                        </select>
+                    </div>
+                    <div id="technicianEquipmentAvailabilityBody">
+                        <div class="tech-availability-empty">Loading equipment availability...</div>
+                    </div>
+                    <div id="technicianEquipmentAvailabilityCount" class="text-sm text-slate-400">Loading equipment availability...</div>
+                </div>
+            </section>
+
+            <section id="new-reports" class="nav-anchor tech-card p-5 lg:p-7 page-section">
+                <div class="space-y-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                        <div class="max-w-3xl">
+                            <p class="text-base font-bold uppercase tracking-[0.32em] text-emerald-300/80 md:text-lg" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">New Reports</p>
+                        </div>
+                    </div>
+
+                    <div class="filter-shell">
+                        <button type="button" class="status-filter-chip active" data-status-filter="all">All</button>
+                        <button type="button" class="status-filter-chip" data-status-filter="pending">Pending</button>
+                        <button type="button" class="status-filter-chip" data-status-filter="in progress">In Progress</button>
+                        <button type="button" class="status-filter-chip" data-status-filter="resolved">Resolved</button>
+                    </div>
+
+                    <div class="pending-queue-list" data-all-pending-reports-list>
+                        <div class="pending-empty-state">
+                            <div class="pending-empty-illustration">
+                                <i class="fas fa-wrench text-xl"></i>
+                            </div>
+                            <h3>No pending maintenance requests</h3>
+                            <p>New reports will appear here as soon as students submit them.</p>
+                        </div>
+                    </div>
+                    <div id="technicianMaintenancePagination" class="mt-4 flex flex-wrap items-center justify-center gap-2"></div>
+                </div>
+            </section>
+
+            <section id="borrow-requests" class="nav-anchor tech-card p-5 lg:p-7 page-section">
+                <div class="space-y-5">
+                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="rounded-2xl border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-4 shadow-[0_12px_30px_rgba(6,64,43,0.15)]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="!text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Total Borrow Records</p>
+                                    <div id="borrowSummaryTotal" class="mt-3 text-3xl font-extrabold text-white">0</div>
+                                </div>
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"><i class="fas fa-file-alt"></i></div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-4 shadow-[0_12px_30px_rgba(6,64,43,0.15)]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="!text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Currently Borrowed</p>
+                                    <div id="borrowSummaryBorrowed" class="mt-3 text-3xl font-extrabold text-white">0</div>
+                                </div>
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"><i class="fas fa-box-open"></i></div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-4 shadow-[0_12px_30px_rgba(6,64,43,0.15)]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="!text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Pending Requests</p>
+                                    <div id="borrowSummaryPending" class="mt-3 text-3xl font-extrabold text-white">0</div>
+                                </div>
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"><i class="fas fa-clock"></i></div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-4 shadow-[0_12px_30px_rgba(6,64,43,0.15)]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="!text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Overdue</p>
+                                    <div id="borrowSummaryOverdue" class="mt-3 text-3xl font-extrabold text-white">0</div>
+                                </div>
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"><i class="fas fa-exclamation-triangle"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-emerald-500/15 bg-[#081a12]/80 p-4 shadow-[0_12px_30px_rgba(6,64,43,0.12)]">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div class="inline-flex gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/5 p-1">
+                                <button id="borrowTabCurrent" type="button" class="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white">Current Borrow Requests</button>
+                                <button id="borrowTabHistory" type="button" class="rounded-full px-4 py-2 text-sm font-semibold text-emerald-100/80 hover:bg-emerald-500/10">Borrow History</button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 lg:grid-cols-[2.2fr_1fr_1.2fr_1fr]">
+                            <div>
+                                <label for="borrowSearchInput" class="mb-1 block !text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Search</label>
+                                <input id="borrowSearchInput" type="text" placeholder="Search borrower or equipment" class="w-full rounded-xl border border-emerald-500/20 bg-[#06100b] px-3 py-2.5 !text-[15px] text-white placeholder:text-emerald-100/40 focus:border-emerald-400 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label for="borrowStatusFilter" class="mb-1 block !text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Status</label>
+                                <select id="borrowStatusFilter" class="w-full rounded-xl border border-emerald-500/20 bg-[#06100b] px-3 py-2.5 !text-[15px] text-white focus:border-emerald-400 focus:outline-none">
+                                    <option value="all">All Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Rejected">Rejected</option>
+                                    <option value="Returned">Returned</option>
+                                    <option value="Overdue">Overdue</option>
+                                    <option value="Lost">Lost</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="borrowTypeFilter" class="mb-1 block !text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Borrower Type</label>
+                                <select id="borrowTypeFilter" class="w-full rounded-xl border border-emerald-500/20 bg-[#06100b] px-3 py-2.5 !text-[15px] text-white focus:border-emerald-400 focus:outline-none">
+                                    <option value="all">All Types</option>
+                                    <option value="Student">Student</option>
+                                    <option value="Faculty/Staff">Faculty/Staff</option>
+                                    <option value="Instructor">Instructor</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Technician">Technician</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="borrowDateFilter" class="mb-1 block !text-sm font-bold uppercase tracking-[0.2em] text-emerald-200/70">Date</label>
+                                <input id="borrowDateFilter" type="date" class="w-full rounded-xl border border-emerald-500/20 bg-[#06100b] px-3 py-2.5 !text-[15px] text-white focus:border-emerald-400 focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="borrow-records-table min-w-full text-left text-sm">
+                                <thead class="bg-emerald-950/60 !text-sm uppercase tracking-[0.18em] text-emerald-200/70">
+                                    <tr>
+                                        <th class="px-3 py-3">Borrower</th>
+                                        <th class="px-3 py-3">Equipment</th>
+                                        <th class="px-3 py-3">Laboratory</th>
+                                        <th class="px-3 py-3">Borrow Date</th>
+                                        <th class="px-3 py-3">Expected Return</th>
+                                        <th class="px-3 py-3">Status</th>
+                                        <th class="min-w-[145px] px-3 py-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="technicianBorrowTableBody" class="divide-y divide-emerald-500/10">
+                                    <tr>
+                                        <td colspan="7" class="px-3 py-5 text-center text-sm text-emerald-100/70">Loading borrow requests...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="technicianBorrowPagination" class="mt-4 flex flex-wrap items-center justify-end gap-2"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="technicianAvailabilityHistoryModal" class="tech-availability-modal fixed inset-0 z-50 items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" aria-hidden="true">
+        <div class="tech-availability-modal-card relative mx-auto my-auto w-full max-w-4xl rounded-2xl shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="technicianAvailabilityHistoryTitle">
+            <div class="flex items-start justify-between gap-4 border-b border-emerald-500/15 pb-4">
+                <div>
+                    <h2 id="technicianAvailabilityHistoryTitle" class="text-xl font-bold text-white">Borrowing History</h2>
+                    <p id="technicianAvailabilityHistorySubtitle" class="mt-1 text-sm text-emerald-100/70"></p>
+                </div>
+                <button id="closeTechnicianAvailabilityHistory" type="button" class="rounded-full border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-100" aria-label="Close borrowing history"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="technicianAvailabilityHistorySummary" class="my-4 grid gap-3 sm:grid-cols-4"></div>
+            <div class="overflow-x-auto">
+                <table class="tech-availability-table">
+                    <thead><tr><th>Borrower</th><th>Type</th><th>Borrow Date</th><th>Expected Return</th><th>Actual Return</th><th>Status</th></tr></thead>
+                    <tbody id="technicianAvailabilityHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="technicianLostEquipmentModal" class="fixed inset-0 z-50 hidden bg-black/60 p-4" aria-hidden="true">
+        <div class="mx-auto mt-20 max-w-md rounded-3xl border border-emerald-500/20 bg-[#081a12] p-6 shadow-[0_25px_60px_rgba(6,64,43,0.35)]">
+            <div class="flex items-start justify-between gap-3 border-b border-emerald-500/15 pb-4">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.26em] text-emerald-300/80">Loss Confirmation</p>
+                    <h3 class="mt-1 text-2xl font-bold text-white">Mark Equipment as Lost?</h3>
+                </div>
+                <button id="closeLostEquipmentModal" type="button" class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-emerald-100 hover:bg-emerald-500/10">✕</button>
+            </div>
+            <p class="mt-4 text-[15px] leading-6 text-slate-200">This equipment is overdue and has been confirmed as missing. Are you sure you want to mark it as Lost?</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="cancelLostEquipmentBtn" type="button" class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/10">Cancel</button>
+                <button id="confirmLostEquipmentBtn" type="button" class="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400">Confirm Lost</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="technicianBorrowDetailsModal" class="fixed inset-0 z-50 hidden bg-black/60 p-4" aria-hidden="true">
+        <div class="mx-auto mt-10 w-full max-w-4xl rounded-[1.6rem] border border-emerald-500/20 bg-[#081a12] p-5 shadow-[0_25px_60px_rgba(6,64,43,0.35)] md:p-6">
+            <div class="borrow-details-header">
+                <div>
+                    <p class="borrow-details-section-label">Borrow Details</p>
+                    <h3 class="borrow-details-title">Record Details</h3>
+                </div>
+                <div class="borrow-detail-header-row">
+                    <span id="borrowDetailStatusBadge" class="borrow-detail-status border border-emerald-500/30 bg-emerald-500/15 text-emerald-200">Pending</span>
+                    <button id="closeBorrowDetailsModal" type="button" class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-emerald-100 hover:bg-emerald-500/10" aria-label="Close details">✕</button>
+                </div>
+            </div>
+
+            <div class="borrow-detail-section mt-5 grid gap-4 md:grid-cols-2">
+                <div class="borrow-detail-card">
+                    <p class="borrow-detail-card-header">Borrower Information</p>
+                    <div class="borrow-detail-grid">
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Borrower Name</span>
+                            <span id="borrowDetailBorrowerName" class="borrow-detail-value">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Borrower Type</span>
+                            <span id="borrowDetailBorrowerType" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Department / Course / Office</span>
+                            <span id="borrowDetailDepartment" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Instructor / Subject Teacher</span>
+                            <span id="borrowDetailInstructorName" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="borrow-detail-card">
+                    <p class="borrow-detail-card-header">Equipment Information</p>
+                    <div class="borrow-detail-grid">
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Equipment Name / Type</span>
+                            <span id="borrowDetailEquipmentName" class="borrow-detail-value">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Equipment ID</span>
+                            <span id="borrowDetailEquipmentId" class="borrow-detail-code">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Campus</span>
+                            <span id="borrowDetailCampus" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Laboratory</span>
+                            <span id="borrowDetailLaboratory" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Quantity</span>
+                            <span id="borrowDetailQuantity" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="borrow-detail-card md:col-span-2">
+                    <p class="borrow-detail-card-header">Borrow Details</p>
+                    <div class="borrow-detail-grid sm:grid-cols-2">
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Borrow Date</span>
+                            <span id="borrowDetailBorrowDate" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Borrow Start Time</span>
+                            <span id="borrowDetailBorrowStartTime" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Expected Return Date</span>
+                            <span id="borrowDetailExpectedReturnDate" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field">
+                            <span class="borrow-detail-label">Expected Return Time</span>
+                            <span id="borrowDetailExpectedReturnTime" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field borrow-detail-field--wide">
+                            <span class="borrow-detail-label">Purpose</span>
+                            <span id="borrowDetailPurpose" class="borrow-detail-value borrow-detail-value--muted">—</span>
+                        </div>
+                        <div class="borrow-detail-field borrow-detail-field--wide">
+                            <span class="borrow-detail-label">Status</span>
+                            <span id="borrowDetailStatus" class="borrow-detail-value">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = typeof window.__CURRENT_USER__ !== 'undefined' ? window.__CURRENT_USER__ : __CURRENT_USER_JSON__;
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').trim().split('@')[0].trim();
+            if (!value) return 'T';
+
+            return value
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(part => part.charAt(0).toUpperCase())
+                .join('') || 'T';
+        }
+
+        function formatRole(role) {
+            if (!role) return 'Technician';
+            return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+        }
+
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Morning';
+            if (hour < 18) return 'Afternoon';
+            return 'Evening';
+        }
+
+        function getBadgeClassForStatus(status) {
+            const value = (status || '').toLowerCase();
+            if (value.includes('resolved') || value.includes('complete')) return 'green';
+            if (value.includes('progress') || value.includes('repair')) return 'amber';
+            if (value.includes('rejected') || value.includes('cancel')) return 'red';
+            return 'blue';
+        }
+
+        function getBadgeClassForPriority(priority) {
+            const value = (priority || '').toLowerCase();
+            if (value.includes('critical')) return 'red';
+            if (value.includes('high')) return 'amber';
+            return 'blue';
+        }
+
+        function titleCaseFromEmail(email) {
+            const localPart = (email || '').split('@')[0].trim();
+            if (!localPart) return '';
+
+            return localPart
+                .replace(/[._-]+/g, ' ')
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                .join(' ');
+        }
+
+        function hydrateTechnicianProfile() {
+            const user = window.__CURRENT_USER__ || {};
+            const rememberedEmail = localStorage.getItem('rememberedEmail') || '';
+            const rememberedRole = localStorage.getItem('rememberedRole') || '';
+            const displayName = user.name || titleCaseFromEmail(user.email || rememberedEmail) || '';
+            const role = formatRole(user.role || rememberedRole || 'technician');
+            const email = user.email || rememberedEmail || '';
+            const initials = user.initials || getInitials(displayName, email);
+            const bay = user.assignedBay || user.bay || user.workArea || '';
+            const shift = user.shift || user.schedule || '';
+            const photoFrame = document.querySelector('[data-tech-photo-frame]');
+            const preview = document.querySelector('[data-tech-photo-preview]');
+            const fallback = document.querySelector('[data-tech-photo-fallback]');
+
+            const mappings = [
+                ['[data-tech-name]', displayName || '—'],
+                ['[data-tech-name-panel]', displayName || '—'],
+                ['[data-tech-role]', role],
+                ['[data-tech-email]', email || '—'],
+                ['[data-tech-bay]', bay || '—'],
+                ['[data-tech-shift]', shift || '—']
+            ];
+
+            mappings.forEach(([selector, value]) => {
+                document.querySelectorAll(selector).forEach(element => {
+                    element.textContent = value;
+                });
+            });
+
+            if (photoFrame && preview && fallback) {
+                if (user.photo || user.photoUrl || user.avatar) {
+                    preview.src = user.photo || user.photoUrl || user.avatar;
+                    photoFrame.classList.add('has-photo');
+                } else {
+                    fallback.textContent = initials;
+                }
+            }
+
+            const greeting = document.getElementById('techGreeting');
+            if (greeting) {
+                greeting.textContent = getGreeting();
+            }
+
+            if (window.sidebarConfig) {
+                window.sidebarConfig.user = {
+                    name: displayName,
+                    email,
+                    role,
+                    initials,
+                    photo: user.photo || user.photoUrl || user.avatar || ''
+                };
+            }
+        }
+
+        function setupTechnicianPhotoUpload() {
+            const input = document.getElementById('technicianPhotoInput');
+            const frame = document.querySelector('[data-tech-photo-frame]');
+            const preview = document.querySelector('[data-tech-photo-preview]');
+            const fallback = document.querySelector('[data-tech-photo-fallback]');
+
+            if (!input || !frame || !preview || !fallback) return;
+
+            input.addEventListener('change', function() {
+                const file = this.files && this.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const result = event.target && event.target.result;
+                    if (typeof result === 'string') {
+                        preview.src = result;
+                        frame.classList.add('has-photo');
+                        fallback.textContent = '';
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        function setActive(event) {
+            event.preventDefault();
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(item => item.classList.remove('active'));
+            const target = event.target.closest('.nav-item');
+            if (target) {
+                target.classList.add('active');
+                const href = target.getAttribute('href') || '';
+                if (href.startsWith('#') && typeof showSection === 'function') {
+                    showSection(href.slice(1));
+                }
+            }
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('mobile-open');
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = event.target.closest('[onclick="toggleSidebar()"]');
+            if (!sidebar || !sidebar.contains(event.target)) {
+                if (!hamburger && window.innerWidth < 768 && sidebar) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 768 && sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+
+        let currentQueueFilter = 'all';
+        const technicianMaintenancePaginationState = {
+            currentPage: 1,
+            rowsPerPage: 3
+        };
+        
+        const recentReportsPaginationState = {
+            currentPage: 1,
+            rowsPerPage: 4
+        };
+
+        function setTechnicianMaintenancePage(page) {
+            technicianMaintenancePaginationState.currentPage = Math.max(1, page);
+            renderPendingReports(window.__TECHNICIAN_REQUESTS__ || [], currentQueueFilter);
+        }
+
+        function setRecentReportsPage(page) {
+            recentReportsPaginationState.currentPage = Math.max(1, page);
+            renderRecentReportsTable(window.__TECHNICIAN_REQUESTS__ || []);
+        }
+
+        function renderTechnicianMaintenancePagination(totalPages) {
+            const container = document.getElementById('technicianMaintenancePagination');
+            if (!container) return;
+            container.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const createButton = (text, page, active, disabled) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = text;
+                button.disabled = disabled;
+                button.className = `rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 ${active ? 'bg-emerald-500 text-white' : ''}`;
+                button.addEventListener('click', () => setTechnicianMaintenancePage(page));
+                return button;
+            };
+
+            container.appendChild(createButton('Previous', technicianMaintenancePaginationState.currentPage - 1, false, technicianMaintenancePaginationState.currentPage <= 1));
+            for (let page = 1; page <= Math.min(3, totalPages); page += 1) {
+                container.appendChild(createButton(String(page), page, page === technicianMaintenancePaginationState.currentPage, false));
+            }
+            container.appendChild(createButton('Next', technicianMaintenancePaginationState.currentPage + 1, false, technicianMaintenancePaginationState.currentPage >= totalPages));
+        }
+
+        function renderRecentReportsPagination(totalPages) {
+            const container = document.getElementById('recentReportsPagination');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const pageCount = Number(totalPages) || 0;
+            if (pageCount <= 1) return;
+
+            const createButton = (text, page, active, disabled) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = text;
+                button.disabled = disabled;
+                button.className = `rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 ${active ? 'bg-emerald-500 text-white' : ''}`;
+                button.addEventListener('click', () => setRecentReportsPage(page));
+                return button;
+            };
+
+            const currentPage = Math.max(1, recentReportsPaginationState.currentPage);
+            const maxAllowedPage = Math.max(1, pageCount);
+
+            container.appendChild(createButton('Previous', currentPage - 1, false, currentPage <= 1));
+            for (let page = 1; page <= maxAllowedPage; page += 1) {
+                container.appendChild(createButton(String(page), page, page === currentPage, false));
+            }
+            container.appendChild(createButton('Next', currentPage + 1, false, currentPage >= maxAllowedPage));
+        }
+
+        window.sidebarConfig = {
+            iconClass: 'fas fa-tools',
+            logoText: 'ComLab',
+            tagline: '',
+            role: 'technician',
+            user: window.__CURRENT_USER__ || null,
+            defaultActive: '#dashboard',
+            items: [
+                { label: 'Dashboard', href: '#dashboard', icon: 'fas fa-gauge-high' },
+                { label: 'New Reports', href: '#new-reports', icon: 'fas fa-file-circle-plus' },
+                { label: 'Equipment Availability', href: '#equipment-availability', icon: 'fas fa-boxes-stacked' },
+                { label: 'Borrow Requests', href: '#borrow-requests', icon: 'fas fa-hand-holding' },
+                { label: 'Logout', href: '/logout', icon: 'fas fa-right-from-bracket' }
+            ]
+        };
+
+        function hydrateDashboardWidgets() {
+            const source = window.__TECH_DASHBOARD__ || window.__CURRENT_DASHBOARD__ || {};
+            const fallback = {
+                newReports: 0,
+                assignedTasks: 0,
+                pendingRepairs: 0,
+                completedToday: 0,
+                notifications: []
+            };
+            const data = Object.assign({}, fallback, source);
+
+            const setText = (sel, value) => {
+                document.querySelectorAll(sel).forEach(el => el.textContent = value == null ? '0' : String(value));
+            };
+
+            setText('[data-new-reports]', data.newReports);
+            setText('[data-assigned-tasks-count]', data.assignedTasks);
+            setText('[data-pending-repairs-count]', data.pendingRepairs);
+            setText('[data-completed-today-count]', data.completedToday);
+
+            // badges
+            setText('[data-new-reports-badge]', data.newReports);
+            setText('[data-assigned-tasks-badge]', data.assignedTasks);
+            setText('[data-pending-repairs-badge]', data.pendingRepairs);
+            setText('[data-completed-today-badge]', data.completedToday);
+
+            // notifications
+            const list = document.querySelector('[data-notification-list]');
+            const notifCount = document.getElementById('notif-count');
+            if (!list) return;
+            const notifs = (data.notifications && data.notifications.length) ? data.notifications : [];
+            if (!notifs.length) {
+                list.innerHTML = '<div class="rounded-[1rem] border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-2.5 text-emerald-100/70">No new notifications</div>';
+                if (notifCount) notifCount.textContent = '0';
+                return;
+            }
+
+            notifCount.textContent = String(notifs.length);
+            list.innerHTML = '';
+            notifs.slice(0, 8).forEach(n => {
+                const row = document.createElement('div');
+                row.className = 'rounded-[1rem] border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-2.5 shadow-[0_10px_24px_rgba(6,64,43,0.16)]';
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-white">${n.title || n.message || 'Notification'}</p>
+                            <p class="mt-0.5 text-xs text-emerald-100/70">${n.meta || ''}</p>
+                        </div>
+                        <span class="tech-badge ${n.level === 'urgent' ? 'red' : (n.level === 'high' ? 'amber' : 'blue')}">${(n.level || 'info').toUpperCase()}</span>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function fetchMaintenanceRequests(filters = {}) {
+            const params = new URLSearchParams();
+            Object.keys(filters).forEach(key => {
+                if (filters[key] != null && filters[key] !== '') {
+                    params.append(key, String(filters[key]));
+                }
+            });
+            const query = params.toString();
+            const response = await fetch('/api/maintenance' + (query ? `?${query}` : ''));
+            if (!response.ok) return [];
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
+        }
+
+        function formatDate(value) {
+            const date = value ? new Date(value) : null;
+            return date ? date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            }) : 'Unknown';
+        }
+
+        const technicianAvailabilityState = { rows: [] };
+
+        function technicianAvailabilityClass(value) {
+            return String(value || '').toLowerCase().replace(/[^a-z]+/g, '-');
+        }
+
+        function renderTechnicianEquipmentAvailability() {
+            const body = document.getElementById('technicianEquipmentAvailabilityBody');
+            const count = document.getElementById('technicianEquipmentAvailabilityCount');
+            if (!body || !count) return;
+            const search = String(document.getElementById('technicianAvailabilitySearch')?.value || '').trim().toLowerCase();
+            const laboratory = String(document.getElementById('technicianAvailabilityLaboratory')?.value || '');
+            const status = String(document.getElementById('technicianAvailabilityStatus')?.value || '');
+            const availability = String(document.getElementById('technicianAvailabilityState')?.value || '');
+            const filtered = technicianAvailabilityState.rows.filter((row) => {
+                const searchable = `${row.name} ${row.equipmentId}`.toLowerCase();
+                return (!search || searchable.includes(search)) && (!laboratory || row.laboratoryRoom === laboratory) && (!status || row.status === status) && (!availability || row.availability === availability);
+            });
+            if (!filtered.length) {
+                body.innerHTML = '<div class="tech-availability-empty">No equipment records found.</div>';
+            } else {
+                const groups = new Map();
+                filtered.forEach((row) => {
+                    const laboratoryName = row.laboratoryRoom || 'Unassigned Laboratory';
+                    const categoryName = row.category || row.name || 'Uncategorized';
+                    if (!groups.has(laboratoryName)) groups.set(laboratoryName, new Map());
+                    if (!groups.get(laboratoryName).has(categoryName)) groups.get(laboratoryName).set(categoryName, []);
+                    groups.get(laboratoryName).get(categoryName).push(row);
+                });
+                body.innerHTML = [...groups.entries()].map(([laboratoryName, categories], laboratoryIndex) => `
+                    <section class="tech-availability-group">
+                        <h3 class="tech-availability-group-heading">${escapeBorrowText(laboratoryName)}</h3>
+                        ${[...categories.entries()].map(([categoryName, rows], categoryIndex) => {
+                            const categoryId = `technician-availability-category-${laboratoryIndex}-${categoryIndex}`;
+                            return `<button type="button" class="tech-availability-category-toggle" aria-expanded="false" aria-controls="${categoryId}" data-technician-availability-toggle="${categoryId}"><span><i class="fas fa-box-open mr-2"></i>${escapeBorrowText(categoryName)} <span class="text-xs text-emerald-200/60">(${rows.length})</span></span><i class="fas fa-chevron-down" aria-hidden="true"></i></button><div id="${categoryId}" class="tech-availability-category-content"><table class="tech-availability-table"><thead><tr><th>Equipment ID</th><th>Equipment Name</th><th>Status</th><th>Availability</th><th>Times Borrowed</th><th>Action</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeBorrowText(row.equipmentId)}</td><td>${escapeBorrowText(row.name)}</td><td>${escapeBorrowText(row.status)}</td><td><span class="tech-availability-state ${technicianAvailabilityClass(row.availability)}">${escapeBorrowText(row.availability)}</span></td><td>${escapeBorrowText(row.timesBorrowed)}</td><td><button type="button" class="tech-availability-history-button" data-technician-availability-history="${escapeBorrowText(row.equipmentId)}"><i class="fas fa-clock-rotate-left"></i> View History</button></td></tr>`).join('')}</tbody></table></div>`;
+                        }).join('')}
+                    </section>
+                `).join('');
+            }
+            count.textContent = `Showing ${filtered.length} of ${technicianAvailabilityState.rows.length} equipment`;
+        }
+
+        function populateTechnicianAvailabilityLaboratories() {
+            const select = document.getElementById('technicianAvailabilityLaboratory');
+            if (!select) return;
+            const current = select.value;
+            const laboratories = [...new Set(technicianAvailabilityState.rows.map((row) => row.laboratoryRoom).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">All Laboratories</option>' + laboratories.map((value) => `<option value="${escapeBorrowText(value)}">${escapeBorrowText(value)}</option>`).join('');
+            select.value = laboratories.includes(current) ? current : '';
+        }
+
+        async function loadTechnicianEquipmentAvailability() {
+            const body = document.getElementById('technicianEquipmentAvailabilityBody');
+            if (!body) return;
+            body.innerHTML = '<div class="tech-availability-empty">Loading equipment availability...</div>';
+            try {
+                const response = await fetch('/api/equipment-availability', { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Unable to load equipment availability.');
+                technicianAvailabilityState.rows = Array.isArray(payload) ? payload : [];
+                populateTechnicianAvailabilityLaboratories();
+                renderTechnicianEquipmentAvailability();
+            } catch (error) {
+                console.error('Unable to load technician equipment availability.', error);
+                body.innerHTML = '<div class="tech-availability-empty text-red-300">Unable to load equipment availability.</div>';
+            }
+        }
+
+        function closeTechnicianAvailabilityHistory() {
+            const modal = document.getElementById('technicianAvailabilityHistoryModal');
+            if (!modal) return;
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        async function openTechnicianAvailabilityHistory(equipmentId) {
+            const modal = document.getElementById('technicianAvailabilityHistoryModal');
+            const body = document.getElementById('technicianAvailabilityHistoryBody');
+            const summary = document.getElementById('technicianAvailabilityHistorySummary');
+            const subtitle = document.getElementById('technicianAvailabilityHistorySubtitle');
+            if (!modal || !body || !summary || !subtitle) return;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            body.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400">Loading borrowing history...</td></tr>';
+            try {
+                const response = await fetch(`/api/equipment-availability/${encodeURIComponent(equipmentId)}/history`, { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Unable to load borrowing history.');
+                subtitle.textContent = `${payload.equipment.name} | ${payload.equipment.equipmentId} | ${payload.equipment.laboratoryRoom || 'Laboratory not specified'}`;
+                summary.innerHTML = ['totalBorrowed', 'returned', 'overdue', 'lost'].map((key) => `<div class="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-3 text-center"><span class="block text-xs text-emerald-100/70">${key === 'totalBorrowed' ? 'Total Borrowed' : key.charAt(0).toUpperCase() + key.slice(1)}</span><strong class="mt-1 block text-lg text-white">${escapeBorrowText(payload.summary?.[key] ?? 0)}</strong></div>`).join('');
+                body.innerHTML = payload.history?.length ? payload.history.map((record) => `<tr><td>${escapeBorrowText(record.borrowerName)}</td><td>${escapeBorrowText(record.borrowerType || '—')}</td><td>${escapeBorrowText(record.borrowDate || '—')} ${escapeBorrowText(record.borrowStartTime || '')}</td><td>${escapeBorrowText(record.expectedReturnDate || '—')} ${escapeBorrowText(record.expectedReturnTime || '')}</td><td>${escapeBorrowText(record.returnDate || '—')} ${escapeBorrowText(record.returnTime || '')}</td><td>${escapeBorrowText(record.status || '—')}</td></tr>`).join('') : '<tr><td colspan="6" class="text-center text-slate-400">No borrowing history for this equipment.</td></tr>';
+            } catch (error) {
+                console.error('Unable to load technician equipment history.', error);
+                body.innerHTML = '<tr><td colspan="6" class="text-center text-red-300">Unable to load borrowing history.</td></tr>';
+            }
+        }
+
+        function showSection(sectionId) {
+            const validSections = ['dashboard', 'new-reports', 'equipment-availability', 'borrow-requests'];
+            const targetSection = validSections.includes(sectionId) ? sectionId : 'dashboard';
+            const sectionTitles = {
+                dashboard: 'Maintenance Dashboard',
+                'new-reports': 'New Reports',
+                'equipment-availability': 'Equipment Availability',
+                'borrow-requests': 'Borrow Requests'
+            };
+            const pageTitle = document.getElementById('technician-page-title');
+            if (pageTitle) pageTitle.textContent = sectionTitles[targetSection];
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.toggle('active', section.id === targetSection);
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('href') === `#${targetSection}`);
+            });
+        }
+
+        function getSectionFromHash() {
+            const hash = (window.location.hash || '#dashboard').replace('#', '');
+            return ['dashboard', 'new-reports', 'equipment-availability', 'borrow-requests'].includes(hash) ? hash : 'dashboard';
+        }
+
+        window.addEventListener('hashchange', () => showSection(getSectionFromHash()));
+
+        function renderMaintenanceQueue(reports) {
+            const list = document.querySelector('[data-maintenance-queue-body]');
+            const emptyState = document.querySelector('[data-maintenance-empty]');
+            const queueCount = document.querySelector('[data-maintenance-queue-count]');
+            if (!list) return;
+
+            const searchTerm = (document.getElementById('requestSearchInput')?.value || '').trim().toLowerCase();
+            const statusFilter = (document.getElementById('requestStatusFilter')?.value || 'all').toLowerCase();
+            const priorityFilter = (document.getElementById('requestPriorityFilter')?.value || 'all').toLowerCase();
+            const sortFilter = (document.getElementById('requestSortFilter')?.value || 'newest');
+
+            let filtered = [...(reports || [])];
+            if (searchTerm) {
+                filtered = filtered.filter((report) => {
+                    const haystack = [
+                        report.equipmentId,
+                        report.equipmentName,
+                        report.issueTitle,
+                        report.category,
+                        report.reporterName,
+                        report.reporter && report.reporter.name
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    return haystack.includes(searchTerm);
+                });
+            }
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter((report) => (report.status || 'Pending').toLowerCase() === statusFilter);
+            }
+            if (priorityFilter !== 'all') {
+                filtered = filtered.filter((report) => (report.priority || 'Medium').toLowerCase() === priorityFilter);
+            }
+            filtered.sort((a, b) => {
+                const first = new Date(a.dateReported || a.createdAt || 0).getTime();
+                const second = new Date(b.dateReported || b.createdAt || 0).getTime();
+                return sortFilter === 'oldest' ? first - second : second - first;
+            });
+
+            if (queueCount) {
+                queueCount.textContent = String(filtered.length);
+            }
+
+            if (!filtered.length) {
+                list.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+            list.innerHTML = '';
+            filtered.forEach((report) => {
+                const row = document.createElement('tr');
+                row.className = 'transition-colors hover:bg-emerald-500/5';
+                row.innerHTML = `
+                    <td class="px-3 py-2 text-sm text-white">${report.equipmentId || '—'}</td>
+                    <td class="px-3 py-2 text-sm text-slate-200">${report.equipmentName || report.equipment?.name || '—'}</td>
+                    <td class="px-3 py-2 text-sm text-slate-300">${report.reporterName || (report.reporter && report.reporter.name) || 'Guest Student'}</td>
+                    <td class="px-3 py-2 text-sm text-slate-200">${report.issueTitle || report.category || 'No title'}</td>
+                    <td class="px-3 py-2"><span class="tech-badge ${getBadgeClassForPriority(report.priority)}">${(report.priority || 'Medium').toUpperCase()}</span></td>
+                    <td class="px-3 py-2"><span class="tech-badge ${getBadgeClassForStatus(report.status)}">${(report.status || 'Pending').toUpperCase()}</span></td>
+                    <td class="px-3 py-2 text-sm text-slate-400">${formatDate(report.dateReported)}</td>
+                    <td class="px-3 py-2">
+                        <div class="action-stack">
+                            <button class="action-btn border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20" data-start-id="${report.id}"><span>▶</span><span>Start Repair</span></button>
+                            <button class="action-btn action-btn-in-progress border border-emerald-500/20 text-emerald-200" data-resolve-id="${report.id}"><span>✅</span><span>Mark as Resolved</span></button>
+                        </div>
+                    </td>
+                `;
+                list.appendChild(row);
+            });
+            bindAssignedTaskButtons();
+        }
+
+        function renderLatestReports(reports) {
+            renderPendingReports(reports, currentQueueFilter);
+        }
+
+        function getNormalizedStatus(status) {
+            return String(status || 'Pending').toLowerCase().trim();
+        }
+
+        function getStatusFilterMatches(report, filterValue) {
+            const normalizedStatus = getNormalizedStatus(report.status);
+            switch (filterValue) {
+                case 'pending':
+                    return normalizedStatus === 'pending' || normalizedStatus === 'new';
+                case 'in progress':
+                    return normalizedStatus === 'in progress' || normalizedStatus.includes('progress') || normalizedStatus === 'in-progress';
+                case 'resolved':
+                    return normalizedStatus === 'resolved' || normalizedStatus === 'complete' || normalizedStatus.includes('resolved');
+                default:
+                    return true;
+            }
+        }
+
+        function renderRecentReportsTable(reports) {
+            const tableBody = document.querySelector('[data-recent-reports-table]');
+            if (!tableBody) return;
+
+            const sortedReports = (Array.isArray(reports) ? reports : [])
+                .slice()
+                .sort((a, b) => new Date(b.dateReported || b.createdAt || 0) - new Date(a.dateReported || a.createdAt || 0));
+
+            const totalPages = Math.max(1, Math.ceil(sortedReports.length / recentReportsPaginationState.rowsPerPage));
+            recentReportsPaginationState.currentPage = Math.min(Math.max(1, recentReportsPaginationState.currentPage), totalPages);
+
+            const pagedReports = sortedReports.slice(
+                (recentReportsPaginationState.currentPage - 1) * recentReportsPaginationState.rowsPerPage,
+                recentReportsPaginationState.currentPage * recentReportsPaginationState.rowsPerPage
+            );
+
+            if (!sortedReports.length) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="px-2 py-4 text-slate-400">No recent reports yet.</td></tr>';
+                renderRecentReportsPagination(0);
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            pagedReports.forEach((report) => {
+                const row = document.createElement('tr');
+                const reporterName = report.reporterName || (report.reporter && report.reporter.name) || 'Guest Student';
+                const reportedDate = formatDate(report.dateReported);
+                const statusText = String(report.status || 'Pending');
+
+                row.innerHTML = `
+                    <td class="px-2 py-3 text-white">${report.equipmentId || report.equipment_id || '—'}</td>
+                    <td class="px-2 py-3 text-slate-300">${reporterName}</td>
+                    <td class="px-2 py-3"><span class="tech-badge ${getBadgeClassForStatus(statusText)}">${statusText.toUpperCase()}</span></td>
+                    <td class="px-2 py-3 text-slate-400">${reportedDate}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            renderRecentReportsPagination(totalPages);
+        }
+
+        function renderPendingReports(reports, filterValue = 'all') {
+            const list = document.querySelector('[data-all-pending-reports-list]');
+            if (!list) return;
+
+            const currentFilter = String(filterValue || 'all').toLowerCase();
+            const pendingReports = Array.isArray(reports) ? reports : [];
+            const filteredReports = pendingReports.filter((report) => getStatusFilterMatches(report, currentFilter));
+            const totalPages = Math.max(1, Math.ceil(filteredReports.length / technicianMaintenancePaginationState.rowsPerPage));
+            technicianMaintenancePaginationState.currentPage = Math.min(Math.max(1, technicianMaintenancePaginationState.currentPage), totalPages);
+
+            const pagedReports = filteredReports.slice(
+                (technicianMaintenancePaginationState.currentPage - 1) * technicianMaintenancePaginationState.rowsPerPage,
+                technicianMaintenancePaginationState.currentPage * technicianMaintenancePaginationState.rowsPerPage
+            );
+
+            if (!filteredReports.length) {
+                list.innerHTML = `
+                    <div class="pending-empty-state">
+                        <div class="pending-empty-illustration">
+                            <i class="fas fa-wrench text-xl"></i>
+                        </div>
+                        <h3>No maintenance requests in this view</h3>
+                        <p>Try another status filter or wait for a new report to arrive.</p>
+                    </div>
+                `;
+                renderTechnicianMaintenancePagination(0);
+                return;
+            }
+
+            list.innerHTML = '';
+            pagedReports.forEach((report) => {
+                const card = document.createElement('article');
+                card.className = 'pending-report-card';
+                const reporterName = report.reporterName || (report.reporter && report.reporter.name) || 'Guest Student';
+                const priority = (report.priority || 'Medium').toUpperCase();
+                const normalizedStatus = getNormalizedStatus(report.status);
+                const status = (report.status || 'Pending').toUpperCase();
+                const reportedAt = report.dateReported ? new Date(report.dateReported) : null;
+                const dateLabel = reportedAt ? reportedAt.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                }) : 'Unknown';
+                const equipmentId = report.equipmentId || report.equipment_id || '—';
+                const equipmentName = report.equipmentName || report.equipment?.name || '—';
+                const equipmentStatus = report.equipmentStatus || report.equipment?.status || 'Serviceable';
+                const campus = report.campus || report.equipment?.campus || '—';
+                const damageDescription = report.description || 'No damage description provided.';
+                const resolvedBy = report.resolvedBy || '—';
+                const resolvedDate = report.resolvedDate ? new Date(report.resolvedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+
+                let actionBlock = '';
+                if (normalizedStatus === 'pending' || normalizedStatus === 'new') {
+                    actionBlock = `
+                        <div class="flex w-full flex-col gap-2">
+                            <button class="action-btn border border-emerald-500/20 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-400" data-accept-id="${report.id}"><span>▶</span><span>Accept Repair</span></button>
+                        </div>`;
+                } else if (normalizedStatus === 'in progress' || normalizedStatus.includes('progress') || normalizedStatus === 'in-progress') {
+                    actionBlock = `
+                        <div class="flex w-full flex-col gap-2">
+                            <button class="action-btn border border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-400" data-resolve-id="${report.id}"><span>✅</span><span>Mark as Resolved</span></button>
+                        </div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="pending-report-header">
+                        <div class="pending-report-identity">
+                            <div class="pending-report-icon">
+                                <i class="fas fa-toolbox"></i>
+                            </div>
+                            <div class="pending-report-title-group">
+                                <p class="pending-report-title">${equipmentName}</p>
+                                <p class="pending-report-subtitle">Equipment ID: ${equipmentId}</p>
+                            </div>
+                        </div>
+                        <div class="pending-report-head-actions">
+                            <span class="tech-badge ${getBadgeClassForStatus(status)}">${status}</span>
+                        </div>
+                    </div>
+
+                    <div class="pending-report-meta-grid">
+                        <div class="pending-report-meta">
+                            <span class="pending-report-meta-label">Reported by</span>
+                            <span class="pending-report-meta-value">${reporterName}</span>
+                        </div>
+                        <div class="pending-report-meta">
+                            <span class="pending-report-meta-label">Date reported</span>
+                            <span class="pending-report-meta-value">${dateLabel}</span>
+                        </div>
+                        <div class="pending-report-meta">
+                            <span class="pending-report-meta-label">Campus</span>
+                            <span class="pending-report-meta-value">${campus}</span>
+                        </div>
+                        <div class="pending-report-meta">
+                            <span class="pending-report-meta-label">Equipment status</span>
+                            <span class="pending-report-meta-value">${equipmentStatus}</span>
+                        </div>
+                    </div>
+
+                    <div class="pending-report-divider"></div>
+
+                    <div class="pending-report-description">
+                        <span class="pending-report-meta-label">Damage description</span>
+                        <p>${damageDescription}</p>
+                    </div>
+
+                    <div class="pending-report-action-wrap">
+                        <div class="pending-report-status-field">
+                            <label class="text-[10px] uppercase tracking-[0.2em] text-emerald-200/70">Status</label>
+                            <select data-equipment-status-select data-equipment-id="${equipmentId}" class="pending-report-status-select">
+                                <option value="Serviceable" ${equipmentStatus === 'Serviceable' ? 'selected' : ''}>Serviceable</option>
+                                <option value="Unserviceable" ${equipmentStatus === 'Unserviceable' ? 'selected' : ''}>Unserviceable</option>
+                            </select>
+                        </div>
+
+                        ${actionBlock ? `${actionBlock}` : ''}
+                    </div>
+
+                    ${normalizedStatus === 'resolved' || normalizedStatus.includes('resolved') || normalizedStatus === 'complete' ? `
+                        <div class="pending-report-resolved-note">Resolved by ${resolvedBy} on ${resolvedDate}</div>` : ''}
+                `;
+                list.appendChild(card);
+            });
+
+            bindAssignedTaskButtons();
+            renderTechnicianMaintenancePagination(totalPages);
+        }
+
+        function renderAssignedTasks(reports) {
+            renderMaintenanceQueue(reports);
+        }
+
+        async function updateMaintenanceStatus(id, status, extra = {}) {
+            try {
+                const response = await fetch(`/api/maintenance/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, ...extra })
+                });
+                if (!response.ok) {
+                    console.error('Unable to update maintenance request', id);
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Unable to update maintenance request', error);
+                return false;
+            }
+        }
+
+        async function updateEquipmentStatusById(equipmentId, status) {
+            if (!equipmentId || !status) return false;
+            try {
+                const response = await fetch(`/api/equipment/${encodeURIComponent(equipmentId)}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    alert(payload.error || 'Unable to update equipment condition.');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Unable to update equipment condition:', error);
+                alert('Unable to update the equipment condition.');
+                return false;
+            }
+        }
+
+        function bindAssignedTaskButtons() {
+            document.querySelectorAll('button[data-accept-id]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = this.getAttribute('data-accept-id');
+                    if (await updateMaintenanceStatus(id, 'In Progress')) {
+                        loadTechnicianDashboard();
+                    }
+                });
+            });
+
+            document.querySelectorAll('button[data-resolve-id]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = this.getAttribute('data-resolve-id');
+                    if (await updateMaintenanceStatus(id, 'Resolved', {
+                        resolvedBy: window.__CURRENT_USER__?.name || window.__CURRENT_USER__?.email || 'Technician'
+                    })) {
+                        loadTechnicianDashboard();
+                    }
+                });
+            });
+
+            document.querySelectorAll('button[data-equipment-status]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const equipmentId = this.getAttribute('data-equipment-id');
+                    const status = this.getAttribute('data-equipment-status');
+                    if (!equipmentId || !status) return;
+                    if (await updateEquipmentStatusById(equipmentId, status)) {
+                        loadTechnicianDashboard();
+                    }
+                });
+            });
+
+            document.querySelectorAll('select[data-equipment-status-select]').forEach(select => {
+                select.addEventListener('change', async function() {
+                    const equipmentId = this.getAttribute('data-equipment-id');
+                    const status = this.value;
+                    if (!equipmentId || !status) return;
+                    if (await updateEquipmentStatusById(equipmentId, status)) {
+                        loadTechnicianDashboard();
+                    }
+                });
+            });
+        }
+
+        async function loadTechnicianDashboard() {
+            const user = window.__CURRENT_USER__ || {};
+            const allRequests = await fetchMaintenanceRequests();
+            const visibleAllRequests = Array.isArray(allRequests) ? allRequests : [];
+
+            technicianMaintenancePaginationState.currentPage = 1;
+            recentReportsPaginationState.currentPage = 1;
+            window.__TECHNICIAN_REQUESTS__ = visibleAllRequests;
+
+            const pendingCount = visibleAllRequests.filter((request) => getNormalizedStatus(request.status) === 'pending' || getNormalizedStatus(request.status) === 'new').length;
+            const inProgressCount = visibleAllRequests.filter((request) => {
+                const status = getNormalizedStatus(request.status);
+                return status === 'in progress' || status === 'in-progress' || status.includes('progress');
+            }).length;
+            const resolvedTodayCount = visibleAllRequests.filter((request) => {
+                const status = getNormalizedStatus(request.status);
+                const resolvedDate = request.dateResolved || request.updatedAt || request.dateReported;
+                const isResolved = status === 'resolved' || status === 'complete' || status.includes('resolved');
+                const sameDay = resolvedDate ? new Date(resolvedDate).toDateString() === new Date().toDateString() : false;
+                return isResolved && sameDay;
+            }).length;
+            const totalResolvedCount = visibleAllRequests.filter((request) => {
+                const status = getNormalizedStatus(request.status);
+                return status === 'resolved' || status === 'complete' || status.includes('resolved');
+            }).length;
+
+            document.querySelectorAll('[data-new-reports]').forEach(el => { el.textContent = String(pendingCount); });
+            document.querySelectorAll('[data-new-reports-badge]').forEach(el => { el.textContent = String(pendingCount); });
+            // Update sidebar bell + badge if present
+            const sidebarBell = document.querySelector('[data-sidebar-bell]');
+            const sidebarBadge = document.querySelector('[data-new-reports-badge]');
+            if (sidebarBell) {
+                if (pendingCount > 0) {
+                    sidebarBell.style.display = 'inline-block';
+                    sidebarBell.setAttribute('aria-hidden', 'false');
+                    sidebarBell.classList.add('has-new-reports');
+                } else {
+                    sidebarBell.style.display = 'none';
+                    sidebarBell.classList.remove('has-new-reports');
+                }
+            }
+            if (sidebarBadge) {
+                if (pendingCount > 0) {
+                    sidebarBadge.style.display = 'inline-block';
+                    sidebarBadge.textContent = String(pendingCount);
+                } else {
+                    sidebarBadge.style.display = 'none';
+                }
+            }
+            if (typeof window.syncSidebarPendingReportBadge === 'function') {
+                window.syncSidebarPendingReportBadge();
+            }
+            document.querySelectorAll('[data-in-progress-count]').forEach(el => { el.textContent = String(inProgressCount); });
+            document.querySelectorAll('[data-resolved-today-count]').forEach(el => { el.textContent = String(resolvedTodayCount); });
+            document.querySelectorAll('[data-total-resolved-count]').forEach(el => { el.textContent = String(totalResolvedCount); });
+            document.querySelectorAll('[data-tech-assigned-count]').forEach(el => { el.textContent = String(totalResolvedCount); });
+            document.querySelectorAll('[data-tech-completed-count]').forEach(el => { el.textContent = String(resolvedTodayCount); });
+            document.querySelectorAll('[data-tech-last-activity]').forEach(el => { el.textContent = visibleAllRequests.length ? 'Updated just now' : 'No pending work'; });
+            document.querySelectorAll('[data-tech-status]').forEach(el => { el.textContent = 'Online'; });
+
+            renderLatestReports(visibleAllRequests);
+            renderRecentReportsTable(visibleAllRequests);
+        }
+
+        async function fetchPendingMaintenanceReports() {
+            try {
+                const response = await fetch('/api/maintenance?status=Pending');
+                if (!response.ok) return [];
+                const data = await response.json();
+                return Array.isArray(data) ? data : [];
+            } catch (error) {
+                console.error('Unable to load pending maintenance reports', error);
+                return [];
+            }
+        }
+
+        function renderTechnicianNotifications(reports) {
+            const notifList = document.querySelector('[data-notification-list]');
+            const newReportsList = document.querySelector('[data-new-reports-list]');
+            const notifCount = document.getElementById('notif-count');
+            const newReportsCountEls = document.querySelectorAll('[data-new-reports]');
+            const newReportsBadgeEls = document.querySelectorAll('[data-new-reports-badge]');
+            const count = reports.length;
+
+            if (newReportsCountEls.length) {
+                newReportsCountEls.forEach(el => el.textContent = String(count));
+            }
+            if (newReportsBadgeEls.length) {
+                newReportsBadgeEls.forEach(el => el.textContent = String(count));
+            }
+            if (notifCount) notifCount.textContent = String(count);
+
+            if (!notifList || !newReportsList) return;
+
+            if (!count) {
+                notifList.innerHTML = '<div class="rounded-[1rem] border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-2.5 text-emerald-100/70">No new notifications</div>';
+                newReportsList.innerHTML = '<div class="rounded-[1rem] border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(15,36,27,.96),rgba(10,29,21,.96))] p-2.5 text-emerald-100/70">No recent reports.</div>';
+                return;
+            }
+
+            notifList.innerHTML = '';
+            // Build a responsive table for recent reports
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'overflow-x-auto mt-2';
+
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-emerald-500/10';
+            table.innerHTML = `
+                <thead>
+                    <tr class="text-xs text-emerald-100/70 text-left">
+                        <th class="px-3 py-2">Equipment ID</th>
+                        <th class="px-3 py-2">Issue Title</th>
+                        <th class="px-3 py-2">Reported By</th>
+                        <th class="px-3 py-2">Date Reported</th>
+                        <th class="px-3 py-2">Priority</th>
+                        <th class="px-3 py-2">Status</th>
+                        <th class="px-3 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-emerald-500/10"></tbody>
+            `;
+
+            const tbody = table.querySelector('tbody');
+
+            reports.slice(0, 20).forEach(report => {
+                const reportedAt = report.dateReported ? new Date(report.dateReported) : null;
+                const dateLabel = reportedAt ? reportedAt.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                }) : 'Unknown';
+                const reporterName = report.reporterName || (report.reporter && report.reporter.name) || 'Guest Student';
+                const priorityClass = report.priority === 'Critical' ? 'red' : report.priority === 'High' ? 'amber' : 'blue';
+                const tr = document.createElement('tr');
+                tr.className = 'bg-transparent';
+                tr.innerHTML = `
+                    <td class="px-3 py-2 align-top text-sm text-white">${report.equipmentId || '—'}</td>
+                    <td class="px-3 py-2 align-top text-sm text-slate-200">${(report.issueTitle || report.category || 'No title')}</td>
+                    <td class="px-3 py-2 align-top text-sm text-slate-300">${reporterName}</td>
+                    <td class="px-3 py-2 align-top text-sm text-slate-400">${dateLabel}</td>
+                    <td class="px-3 py-2 align-top"><span class="tech-badge ${priorityClass}">${(report.priority || 'Medium').toUpperCase()}</span></td>
+                    <td class="px-3 py-2 align-top text-sm text-slate-300">${report.status || 'Pending'}</td>
+                    <td class="px-3 py-2 align-top"><button class="btn-primary px-3 py-1 rounded text-sm" data-view-id="${report.id}">View</button></td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            tableWrapper.appendChild(table);
+            newReportsList.innerHTML = '';
+            newReportsList.appendChild(tableWrapper);
+
+            // wire up View buttons to existing handlers (if any)
+            newReportsList.querySelectorAll('button[data-view-id]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-view-id');
+                    // try to find an existing handler; otherwise navigate to a detail view if available
+                    if (typeof openMaintenanceDetail === 'function') return openMaintenanceDetail(id);
+                    // fallback: open a modal or navigate to maintenance detail route if present
+                    try { window.location.hash = '#maintenance-' + id; } catch (e) {}
+                });
+            });
+        }
+
+        async function refreshTechnicianNotifications() {
+            const reports = await fetchPendingMaintenanceReports();
+            renderTechnicianNotifications(reports);
+        }
+
+        const escapeBorrowText = (value) => String(value ?? '—').replace(/[&<>'"]/g, (character) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[character]));
+
+        const formatBorrowDate = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        }) : '—';
+
+        const formatBorrowDateTime = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        }) : '—';
+
+        const borrowRequestState = {
+            records: [],
+            activeTab: 'current',
+            filters: { search: '', status: 'all', type: 'all', date: '' },
+            currentPage: 1,
+            pageSize: 3
+        };
+
+        function getBorrowStatusText(record) {
+            const statusValue = String(record?.status || '').trim();
+            const lower = statusValue.toLowerCase();
+
+            if (lower === 'pending') return 'Pending';
+            if (lower === 'approved') return 'Approved';
+            if (lower === 'rejected') return 'Rejected';
+            if (lower === 'returned') return 'Returned';
+            if (lower === 'borrowed') return 'Borrowed';
+            if (lower === 'lost') return 'Lost';
+            if (lower === 'overdue') return 'Overdue';
+            if (lower === 'pending replacement') return 'Pending Replacement';
+
+            const expected = record?.expectedReturnDate ? new Date(`${String(record.expectedReturnDate).slice(0, 10)}T00:00:00`) : null;
+            if (expected && expected < new Date() && !['returned', 'rejected'].includes(lower)) {
+                return 'Overdue';
+            }
+            return statusValue || 'Borrowed';
+        }
+
+        function getBorrowBadgeClass(status) {
+            const label = String(status || '').trim();
+            const lower = label.toLowerCase();
+            if (lower === 'pending') return 'border border-yellow-500/30 bg-yellow-500/15 text-yellow-200';
+            if (lower === 'approved' || lower === 'borrowed') return 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-200';
+            if (lower === 'rejected') return 'border border-red-500/30 bg-red-500/15 text-red-200';
+            if (lower === 'returned') return 'border border-sky-500/30 bg-sky-500/15 text-sky-200';
+            if (lower === 'overdue') return 'border border-orange-500/30 bg-orange-500/15 text-orange-200';
+            if (lower === 'lost') return 'border border-rose-500/30 bg-rose-500/15 text-rose-200';
+            return 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-200';
+        }
+
+        function getBorrowVisibleRecords() {
+            const filtered = borrowRequestState.records.filter((record) => {
+                const searchText = `${record.borrowerName || ''} ${record.equipmentName || ''} ${record.equipmentId || ''}`.toLowerCase();
+                const searchMatch = !borrowRequestState.filters.search || searchText.includes(borrowRequestState.filters.search.toLowerCase());
+                const statusMatch = borrowRequestState.filters.status === 'all' || getBorrowStatusText(record) === borrowRequestState.filters.status;
+                const typeMatch = borrowRequestState.filters.type === 'all' || String(record.borrowerType || '').trim() === borrowRequestState.filters.type;
+                const dateMatch = !borrowRequestState.filters.date || String(record.borrowDate || '').slice(0, 10) === borrowRequestState.filters.date;
+                return searchMatch && statusMatch && typeMatch && dateMatch;
+            });
+
+            if (borrowRequestState.activeTab === 'current') {
+                return filtered.filter((record) => {
+                    const status = String(record.status || '').trim().toLowerCase();
+                    return ['pending', 'approved', 'borrowed'].includes(status) || (status === '' && record.expectedReturnDate);
+                });
+            }
+
+            return filtered.filter((record) => {
+                const status = String(record.status || '').trim().toLowerCase();
+                return ['returned', 'rejected', 'lost', 'overdue'].includes(status) || status === 'pending replacement';
+            });
+        }
+
+        function renderBorrowSummary() {
+            const total = borrowRequestState.records.length;
+            const pending = borrowRequestState.records.filter((record) => String(record.status || '').trim().toLowerCase() === 'pending').length;
+            const borrowed = borrowRequestState.records.filter((record) => ['approved', 'borrowed'].includes(String(record.status || '').trim().toLowerCase())).length;
+            const overdue = borrowRequestState.records.filter((record) => {
+                const status = String(record.status || '').trim().toLowerCase();
+                if (!['approved', 'borrowed'].includes(status)) return false;
+                const expectedDate = record.expectedReturnDate ? new Date(`${String(record.expectedReturnDate).slice(0, 10)}T00:00:00`) : null;
+                return expectedDate && expectedDate < new Date();
+            }).length;
+
+            const totalEl = document.getElementById('borrowSummaryTotal');
+            const borrowedEl = document.getElementById('borrowSummaryBorrowed');
+            const pendingEl = document.getElementById('borrowSummaryPending');
+            const overdueEl = document.getElementById('borrowSummaryOverdue');
+            if (totalEl) totalEl.textContent = String(total);
+            if (borrowedEl) borrowedEl.textContent = String(borrowed);
+            if (pendingEl) pendingEl.textContent = String(pending);
+            if (overdueEl) overdueEl.textContent = String(overdue);
+
+            const count = document.getElementById('borrow-request-count');
+            if (count) count.textContent = `${pending} pending`;
+        }
+
+        function renderBorrowPagination(totalPages) {
+            const container = document.getElementById('technicianBorrowPagination');
+            if (!container) return;
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const prevDisabled = borrowRequestState.currentPage === 1;
+            const nextDisabled = borrowRequestState.currentPage >= totalPages;
+            const buttons = [
+                `<button type="button" data-borrow-page="prev" ${prevDisabled ? 'disabled' : ''} class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Previous</button>`
+            ];
+
+            for (let page = 1; page <= totalPages; page += 1) {
+                buttons.push(`<button type="button" data-borrow-page="${page}" class="rounded-full border ${page === borrowRequestState.currentPage ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-emerald-500/20 bg-emerald-500/5 text-emerald-100'} px-3 py-1.5 text-sm font-semibold">${page}</button>`);
+            }
+
+            buttons.push(`<button type="button" data-borrow-page="next" ${nextDisabled ? 'disabled' : ''} class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Next</button>`);
+            container.innerHTML = buttons.join('');
+            container.querySelectorAll('[data-borrow-page]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.borrowPage;
+                    if (page === 'prev') {
+                        borrowRequestState.currentPage = Math.max(1, borrowRequestState.currentPage - 1);
+                    } else if (page === 'next') {
+                        borrowRequestState.currentPage = Math.min(totalPages, borrowRequestState.currentPage + 1);
+                    } else {
+                        borrowRequestState.currentPage = Number(page);
+                    }
+                    renderBorrowTable();
+                });
+            });
+        }
+
+        function renderBorrowTable() {
+            const body = document.getElementById('technicianBorrowTableBody');
+            if (!body) return;
+
+            const visible = getBorrowVisibleRecords();
+            const totalPages = Math.max(1, Math.ceil(visible.length / borrowRequestState.pageSize));
+            borrowRequestState.currentPage = Math.min(borrowRequestState.currentPage, totalPages);
+            const start = (borrowRequestState.currentPage - 1) * borrowRequestState.pageSize;
+            const pageRows = visible.slice(start, start + borrowRequestState.pageSize);
+
+            if (!visible.length) {
+                body.innerHTML = '<tr><td colspan="7" class="px-3 py-6 text-center text-sm text-emerald-100/70">No borrow records match the current filters.</td></tr>';
+                renderBorrowPagination(0);
+                return;
+            }
+
+            body.innerHTML = pageRows.map((record) => {
+                const statusText = getBorrowStatusText(record);
+                const equipmentLabel = `${record.equipmentName || 'Equipment'}${record.equipmentId ? `\n${record.equipmentId}` : ''}`;
+                const lab = record.laboratoryRoom || record.laboratory || 'Not specified';
+                const isPending = String(record.status || '').trim().toLowerCase() === 'pending';
+                const isOverdue = statusText === 'Overdue';
+
+                const actionHtml = isPending
+                    ? `<div class="technician-borrow-actions"><button type="button" data-borrow-view="${record.id}" class="technician-borrow-action-btn" title="View Details" aria-label="View Details"><i class="fas fa-eye" aria-hidden="true"></i></button><button type="button" data-borrow-approve="${record.id}" class="technician-borrow-action-btn approve" title="Approve Request" aria-label="Approve Request"><i class="fas fa-check" aria-hidden="true"></i></button><button type="button" data-borrow-reject="${record.id}" class="technician-borrow-action-btn reject" title="Reject Request" aria-label="Reject Request"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>`
+                    : `<div class="technician-borrow-actions"><button type="button" data-borrow-view="${record.id}" class="technician-borrow-action-btn" title="View Details" aria-label="View Details"><i class="fas fa-eye" aria-hidden="true"></i></button>${isOverdue ? `<button type="button" data-borrow-mark-lost="${record.id}" class="technician-borrow-action-btn reject" title="Mark as Lost" aria-label="Mark as Lost"><i class="fas fa-circle-exclamation" aria-hidden="true"></i></button>` : ''}</div>`;
+
+                return `<tr class="align-top">
+                    <td class="px-3 py-3 !text-[15px] text-white">${escapeBorrowText(record.borrowerName || '—')}</td>
+                    <td class="px-3 py-3 !text-[15px]">
+                        <div class="font-semibold text-white">${escapeBorrowText(record.equipmentName || '—')}</div>
+                        <div class="text-xs text-emerald-200/70">${escapeBorrowText(record.equipmentId || '—')}</div>
+                    </td>
+                    <td class="px-3 py-3 !text-[15px] text-slate-300">${escapeBorrowText(lab)}</td>
+                    <td class="px-3 py-3 !text-[15px] text-slate-300">${formatBorrowDateTime(record.borrowDate)}<br><span class="!text-[13px] text-emerald-200/70">${escapeBorrowText(record.borrowStartTime || '—')}</span></td>
+                    <td class="px-3 py-3 !text-[15px] text-slate-300">${formatBorrowDateTime(record.expectedReturnDate)}<br><span class="!text-[13px] text-emerald-200/70">${escapeBorrowText(record.expectedReturnTime || '—')}</span></td>
+                    <td class="px-3 py-3"><span class="inline-flex rounded-full px-2.5 py-1 !text-sm font-bold uppercase tracking-[0.14em] ${getBorrowBadgeClass(statusText)}">${escapeBorrowText(statusText)}</span></td>
+                    <td class="min-w-[145px] whitespace-nowrap px-3 py-3 !text-[15px] align-middle">${actionHtml}</td>
+                </tr>`;
+            }).join('');
+
+            renderBorrowPagination(totalPages);
+        }
+
+        function openBorrowDetailsModal(recordId) {
+            const record = borrowRequestState.records.find((item) => String(item.id) === String(recordId));
+            if (!record) return;
+
+            const modal = document.getElementById('technicianBorrowDetailsModal');
+            if (!modal) return;
+
+            const statusText = getBorrowStatusText(record);
+            const badge = document.getElementById('borrowDetailStatusBadge');
+            if (badge) {
+                badge.textContent = statusText;
+                badge.className = `inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${getBorrowBadgeClass(statusText)}`;
+            }
+
+            document.getElementById('borrowDetailBorrowerName').textContent = record.borrowerName || '—';
+            document.getElementById('borrowDetailBorrowerType').textContent = record.borrowerType || '—';
+            document.getElementById('borrowDetailDepartment').textContent = record.departmentInfo || '—';
+            document.getElementById('borrowDetailInstructorName').textContent = record.instructorName || record.instructor_name || '—';
+            document.getElementById('borrowDetailEquipmentName').textContent = `${record.equipmentName || '—'} / ${record.equipmentType || 'Equipment'}`;
+            document.getElementById('borrowDetailEquipmentId').textContent = record.equipmentId || '—';
+            document.getElementById('borrowDetailCampus').textContent = record.campus || '—';
+            document.getElementById('borrowDetailLaboratory').textContent = record.laboratoryRoom || record.laboratory || 'Not specified';
+            document.getElementById('borrowDetailQuantity').textContent = `${record.quantity || 1}`;
+            document.getElementById('borrowDetailBorrowDate').textContent = formatBorrowDateTime(record.borrowDate);
+            document.getElementById('borrowDetailBorrowStartTime').textContent = record.borrowStartTime || '—';
+            document.getElementById('borrowDetailExpectedReturnDate').textContent = formatBorrowDateTime(record.expectedReturnDate);
+            document.getElementById('borrowDetailExpectedReturnTime').textContent = record.expectedReturnTime || '—';
+            document.getElementById('borrowDetailPurpose').textContent = record.purpose || 'No purpose provided';
+            document.getElementById('borrowDetailStatus').textContent = statusText;
+
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeBorrowDetailsModal() {
+            const modal = document.getElementById('technicianBorrowDetailsModal');
+            if (!modal) return;
+            document.activeElement?.blur();
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function handleBorrowTableActions() {
+            const body = document.getElementById('technicianBorrowTableBody');
+            if (!body) return;
+
+            body.onclick = async (event) => {
+                const viewButton = event.target.closest('[data-borrow-view]');
+                const approveButton = event.target.closest('[data-borrow-approve]');
+                const rejectButton = event.target.closest('[data-borrow-reject]');
+                const lostButton = event.target.closest('[data-borrow-mark-lost]');
+
+                if (viewButton) {
+                    openBorrowDetailsModal(viewButton.dataset.borrowView);
+                    return;
+                }
+                if (approveButton) {
+                    await processBorrowRequest(approveButton.dataset.borrowApprove, 'approve');
+                    return;
+                }
+                if (rejectButton) {
+                    await processBorrowRequest(rejectButton.dataset.borrowReject, 'reject');
+                    return;
+                }
+                if (lostButton) {
+                    openLostEquipmentModal(lostButton.dataset.borrowMarkLost);
+                }
+            };
+        }
+
+        async function loadBorrowRequests() {
+            const tableBody = document.getElementById('technicianBorrowTableBody');
+            try {
+                const response = await fetch('/api/borrow-records', { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Unable to load borrow requests.');
+
+                borrowRequestState.records = Array.isArray(payload) ? payload : [];
+                borrowRequestState.records.sort((a, b) => new Date(b.created_at || b.createdAt || b.borrowDate || 0) - new Date(a.created_at || a.createdAt || a.borrowDate || 0));
+                renderBorrowSummary();
+                renderBorrowTable();
+                if (tableBody) tableBody.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (error) {
+                console.error('Unable to load technician borrow requests.', error);
+                const count = document.getElementById('borrow-request-count');
+                if (count) count.textContent = '0 pending';
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="7" class="px-3 py-5 text-center text-sm text-red-300">${escapeBorrowText(error.message || 'Unable to load borrow requests.')}</td></tr>`;
+                }
+            }
+        }
+
+        function bindTechnicianBorrowControls() {
+            const tabCurrent = document.getElementById('borrowTabCurrent');
+            const tabHistory = document.getElementById('borrowTabHistory');
+            const searchInput = document.getElementById('borrowSearchInput');
+            const statusFilter = document.getElementById('borrowStatusFilter');
+            const typeFilter = document.getElementById('borrowTypeFilter');
+            const dateFilter = document.getElementById('borrowDateFilter');
+            const modal = document.getElementById('technicianBorrowDetailsModal');
+            const closeButton = document.getElementById('closeBorrowDetailsModal');
+            const lostModal = document.getElementById('technicianLostEquipmentModal');
+            const closeLostButton = document.getElementById('closeLostEquipmentModal');
+            const cancelLostButton = document.getElementById('cancelLostEquipmentBtn');
+            const confirmLostButton = document.getElementById('confirmLostEquipmentBtn');
+
+            tabCurrent?.addEventListener('click', () => {
+                borrowRequestState.activeTab = 'current';
+                borrowRequestState.currentPage = 1;
+                tabCurrent.className = 'rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white';
+                tabHistory.className = 'rounded-full px-4 py-2 text-sm font-semibold text-emerald-100/80 hover:bg-emerald-500/10';
+                renderBorrowTable();
+            });
+
+            tabHistory?.addEventListener('click', () => {
+                borrowRequestState.activeTab = 'history';
+                borrowRequestState.currentPage = 1;
+                tabHistory.className = 'rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white';
+                tabCurrent.className = 'rounded-full px-4 py-2 text-sm font-semibold text-emerald-100/80 hover:bg-emerald-500/10';
+                renderBorrowTable();
+            });
+
+            searchInput?.addEventListener('input', (event) => {
+                borrowRequestState.filters.search = event.target.value;
+                borrowRequestState.currentPage = 1;
+                renderBorrowTable();
+            });
+
+            statusFilter?.addEventListener('change', (event) => {
+                borrowRequestState.filters.status = event.target.value;
+                borrowRequestState.currentPage = 1;
+                renderBorrowTable();
+            });
+
+            typeFilter?.addEventListener('change', (event) => {
+                borrowRequestState.filters.type = event.target.value;
+                borrowRequestState.currentPage = 1;
+                renderBorrowTable();
+            });
+
+            dateFilter?.addEventListener('change', (event) => {
+                borrowRequestState.filters.date = event.target.value;
+                borrowRequestState.currentPage = 1;
+                renderBorrowTable();
+            });
+
+            closeButton?.addEventListener('click', closeBorrowDetailsModal);
+            modal?.addEventListener('click', (event) => {
+                if (event.target === modal) closeBorrowDetailsModal();
+            });
+            closeLostButton?.addEventListener('click', closeLostEquipmentModal);
+            cancelLostButton?.addEventListener('click', closeLostEquipmentModal);
+            confirmLostButton?.addEventListener('click', confirmLostEquipment);
+            lostModal?.addEventListener('click', (event) => {
+                if (event.target === lostModal) closeLostEquipmentModal();
+            });
+        }
+
+        let lostEquipmentRecordId = null;
+
+        function openLostEquipmentModal(recordId) {
+            lostEquipmentRecordId = recordId || null;
+            const modal = document.getElementById('technicianLostEquipmentModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeLostEquipmentModal() {
+            lostEquipmentRecordId = null;
+            const modal = document.getElementById('technicianLostEquipmentModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        async function confirmLostEquipment() {
+            if (!lostEquipmentRecordId) return;
+            const response = await fetch(`/api/borrow-records/${encodeURIComponent(lostEquipmentRecordId)}/mark-lost`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ processedBy: window.__CURRENT_USER__?.name || 'Technician' })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                window.alert(payload.error || 'Unable to mark equipment as lost.');
+                return;
+            }
+            closeLostEquipmentModal();
+            await loadBorrowRequests();
+            await loadBorrowNotifications();
+            await loadTechnicianDashboard();
+            await loadTechnicianEquipmentAvailability();
+        }
+
+        async function processBorrowRequest(id, action) {
+            if (!id) return;
+            let reason = '';
+            if (action === 'reject') {
+                reason = window.prompt('Reason for rejection:', 'Equipment is currently unavailable') || '';
+                if (!reason.trim()) return;
+            } else if (!window.confirm('Approve this borrow request?')) {
+                return;
+            }
+
+            const response = await fetch(`/api/borrow-records/${encodeURIComponent(id)}/${action}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason, processedBy: window.__CURRENT_USER__?.name || 'Technician' })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                window.alert(payload.error || 'This borrow request has already been processed.');
+                return;
+            }
+            await loadBorrowRequests();
+            await loadBorrowNotifications();
+        }
+
+        async function loadBorrowNotifications() {
+            const response = await fetch('/api/borrow-notifications?unreadOnly=true', { cache: 'no-store' });
+            const notifications = response.ok ? await response.json() : [];
+            const unread = Array.isArray(notifications) ? notifications : [];
+            const list = document.querySelector('[data-notification-list]');
+            if (!list) return;
+            list.innerHTML = unread.length ? unread.slice(0, 8).map((notification) => `<button type="button" class="block w-full rounded-xl border border-emerald-500/15 bg-emerald-950/50 p-3 text-left" data-borrow-notification="${escapeBorrowText(notification.id)}" data-related-id="${escapeBorrowText(notification.relatedId)}"><strong class="text-sm text-white">${escapeBorrowText(notification.title)}</strong><span class="mt-1 block text-xs text-emerald-100/70">${escapeBorrowText(notification.message)}</span></button>`).join('') : '<div class="rounded-xl border border-emerald-500/15 bg-emerald-950/50 p-3 text-sm text-emerald-100/70">No new notifications</div>';
+            list.querySelectorAll('[data-borrow-notification]').forEach((button) => button.addEventListener('click', async () => {
+                await fetch(`/api/borrow-notifications/${button.dataset.borrowNotification}/read`, { method: 'PUT' });
+                showSection('borrow-requests');
+                document.getElementById(`borrow-request-${button.dataset.relatedId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                await loadBorrowNotifications();
+            }));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            hydrateTechnicianProfile();
+            setupTechnicianPhotoUpload();
+            hydrateDashboardWidgets();
+
+            document.querySelectorAll('.status-filter-chip').forEach((chip) => {
+                chip.addEventListener('click', function() {
+                    document.querySelectorAll('.status-filter-chip').forEach((item) => item.classList.remove('active'));
+                    this.classList.add('active');
+                    currentQueueFilter = this.getAttribute('data-status-filter') || 'all';
+                    technicianMaintenancePaginationState.currentPage = 1;
+                    renderPendingReports(window.__TECHNICIAN_REQUESTS__ || [], currentQueueFilter);
+                });
+            });
+
+            technicianMaintenancePaginationState.currentPage = 1;
+            bindTechnicianBorrowControls();
+            handleBorrowTableActions();
+            ['technicianAvailabilitySearch', 'technicianAvailabilityLaboratory', 'technicianAvailabilityStatus', 'technicianAvailabilityState'].forEach((id) => {
+                document.getElementById(id)?.addEventListener('input', renderTechnicianEquipmentAvailability);
+                document.getElementById(id)?.addEventListener('change', renderTechnicianEquipmentAvailability);
+            });
+            document.getElementById('technicianEquipmentAvailabilityBody')?.addEventListener('click', (event) => {
+                const toggle = event.target.closest('[data-technician-availability-toggle]');
+                if (toggle) {
+                    const content = document.getElementById(toggle.dataset.technicianAvailabilityToggle);
+                    if (content) {
+                        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                        toggle.setAttribute('aria-expanded', String(!expanded));
+                        content.classList.toggle('expanded', !expanded);
+                    }
+                    return;
+                }
+                const historyButton = event.target.closest('[data-technician-availability-history]');
+                if (historyButton) openTechnicianAvailabilityHistory(historyButton.dataset.technicianAvailabilityHistory);
+            });
+            document.getElementById('closeTechnicianAvailabilityHistory')?.addEventListener('click', closeTechnicianAvailabilityHistory);
+            document.getElementById('technicianAvailabilityHistoryModal')?.addEventListener('click', (event) => {
+                if (event.target.id === 'technicianAvailabilityHistoryModal') closeTechnicianAvailabilityHistory();
+            });
+            loadTechnicianDashboard();
+            loadTechnicianEquipmentAvailability();
+            loadBorrowRequests();
+            loadBorrowNotifications();
+            window.setInterval(loadTechnicianDashboard, 20000);
+            window.setInterval(loadTechnicianEquipmentAvailability, 20000);
+            window.setInterval(loadBorrowRequests, 20000);
+            window.setInterval(loadBorrowNotifications, 20000);
+
+            const currentSection = getSectionFromHash();
+            showSection(currentSection);
+            if (window.location.hash !== `#${currentSection}`) {
+                history.replaceState(null, '', `#${currentSection}`);
+            }
+
+            function attachSidebarNavHandlers() {
+                const container = document.getElementById('shared-sidebar');
+                if (!container) return;
+                setTimeout(() => {
+                    const items = container.querySelectorAll('.nav-item');
+                    items.forEach(a => {
+                        a.addEventListener('click', function(evt) {
+                            const href = this.getAttribute('href') || '';
+                            if (href.startsWith('#')) {
+                                evt.preventDefault();
+                                const target = document.querySelector(href);
+                                if (target) {
+                                    showSection(href.slice(1));
+                                    try { history.replaceState(null, '', href); } catch (e) {}
+                                    if (typeof markActiveItem === 'function') markActiveItem();
+                                } else {
+                                    console.warn('Sidebar target not found for', href);
+                                    items.forEach(i => i.classList.remove('active'));
+                                    this.classList.add('active');
+                                }
+                                if (typeof closeSidebarOnMobile === 'function') closeSidebarOnMobile();
+                                return;
+                            }
+                        });
+                    });
+                }, 60);
+            }
+
+            attachSidebarNavHandlers();
+        });
+    </script>
+    <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

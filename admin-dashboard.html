@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #06402B;
+            --accent: #22C55E;
+            --hover: #16A34A;
+            --success: #4ADE80;
+            --bg: #07150F;
+            --bg-secondary: #0A1D15;
+            --card-bg: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            --card-bg-solid: #0F241B;
+            --card-hover: #123124;
+            --borders: rgba(74,222,128,.15);
+            --glow: rgba(34,197,94,.12);
+            --card-glow: rgba(34,197,94,.08);
+            --border-glow: rgba(34,197,94,.20);
+            --text: #F8FAFC;
+            --text-secondary: #B6D7C8;
+            --text-muted: #86EFAC;
+            --primary-soft: rgba(34,197,94,.12);
+            --primary-hover: rgba(22,163,74,.24);
+            --primary-light: #BBF7D0;
+            --sidebar-bg: linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+            --sidebar-shadow: 0 20px 70px rgba(6,64,43,.18);
+            --primary-border: rgba(74,222,128,.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(74,222,128,.10), transparent 28%),
+                linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            overflow-y: auto;
+            box-shadow: 0 20px 70px rgba(6,64,43,.18);
+            border-right: 1px solid rgba(74,222,128,.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(18px);
+        }
+
+        .sidebar.mobile-closed {
+            transform: translateX(-100%);
+        }
+
+        /* Sidebar header */
+        .sidebar-header {
+            padding: 1.4rem 1.2rem;
+            border-bottom: 1px solid rgba(74,222,128,.15);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.75rem;
+            color: var(--accent);
+        }
+
+        .sidebar-logo-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .sidebar-tagline {
+            font-size: 0.75rem;
+            color: #86EFAC;
+            margin-top: 0.2rem;
+        }
+
+        /* Sidebar navigation */
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            padding: 0.85rem 1.2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            border-left: 3px solid transparent;
+            margin: 0.3rem 0.4rem;
+            border-radius: 0.9rem;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-item i {
+            width: 1.25rem;
+            margin-right: 0.75rem;
+            text-align: center;
+            color: #4ADE80;
+            font-size: 1.05rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(34,197,94,.08);
+            color: var(--text);
+            border-left-color: var(--accent);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--hover) 0%, var(--accent) 100%);
+            color: white;
+            border-left-color: var(--accent);
+            font-weight: 600;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+        }
+
+        /* Main content */
+        .main-container {
+            margin-left: 280px;
+            transition: all 0.3s ease;
+            padding-top: 0.35rem;
+        }
+
+        .main-container.mobile-full {
+            margin-left: 0;
+        }
+
+        /* Top header */
+        .top-header {
+            background: linear-gradient(180deg, #0b1f13 0%, #0d1712 100%);
+            padding: 0.95rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: inset 0 0 25px rgba(16, 185, 129, 0.14), 0 14px 40px rgba(5, 80, 48, 0.24);
+            border: 1px solid rgba(16, 185, 129, 0.26);
+            border-radius: 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px) saturate(1.04);
+            margin: 0.6rem 0.8rem 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .header-eyebrow {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.72);
+            margin: 0;
+        }
+
+        .top-header .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #f8fafc;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 0.5rem 0.8rem 0.5rem 2.3rem;
+            border: 1px solid rgba(34,197,94,.24);
+            border-radius: 999px;
+            width: 200px;
+            transition: all 0.3s ease;
+            background: rgba(8, 27, 16, 0.92);
+            color: #f8fafc;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+            font-size: 0.9rem;
+        }
+
+        .search-box input::placeholder {
+            color: #86efac;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: rgba(74,222,128,.28);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.14);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            color: #a7f3d0;
+        }
+
+        .icon-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #22c55e;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.55rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background 0.3s ease, border 0.3s ease;
+            background: rgba(8, 22, 14, 0.85);
+            border: 1px solid rgba(34,197,94,.24);
+            box-shadow: inset 0 0 18px rgba(16, 185, 129, 0.08), 0 8px 24px rgba(6,64,43,.12);
+        }
+
+        .user-profile:hover {
+            background: rgba(20, 47, 25, 0.95);
+            border-color: rgba(74,222,128,.28);
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 0 20px var(--border-glow);
+            font-size: 0.85rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #ecfdf5;
+            font-size: 0.9rem;
+        }
+
+        .user-role {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        /* Main content area */
+        .main-content {
+            padding: 0.9rem 1rem 1rem;
+            background: var(--card-bg-solid);
+        }
+
+        /* Page header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .maintenance-header-card {
+            background: var(--card-bg-solid);
+            border: 2px solid rgba(74, 222, 128, 0.15);
+            border-radius: 24px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            backdrop-filter: blur(16px) saturate(1.04);
+        }
+
+        .maintenance-header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            min-width: 240px;
+        }
+
+        .maintenance-header-left h1 {
+            margin: 0;
+        }
+
+        .maintenance-header-user {
+            background: rgba(8, 22, 14, 0.85);
+            border: 1px solid rgba(34, 197, 94, 0.24);
+            padding: 0.6rem 0.85rem;
+            border-radius: 999px;
+        }
+
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        /* Dashboard cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.3rem;
+            min-height: 142px;
+            box-shadow: 0 12px 35px rgba(6,64,43,.18);
+            transition: all .25s ease;
+            border: 1px solid var(--primary-border);
+            backdrop-filter: blur(14px) saturate(1.04);
+            color: var(--text);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(74,222,128,.24);
+            box-shadow: 0 18px 40px rgba(34,197,94,.18);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            background: rgba(74,222,128,.12);
+            border: 1px solid rgba(74,222,128,.16);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+
+        .card-icon.green {
+            background: var(--primary-soft);
+            color: var(--primary-light);
+        }
+
+        .card-icon.blue {
+            background: rgba(34, 211, 238, 0.12);
+            color: #38bdf8;
+        }
+
+        .card-icon.purple {
+            background: rgba(168, 85, 247, 0.12);
+            color: #c084fc;
+        }
+
+        .card-icon.orange {
+            background: rgba(249, 115, 22, 0.14);
+            color: #fbbf24;
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        .card-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .card-change.positive {
+            color: var(--primary-light);
+        }
+
+        .card-change.negative {
+            color: #f87171;
+        }
+
+        /* Charts section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1.1rem;
+            margin-bottom: 0.2rem;
+            align-items: stretch;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.2rem 1.2rem 1.25rem;
+            min-height: 430px;
+            height: 100%;
+            box-shadow: 0 12px 35px rgba(6,64,43,.18);
+            border: 1px solid var(--primary-border);
+            color: var(--text);
+            backdrop-filter: blur(14px) saturate(1.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.6rem;
+        }
+
+        .chart-summary {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.9rem;
+            line-height: 1.5;
+            min-height: 2.4rem;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            min-height: 280px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .chart-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .activity-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .activity-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.1rem 1.2rem;
+            box-shadow: 0 12px 35px rgba(6,64,43,.18);
+            border: 1px solid var(--primary-border);
+            color: var(--text);
+            backdrop-filter: blur(14px) saturate(1.04);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .activity-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .activity-chip {
+            font-size: 0.72rem;
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(34,197,94,.12);
+            color: var(--primary-light);
+            border: 1px solid rgba(74,222,128,.18);
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            padding: 0.7rem 0.75rem;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(74,222,128,.08);
+        }
+
+        .activity-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34,197,94,.12);
+            color: var(--primary-light);
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            min-width: 0;
+        }
+
+        .activity-label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.2rem;
+        }
+
+        .activity-meta {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+
+        .activity-empty {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding: 0.2rem 0;
+        }
+
+        /* Table section */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.4rem;
+            box-shadow: 0 12px 35px rgba(6,64,43,.18);
+            border: 1px solid var(--primary-border);
+            color: var(--text);
+            backdrop-filter: blur(14px) saturate(1.04);
+        }
+
+        .page-view {
+            display: none;
+        }
+
+        .page-view.active {
+            display: block;
+        }
+
+        .maintenance-monitoring-page {
+            margin-top: 1.2rem;
+        }
+
+        .maintenance-monitoring-page th {
+            font-size: 0.9rem;
+            padding: 0.9rem 0.85rem;
+        }
+
+        .maintenance-monitoring-page td {
+            font-size: 1rem;
+            padding: 0.9rem 0.85rem;
+        }
+
+        .maintenance-monitoring-page .status-badge {
+            font-size: 0.8rem;
+        }
+
+        .maintenance-monitoring-page .status-filter,
+        .maintenance-monitoring-page .filter-select,
+        .maintenance-monitoring-page .search-box input {
+            font-size: 0.95rem;
+        }
+
+        .maintenance-monitoring-page #maintenancePaginationInfo,
+        .maintenance-monitoring-page #maintenancePagination button {
+            font-size: 0.9rem;
+        }
+
+        .equipment-availability-page {
+            margin-top: 1.2rem;
+        }
+
+        .availability-toolbar {
+            display: grid;
+            grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .availability-toolbar input,
+        .availability-toolbar select {
+            width: 100%;
+            border: 1px solid rgba(74,222,128,.16);
+            background: rgba(6,16,11,.72);
+            color: #f8fafc;
+            padding: 0.75rem 0.85rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .availability-toolbar input:focus,
+        .availability-toolbar select:focus {
+            outline: none;
+            border-color: rgba(74,222,128,.45);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.12);
+        }
+
+        .availability-table th,
+        .availability-table td {
+            white-space: nowrap;
+        }
+
+        .availability-table td {
+            font-size: 0.95rem;
+        }
+
+        .availability-laboratory-section {
+            margin-top: 1rem;
+            border: 1px solid rgba(74,222,128,.16);
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(6,16,11,.28);
+        }
+
+        .availability-laboratory-section:first-child { margin-top: 0; }
+
+        .availability-laboratory-heading {
+            padding: 0.9rem 1rem;
+            color: #dcfce7;
+            background: linear-gradient(135deg, rgba(22,163,74,.2), rgba(6,16,11,.68));
+            border-bottom: 1px solid rgba(74,222,128,.14);
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .availability-category {
+            border-bottom: 1px solid rgba(74,222,128,.1);
+        }
+
+        .availability-category:last-child { border-bottom: 0; }
+
+        .availability-category-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 1rem;
+            border: 0;
+            color: #d1fae5;
+            background: rgba(15,36,27,.72);
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .availability-category-toggle:hover { background: rgba(34,197,94,.12); }
+
+        .availability-category-toggle i {
+            color: #86efac;
+            transition: transform 0.2s ease;
+        }
+
+        .availability-category-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+
+        .availability-category-content {
+            display: none;
+            overflow-x: auto;
+        }
+
+        .availability-category-content.expanded { display: block; }
+
+        .availability-category-content .availability-table {
+            min-width: 760px;
+        }
+
+        .availability-empty-state {
+            padding: 1.5rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .availability-state {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .availability-state.available { background: rgba(34,197,94,.14); color: #bbf7d0; }
+        .availability-state.borrowed { background: rgba(245,158,11,.16); color: #fde68a; }
+        .availability-state.unavailable { background: rgba(248,113,113,.15); color: #fecaca; }
+
+        .availability-history-button {
+            border: 1px solid rgba(74,222,128,.22);
+            background: rgba(34,197,94,.1);
+            color: #d1fae5;
+            border-radius: 0.65rem;
+            padding: 0.5rem 0.7rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .availability-history-button:hover { background: rgba(34,197,94,.2); }
+
+        .availability-modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 2100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(1rem, 3vw, 2rem);
+            background: rgba(1,31,9,.78);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .availability-modal.show { display: flex; }
+
+        .availability-modal-card {
+            width: min(1100px, 100%);
+            max-width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: clamp(1rem, 2vw, 1.5rem);
+            border: 1px solid var(--primary-border);
+            border-radius: 18px;
+            background: var(--card-bg);
+            box-shadow: 0 24px 70px rgba(6,64,43,.3);
+        }
+
+        .availability-modal-header,
+        .availability-modal-summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .availability-modal-header > div { min-width: 0; }
+
+        .availability-modal-header h2,
+        .availability-modal-header p {
+            overflow-wrap: anywhere;
+        }
+
+        .availability-modal-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            justify-content: stretch;
+            margin: 1rem 0;
+        }
+
+        .availability-summary-item {
+            min-width: 0;
+            padding: 0.75rem;
+            border: 1px solid rgba(74,222,128,.14);
+            border-radius: 0.75rem;
+            background: rgba(74,222,128,.06);
+        }
+
+        .availability-summary-item span { display: block; color: var(--text-secondary); font-size: 0.75rem; }
+        .availability-summary-item strong { display: block; margin-top: 0.25rem; font-size: 1.2rem; }
+
+        .availability-modal-close {
+            border: 0;
+            background: rgba(74,222,128,.1);
+            color: var(--text);
+            width: 2.25rem;
+            height: 2.25rem;
+            flex: 0 0 auto;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        .availability-modal-card > .overflow-x-auto {
+            min-width: 0;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        .availability-history-table { min-width: 850px; }
+
+        @media (max-width: 900px) {
+            .availability-toolbar { grid-template-columns: 1fr 1fr; }
+
+            .availability-modal-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 768px) {
+            .availability-modal {
+                left: 0;
+                padding: 0.75rem;
+                z-index: 900;
+            }
+
+            .availability-modal-card {
+                width: 100%;
+                max-height: 90vh;
+                border-radius: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .availability-modal-summary { grid-template-columns: 1fr 1fr; }
+
+            .availability-summary-item { padding: 0.6rem; }
+        }
+
+        /* Expanded Recent Attendance History styles */
+        #attendance-history {
+            min-height: 620px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 1.6rem;
+        }
+
+        #attendance-history .table-header {
+            margin-bottom: 1rem;
+        }
+
+        /* make the table area taller and scrollable vertically while preserving horizontal overflow behavior */
+        #attendance-history .overflow-x-auto {
+            max-height: 520px;
+            overflow-y: auto;
+            overflow-x: auto;
+            padding-right: 0.25rem;
+        }
+
+        #attendance-history table tbody td {
+            padding: 0.65rem 0.75rem;
+        }
+
+        #attendance-history .table-title {
+            font-size: 1.15rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .table-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .view-all {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .view-all:hover {
+            color: #22c55e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(180deg, rgba(18,49,36,.95), rgba(20,59,42,.95));
+            border-bottom: 1px solid var(--primary-border);
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #D1FAE5;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(74,222,128,.12);
+            color: #E2FBE8;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: rgba(20,59,42,.45);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid rgba(74,222,128,.16);
+        }
+
+        .status-pending {
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef3c7;
+        }
+
+        .status-in-progress {
+            background: rgba(74, 222, 128, 0.14);
+            color: #bbf7d0;
+        }
+
+        .status-resolved {
+            background: rgba(34, 197, 94, 0.16);
+            color: #dcfce7;
+        }
+
+        .status-rejected {
+            background: rgba(248, 113, 113, 0.14);
+            color: #fee2e2;
+        }
+
+        .status-completed {
+            background: rgba(34, 197, 94, 0.16);
+            color: #dcfce7;
+        }
+
+        .status-active {
+            background: rgba(74, 222, 128, 0.14);
+            color: #bbf7d0;
+        }
+
+        .status-no-records {
+            background: rgba(74, 222, 128, 0.10);
+            color: #d1fae5;
+        }
+
+        .details-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(1, 31, 9, 0.72);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+        }
+
+        .details-modal.show {
+            display: flex;
+        }
+
+        .details-modal-card {
+            width: min(100%, 1100px);
+            max-height: min(92vh, 920px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border: 1px solid var(--primary-border);
+            border-radius: 20px;
+            box-shadow: 0 24px 70px rgba(6,64,43,.24);
+            backdrop-filter: blur(14px) saturate(1.04);
+        }
+
+        .details-modal-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1.2rem 1.25rem;
+            border-bottom: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        .details-modal-body {
+            padding: 1rem 1.25rem 1.25rem;
+            overflow: auto;
+        }
+
+        .details-modal-close {
+            border: none;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--text-secondary);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        .details-summary {
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-bottom: 1rem;
+        }
+
+        .details-summary .summary-pill {
+            padding: 0.85rem 0.95rem;
+            border-radius: 16px;
+            background: rgba(74,222,128,.06);
+            border: 1px solid rgba(74,222,128,.12);
+        }
+
+        .details-summary .summary-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-secondary);
+        }
+
+        .details-summary .summary-value {
+            margin-top: 0.35rem;
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .details-table-shell {
+            overflow: hidden;
+            border-radius: 16px;
+            border: 1px solid rgba(74,222,128,.12);
+            background: rgba(74,222,128,.04);
+        }
+
+        .details-table-shell table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table-shell th,
+        .details-table-shell td {
+            padding: 0.8rem 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.9rem;
+        }
+
+        .details-table-shell th {
+            color: #94f9b3;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.72rem;
+        }
+
+        .details-table-shell td {
+            color: #d1f9d8;
+        }
+
+        .details-table-shell tr:hover {
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .status-filter {
+            border: 1px solid rgba(74,222,128,.16);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            color: #d9f5e0;
+            padding: 0.6rem 1rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+
+        .status-filter.active,
+        .status-filter:hover {
+            background: linear-gradient(135deg, rgba(22,163,74,.28), rgba(34,197,94,.16));
+            border-color: rgba(74,222,128,.28);
+            color: #f0fdf4;
+        }
+
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .filter-select {
+            border: 1px solid rgba(74,222,128,.16);
+            background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+            color: #f8fafc;
+            padding: 0.6rem 0.8rem;
+            border-radius: 999px;
+            min-width: 150px;
+            font-size: 0.85rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: rgba(74,222,128,.28);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.14);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+
+            .main-container {
+                margin-left: 0;
+            }
+
+            .main-content {
+                padding: 0.75rem 0.8rem 1rem;
+            }
+
+            .top-header {
+                padding: 0.9rem 1rem;
+                margin: 0.45rem 0.45rem 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .search-box input {
+                width: 130px;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card {
+                min-height: 400px;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .header-right {
+                gap: 1rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card, .chart-card, .table-card {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Custom scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+    </style>
+    <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+<body class="app-shell">
+    <script>window.__CURRENT_USER__ = __CURRENT_USER_JSON__;</script>
+    <div id="shared-sidebar"></div>
+
+    <!-- Main Container -->
+    <div class="main-container" id="mainContainer">
+        <!-- Top Header -->
+        <div class="top-header">
+            <div class="header-left flex items-center space-x-3 pl-14 lg:pl-0">
+                <button id="mobileMenuToggle" class="menu-toggle fixed left-4 top-4 z-50 block lg:hidden" onclick="toggleSidebar()" aria-label="Open navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-meta ml-3">
+                    <h2 class="header-title" id="pageHeaderTitle">Dashboard Overview</h2>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+
+                <div class="relative">
+                    <button id="adminBorrowNotificationsButton" type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 transition hover:bg-emerald-500/20" aria-label="Borrow notifications">
+                        <i class="fas fa-bell"></i>
+                        <span id="adminBorrowNotificationBadge" class="hidden absolute -right-1 -top-1 min-w-[1.1rem] rounded-full bg-red-500 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">0</span>
+                    </button>
+                </div>
+
+                <div class="ml-auto flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" id="adminAvatar">AD</div>
+                    <div class="min-w-0">
+                        <div class="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200" id="adminUserRole">Admin</div>
+                        <div class="text-sm font-semibold text-white" id="adminUserName">Admin User</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                </div>
+            </div>
+
+            <div id="dashboard-view" class="page-view active">
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Total Laboratory Sessions</h3>
+                            <div class="card-icon green">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="totalLaboratorySessionsCount">0</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Attendance Sessions Conducted</h3>
+                            <div class="card-icon blue">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="attendanceSessionsConductedCount">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <div class="chart-title">Borrow Equipment Overview</div>
+                        <div class="chart-summary" id="borrowEquipmentSummary">Borrowed: 0 • Returned: 0 • Overdue: 0</div>
+                        <div class="chart-container">
+                            <canvas id="borrowEquipmentChart" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Equipment Status</div>
+                        <div class="chart-summary" id="equipmentStatusSummary">Serviceable: 0 • Unserviceable: 0 • Lost: 0</div>
+                        <div class="chart-container">
+                            <canvas id="equipmentStatusChart" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Maintenance Reports</div>
+                        <div class="chart-summary" id="maintenanceStatusSummary">Pending: 0 • In Progress: 0 • Resolved: 0</div>
+                        <div class="chart-container">
+                            <canvas id="maintenanceStatusChart" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Monitoring -->
+            <div id="maintenance-view" class="page-view">
+                <div class="maintenance-header-card">
+                    <div class="maintenance-header-left">
+                        <h1 class="text-white text-2xl font-bold">Maintenance Monitoring</h1>
+                    </div>
+                    <div class="maintenance-header-right">
+                        <div class="flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" id="maintenanceHeaderAvatar">NC</div>
+                            <div class="min-w-0">
+                                <div class="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200" id="maintenanceHeaderUserRole">Admin</div>
+                                <div class="text-sm font-semibold text-white" id="maintenanceHeaderUserName">NIA CORDERO</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-card maintenance-monitoring-page" id="maintenance-monitoring" data-maintenance-section>
+                    <div class="table-header" style="align-items: flex-start; gap: 1rem; flex-wrap: wrap; justify-content: space-between;">
+                        <div></div>
+                        <div class="filter-toolbar">
+                            <div class="search-box" style="min-width: 240px; flex: 1 1 240px;">
+                                <i class="fas fa-search"></i>
+                                <input id="maintenanceSearchInput" type="text" placeholder="Search..." style="width: 100%;">
+                            </div>
+                            <div class="filter-group">
+                            <button type="button" class="status-filter active" data-filter="All">All</button>
+                            <button type="button" class="status-filter" data-filter="Pending">Pending</button>
+                            <button type="button" class="status-filter" data-filter="In Progress">In Progress</button>
+                            <button type="button" class="status-filter" data-filter="Resolved">Resolved</button>
+                        </div>
+                        <select id="dateFilter" class="filter-select">
+                            <option value="All">Date: All</option>
+                            <option value="Today">Today</option>
+                            <option value="This Week">This Week</option>
+                            <option value="This Month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Equipment ID</th>
+                                <th>Equipment Name</th>
+                                <th>Student Name</th>
+                                <th>Current Status</th>
+                                <th>Date Reported</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenanceTableBody">
+                            <!-- populated by /js/admin-maintenance.js -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+                    <div id="maintenancePaginationInfo" class="text-sm text-slate-400">Showing 0 of 0</div>
+                    <div id="maintenancePagination" class="flex flex-wrap items-center gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="equipment-availability-view" class="page-view">
+            <div class="flex flex-row items-center justify-between w-full mb-6 p-4 rounded-xl bg-[#022814]/40 border border-emerald-500/20 backdrop-blur-md">
+                <h1 class="text-3xl font-bold text-white tracking-tight">Equipment Availability</h1>
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 rounded-lg">
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                        <span>Pending Reports</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 rounded-lg">
+                        <i class="fas fa-hand-holding" aria-hidden="true"></i>
+                        <span>Borrow Requests</span>
+                        <strong id="equipmentAvailabilityBorrowCount" class="font-bold">0</strong>
+                    </span>
+                </div>
+            </div>
+            <div class="table-card equipment-availability-page">
+                <div class="availability-toolbar">
+                    <input id="availabilitySearch" type="search" placeholder="Search equipment name or ID" aria-label="Search equipment">
+                    <select id="availabilityLaboratory" aria-label="Filter by laboratory">
+                        <option value="">All Laboratories</option>
+                    </select>
+                    <select id="availabilityStatus" aria-label="Filter by equipment status">
+                        <option value="">All Statuses</option>
+                        <option value="Serviceable">Serviceable</option>
+                        <option value="Unserviceable">Unserviceable</option>
+                        <option value="Lost">Lost</option>
+                    </select>
+                    <select id="availabilityState" aria-label="Filter by availability">
+                        <option value="">All Availability</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="BORROWED">Borrowed</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
+                    </select>
+                </div>
+                <div id="equipmentAvailabilityBody">
+                    <div class="availability-empty-state">Loading equipment availability...</div>
+                </div>
+                <div id="equipmentAvailabilityCount" class="mt-4 text-sm text-slate-400">Loading equipment availability...</div>
+            </div>
+        </div>
+
+        <div id="availabilityHistoryModal" class="availability-modal fixed inset-0 z-50 items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm" aria-hidden="true">
+            <div class="availability-modal-card relative mx-auto my-auto w-full max-w-4xl rounded-2xl shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="availabilityHistoryTitle">
+                <div class="availability-modal-header">
+                    <div>
+                        <h2 id="availabilityHistoryTitle" class="text-xl font-bold text-white">Borrowing History</h2>
+                        <p id="availabilityHistorySubtitle" class="mt-1 text-sm text-emerald-100/70"></p>
+                    </div>
+                    <button id="closeAvailabilityHistory" type="button" class="availability-modal-close" aria-label="Close borrowing history"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="availabilityHistorySummary" class="availability-modal-summary"></div>
+                <div class="overflow-x-auto">
+                    <table class="availability-history-table">
+                        <thead>
+                            <tr>
+                                <th>Borrower</th>
+                                <th>Type</th>
+                                <th>Borrow Date</th>
+                                <th>Expected Return</th>
+                                <th>Actual Return</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availabilityHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+
+        const dashboardEndpoint = '/api/instructor/attendance-dashboard';
+        const equipmentSummaryEndpoint = '/api/reports-summary';
+        const maintenanceSummaryEndpoint = '/api/maintenance-summary';
+
+        const dashboardState = {
+            summary: {
+                totalSessions: 0,
+                attendanceSessionsConducted: 0,
+                studentsPresentToday: 0,
+                lateToday: 0,
+                absentToday: 0
+            },
+            chart: {
+                labels: [],
+                trend: [],
+                statusLabels: [],
+                statusValues: []
+            },
+            equipment: {
+                equipmentTotal: 0,
+                serviceableCount: 0,
+                unserviceableCount: 0,
+                lostCount: 0
+            },
+            borrow: {
+                totalBorrowed: 0,
+                borrowed: 0,
+                returned: 0,
+                overdue: 0,
+                pendingReplacement: 0
+            },
+            maintenance: {
+                totalRequests: 0,
+                pendingRequests: 0,
+                inProgressRequests: 0,
+                resolvedRequests: 0
+            },
+            recent: {
+                attendance: null,
+                maintenance: null,
+                equipment: null,
+                equipmentNeedsAttention: null,
+                schedule: null
+            },
+            activeSessionId: null
+        };
+
+        let borrowEquipmentChart = null;
+        let equipmentStatusChart = null;
+        let maintenanceStatusChart = null;
+        let equipmentAvailabilityRows = [];
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getAvailabilityStateClass(value) {
+            return String(value || '').toLowerCase().replace(/[^a-z]+/g, '-');
+        }
+
+        function renderEquipmentAvailability() {
+            const body = document.getElementById('equipmentAvailabilityBody');
+            const count = document.getElementById('equipmentAvailabilityCount');
+            if (!body || !count) return;
+
+            const search = String(document.getElementById('availabilitySearch')?.value || '').trim().toLowerCase();
+            const laboratory = String(document.getElementById('availabilityLaboratory')?.value || '');
+            const status = String(document.getElementById('availabilityStatus')?.value || '');
+            const availability = String(document.getElementById('availabilityState')?.value || '');
+            const filteredRows = equipmentAvailabilityRows.filter((row) => {
+                const searchable = `${row.name} ${row.equipmentId}`.toLowerCase();
+                return (!search || searchable.includes(search)) &&
+                    (!laboratory || row.laboratoryRoom === laboratory) &&
+                    (!status || row.status === status) &&
+                    (!availability || row.availability === availability);
+            });
+
+            if (!filteredRows.length) {
+                body.innerHTML = '<div class="availability-empty-state">No equipment records found.</div>';
+            } else {
+                const grouped = new Map();
+                filteredRows.forEach((row) => {
+                    const laboratoryName = row.laboratoryRoom || 'Unassigned Laboratory';
+                    const categoryName = row.category || row.name || 'Uncategorized';
+                    if (!grouped.has(laboratoryName)) grouped.set(laboratoryName, new Map());
+                    const categories = grouped.get(laboratoryName);
+                    if (!categories.has(categoryName)) categories.set(categoryName, []);
+                    categories.get(categoryName).push(row);
+                });
+
+                body.innerHTML = [...grouped.entries()].map(([laboratoryName, categories], laboratoryIndex) => `
+                    <section class="availability-laboratory-section" aria-labelledby="availability-laboratory-${laboratoryIndex}">
+                        <h3 id="availability-laboratory-${laboratoryIndex}" class="availability-laboratory-heading">${escapeHtml(laboratoryName)}</h3>
+                        ${[...categories.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([categoryName, rows], categoryIndex) => {
+                            const categoryId = `availability-category-${laboratoryIndex}-${categoryIndex}`;
+                            return `
+                                <div class="availability-category">
+                                    <button type="button" class="availability-category-toggle" aria-expanded="false" aria-controls="${categoryId}" data-availability-category-toggle="${categoryId}">
+                                        <span><i class="fas fa-box-open mr-2"></i>${escapeHtml(categoryName)} <span class="text-xs text-emerald-200/60">(${rows.length})</span></span>
+                                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                    </button>
+                                    <div id="${categoryId}" class="availability-category-content">
+                                        <table class="availability-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Equipment ID</th>
+                                                    <th>Equipment Name</th>
+                                                    <th>Status</th>
+                                                    <th>Availability</th>
+                                                    <th>Times Borrowed</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${rows.map((row) => `
+                                                    <tr>
+                                                        <td>${escapeHtml(row.equipmentId)}</td>
+                                                        <td>${escapeHtml(row.name)}</td>
+                                                        <td>${escapeHtml(row.status)}</td>
+                                                        <td><span class="availability-state ${getAvailabilityStateClass(row.availability)}">${escapeHtml(row.availability)}</span></td>
+                                                        <td>${escapeHtml(row.timesBorrowed)}</td>
+                                                        <td><button type="button" class="availability-history-button" data-availability-history="${escapeHtml(row.equipmentId)}"><i class="fas fa-clock-rotate-left"></i> View History</button></td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </section>
+                `).join('');
+            }
+            count.textContent = `Showing ${filteredRows.length} of ${equipmentAvailabilityRows.length} equipment`;
+        }
+
+        function populateAvailabilityLaboratories() {
+            const select = document.getElementById('availabilityLaboratory');
+            if (!select) return;
+            const currentValue = select.value;
+            const laboratories = [...new Set(equipmentAvailabilityRows.map((row) => row.laboratoryRoom).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">All Laboratories</option>' + laboratories.map((laboratory) => `<option value="${escapeHtml(laboratory)}">${escapeHtml(laboratory)}</option>`).join('');
+            select.value = laboratories.includes(currentValue) ? currentValue : '';
+        }
+
+        async function loadEquipmentAvailability() {
+            const body = document.getElementById('equipmentAvailabilityBody');
+            if (!body) return;
+            body.innerHTML = '<div class="availability-empty-state">Loading equipment availability...</div>';
+            try {
+                const response = await fetch('/api/equipment-availability', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load equipment availability.');
+                equipmentAvailabilityRows = await response.json();
+                populateAvailabilityLaboratories();
+                renderEquipmentAvailability();
+            } catch (error) {
+                console.error(error);
+                body.innerHTML = '<div class="availability-empty-state text-red-300">Unable to load equipment availability.</div>';
+            }
+        }
+
+        function closeAvailabilityHistory() {
+            const modal = document.getElementById('availabilityHistoryModal');
+            if (!modal) return;
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        async function openAvailabilityHistory(equipmentId) {
+            const modal = document.getElementById('availabilityHistoryModal');
+            const body = document.getElementById('availabilityHistoryBody');
+            const summary = document.getElementById('availabilityHistorySummary');
+            const subtitle = document.getElementById('availabilityHistorySubtitle');
+            if (!modal || !body || !summary || !subtitle) return;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            body.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400">Loading borrowing history...</td></tr>';
+            summary.innerHTML = '';
+            try {
+                const response = await fetch(`/api/equipment-availability/${encodeURIComponent(equipmentId)}/history`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Unable to load borrowing history.');
+                const payload = await response.json();
+                subtitle.textContent = `${payload.equipment.name} | ${payload.equipment.equipmentId} | ${payload.equipment.laboratoryRoom || 'Laboratory not specified'}`;
+                summary.innerHTML = ['totalBorrowed', 'returned', 'overdue', 'lost'].map((key) => `<div class="availability-summary-item"><span>${key === 'totalBorrowed' ? 'Total Borrowed' : key.charAt(0).toUpperCase() + key.slice(1)}</span><strong>${escapeHtml(payload.summary[key] ?? 0)}</strong></div>`).join('');
+                if (!payload.history.length) {
+                    body.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400">No borrowing history for this equipment.</td></tr>';
+                    return;
+                }
+                body.innerHTML = payload.history.map((record) => `
+                    <tr>
+                        <td>${escapeHtml(record.borrowerName)}</td>
+                        <td>${escapeHtml(record.borrowerType || '—')}</td>
+                        <td>${escapeHtml(record.borrowDate || '—')} ${escapeHtml(record.borrowStartTime || '')}</td>
+                        <td>${escapeHtml(record.expectedReturnDate || '—')} ${escapeHtml(record.expectedReturnTime || '')}</td>
+                        <td>${escapeHtml(record.returnDate || '—')} ${escapeHtml(record.returnTime || '')}</td>
+                        <td>${escapeHtml(record.status || '—')}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error(error);
+                body.innerHTML = '<tr><td colspan="6" class="text-center text-red-300">Unable to load borrowing history.</td></tr>';
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContainer = document.getElementById('mainContainer');
+
+            if (!sidebar || !mainContainer) return;
+            sidebar.classList.toggle('mobile-open');
+            sidebar.classList.toggle('mobile-closed');
+            mainContainer.classList.toggle('mobile-full');
+        }
+
+        function setActive(element) {
+            document.querySelectorAll('.nav-item').forEach((item) => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        function formatDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '—';
+            return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatTimeRange(value) {
+            return value || '—';
+        }
+
+        function formatCompactDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '—';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function getActivityTime(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 0;
+            return date.getTime();
+        }
+
+        function findLatestAttendanceSession(sessions) {
+            if (!Array.isArray(sessions) || !sessions.length) return null;
+            return [...sessions].sort((left, right) => getActivityTime(right.createdAt || right.updatedAt || right.startTime || right.endTime || right.dateReported) - getActivityTime(left.createdAt || left.updatedAt || left.startTime || left.endTime || left.dateReported))[0];
+        }
+
+        function findLatestMaintenanceRequest(requests) {
+            if (!Array.isArray(requests) || !requests.length) return null;
+            return [...requests].sort((left, right) => getActivityTime(right.created_at || right.createdAt || right.dateReported || right.updatedAt) - getActivityTime(left.created_at || left.createdAt || left.dateReported || left.updatedAt))[0];
+        }
+
+        function findLatestEquipmentActivity(equipment) {
+            if (!Array.isArray(equipment) || !equipment.length) return null;
+            return [...equipment].sort((left, right) => getActivityTime(right.dateAdded || right.createdAt || right.updatedAt) - getActivityTime(left.dateAdded || left.createdAt || left.updatedAt))[0];
+        }
+
+        function findEquipmentNeedsAttention(equipment) {
+            if (!Array.isArray(equipment) || !equipment.length) return null;
+            return [...equipment].find((item) => String(item.status || '').toLowerCase() === 'unserviceable') || null;
+        }
+
+        function findLatestSchedule(schedules) {
+            if (!Array.isArray(schedules) || !schedules.length) return null;
+            return [...schedules].sort((left, right) => getActivityTime(right.updatedAt || right.createdAt || right.startTime) - getActivityTime(left.updatedAt || left.createdAt || left.startTime))[0];
+        }
+
+        async function refreshBorrowNotifications() {
+            const badge = document.getElementById('adminBorrowNotificationBadge');
+            const button = document.getElementById('adminBorrowNotificationsButton');
+            const availabilityCount = document.getElementById('equipmentAvailabilityBorrowCount');
+            if (!badge || !button) return;
+
+            try {
+                const response = await fetch('/api/borrow-records', { cache: 'no-store' });
+                if (!response.ok) {
+                    badge.classList.add('hidden');
+                    badge.textContent = '0';
+                    if (availabilityCount) availabilityCount.textContent = '0';
+                    button.title = 'No new borrow requests';
+                    return;
+                }
+
+                const records = await response.json();
+                const count = Array.isArray(records)
+                    ? records.filter((record) => String(record?.status || '').trim().toLowerCase() === 'pending').length
+                    : 0;
+
+                badge.textContent = String(count);
+                if (availabilityCount) availabilityCount.textContent = String(count);
+                badge.classList.toggle('hidden', count <= 0);
+                button.title = count ? `${count} new borrow request${count === 1 ? '' : 's'}` : 'No new borrow requests';
+            } catch (error) {
+                console.warn('Unable to load borrow notifications.', error);
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+                if (availabilityCount) availabilityCount.textContent = '0';
+                button.title = 'No new borrow requests';
+            }
+        }
+
+        function setActivityText(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value || '—';
+            }
+        }
+
+        function formatRole(role) {
+            const value = String(role || 'Instructor').trim();
+            return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+        }
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').split('@')[0].trim();
+            if (!value) return 'AD';
+            return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'AD';
+        }
+
+        function getStatusBadgeClass(status) {
+            const value = String(status || '').toLowerCase();
+            if (value === 'completed') return 'status-completed';
+            if (value === 'active') return 'status-active';
+            return 'status-no-records';
+        }
+
+        function hydrateInstructorProfile() {
+            const user = window.__CURRENT_USER__ || {};
+            const displayName = user.name || 'Administrator';
+            const initials = user.initials || getInitials(displayName, user.email || '');
+            const roleText = 'Admin';
+
+            const adminNameElement = document.getElementById('adminUserName');
+            const adminRoleElement = document.getElementById('adminUserRole');
+            const adminAvatarElement = document.getElementById('adminAvatar');
+            const maintenanceNameElement = document.getElementById('maintenanceHeaderUserName');
+            const maintenanceRoleElement = document.getElementById('maintenanceHeaderUserRole');
+            const maintenanceAvatarElement = document.getElementById('maintenanceHeaderAvatar');
+
+            if (adminNameElement) adminNameElement.textContent = displayName;
+            if (adminRoleElement) adminRoleElement.textContent = roleText;
+            if (adminAvatarElement) adminAvatarElement.textContent = initials;
+            if (maintenanceNameElement) maintenanceNameElement.textContent = displayName;
+            if (maintenanceRoleElement) maintenanceRoleElement.textContent = roleText;
+            if (maintenanceAvatarElement) maintenanceAvatarElement.textContent = initials;
+        }
+
+        function setSummaryValue(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = String(value ?? 0);
+            }
+        }
+
+        function renderSummary(summary) {
+            setSummaryValue('totalLaboratorySessionsCount', summary.totalLaboratorySessions ?? summary.totalSessions ?? 0);
+            setSummaryValue('attendanceSessionsConductedCount', summary.attendanceSessionsConducted ?? 0);
+        }
+
+        function renderAnalyticsSummary() {
+            const borrowSummary = document.getElementById('borrowEquipmentSummary');
+            const equipmentSummary = document.getElementById('equipmentStatusSummary');
+            const maintenanceSummary = document.getElementById('maintenanceStatusSummary');
+
+            if (borrowSummary) {
+                borrowSummary.textContent = `Borrowed: ${dashboardState.borrow.borrowed} • Returned: ${dashboardState.borrow.returned} • Overdue: ${dashboardState.borrow.overdue}`;
+            }
+
+            if (equipmentSummary) {
+                equipmentSummary.textContent = `Serviceable: ${dashboardState.equipment.serviceableCount} • Unserviceable: ${dashboardState.equipment.unserviceableCount} • Lost: ${dashboardState.equipment.lostCount}`;
+            }
+
+            if (maintenanceSummary) {
+                maintenanceSummary.textContent = `Pending: ${dashboardState.maintenance.pendingRequests} • In Progress: ${dashboardState.maintenance.inProgressRequests} • Resolved: ${dashboardState.maintenance.resolvedRequests}`;
+            }
+        }
+
+        function updateMaintenanceMonitoringVisibility() {
+            const dashboardView = document.getElementById('dashboard-view');
+            const maintenanceView = document.getElementById('maintenance-view');
+            const availabilityView = document.getElementById('equipment-availability-view');
+            const headerTitle = document.getElementById('pageHeaderTitle');
+            const topHeader = document.querySelector('.top-header');
+            const trimmedPath = window.location.pathname.replace(/\/+$/, '');
+            const isMaintenanceView = trimmedPath === '/maintenance-monitoring' || window.location.hash === '#maintenance-monitoring';
+            const isAvailabilityView = window.location.hash === '#equipment-availability';
+
+            if (dashboardView) {
+                dashboardView.classList.toggle('active', !isMaintenanceView && !isAvailabilityView);
+                dashboardView.hidden = isMaintenanceView || isAvailabilityView;
+            }
+
+            if (maintenanceView) {
+                maintenanceView.classList.toggle('active', isMaintenanceView);
+                maintenanceView.hidden = !isMaintenanceView;
+            }
+
+            if (availabilityView) {
+                availabilityView.classList.toggle('active', isAvailabilityView);
+                availabilityView.hidden = !isAvailabilityView;
+            }
+
+            if (headerTitle) {
+                headerTitle.textContent = isMaintenanceView ? 'Maintenance Monitoring' : isAvailabilityView ? 'Equipment Availability' : 'Dashboard Overview';
+            }
+
+            if (topHeader) {
+                topHeader.hidden = isMaintenanceView || isAvailabilityView;
+            }
+
+            if (isAvailabilityView) loadEquipmentAvailability();
+        }
+
+        function renderCharts() {
+            const borrowCanvas = document.getElementById('borrowEquipmentChart');
+            const equipmentCanvas = document.getElementById('equipmentStatusChart');
+            const maintenanceCanvas = document.getElementById('maintenanceStatusChart');
+            if (!borrowCanvas || !equipmentCanvas || !maintenanceCanvas) return;
+
+            // Get container dimensions and set canvas attributes
+            const setCanvasDimensions = (canvas) => {
+                const container = canvas.parentElement;
+                if (container) {
+                    const rect = container.getBoundingClientRect();
+                    // Use the displayed dimensions for the canvas internal resolution
+                    canvas.width = Math.max(300, Math.floor(rect.width));
+                    canvas.height = Math.max(150, Math.floor(rect.height));
+                }
+            };
+
+            setCanvasDimensions(borrowCanvas);
+            setCanvasDimensions(equipmentCanvas);
+            setCanvasDimensions(maintenanceCanvas);
+
+            const borrowContext = borrowCanvas.getContext('2d');
+            const equipmentContext = equipmentCanvas.getContext('2d');
+            const maintenanceContext = maintenanceCanvas.getContext('2d');
+
+            try { if (borrowEquipmentChart) borrowEquipmentChart.destroy(); } catch (e) {}
+            try { if (equipmentStatusChart) equipmentStatusChart.destroy(); } catch (e) {}
+            try { if (maintenanceStatusChart) maintenanceStatusChart.destroy(); } catch (e) {}
+
+            borrowEquipmentChart = new Chart(borrowContext, {
+                type: 'bar',
+                data: {
+                    labels: ['Borrowed', 'Returned', 'Overdue'],
+                    datasets: [{
+                        label: 'Borrow Equipment',
+                        data: [dashboardState.borrow.borrowed, dashboardState.borrow.returned, dashboardState.borrow.overdue],
+                        backgroundColor: ['rgba(34, 197, 94, 0.38)', 'rgba(59, 130, 246, 0.35)', 'rgba(249, 115, 22, 0.36)'],
+                        borderColor: ['#22C55E', '#60A5FA', '#F59E0B'],
+                        borderWidth: 2,
+                        borderRadius: 12,
+                        maxBarThickness: 34,
+                        categoryPercentage: 0.72,
+                        barPercentage: 0.9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 11, weight: 600 },
+                                color: '#B6D7C8',
+                                usePointStyle: true,
+                                padding: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.08)', drawBorder: false },
+                            ticks: { color: '#B6D7C8', font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#c7f9d6', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            equipmentStatusChart = new Chart(equipmentContext, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Serviceable', 'Unserviceable', 'Lost'],
+                    datasets: [{
+                        data: [dashboardState.equipment.serviceableCount, dashboardState.equipment.unserviceableCount, dashboardState.equipment.lostCount],
+                        backgroundColor: ['#22C55E', '#F59E0B', '#EF4444'],
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 11, weight: 600 },
+                                color: '#94f9b3',
+                                usePointStyle: true,
+                                padding: 12
+                            }
+                        }
+                    }
+                }
+            });
+
+            maintenanceStatusChart = new Chart(maintenanceContext, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'In Progress', 'Resolved'],
+                    datasets: [{
+                        data: [dashboardState.maintenance.pendingRequests, dashboardState.maintenance.inProgressRequests, dashboardState.maintenance.resolvedRequests],
+                        backgroundColor: ['#f59e0b', '#22c55e', '#60a5fa'],
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 11, weight: 600 },
+                                color: '#94f9b3',
+                                usePointStyle: true,
+                                padding: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadInstructorDashboard() {
+            const response = await fetch(dashboardEndpoint, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error('Unable to load instructor attendance dashboard.');
+            }
+
+            const payload = await response.json();
+            dashboardState.chart = payload.chart || dashboardState.chart;
+            dashboardState.summary = payload.summary || dashboardState.summary;
+            dashboardState.recent.attendance = findLatestAttendanceSession(payload.sessions || []);
+
+            renderSummary(payload.summary || {});
+            await loadAdditionalAnalytics(payload);
+            renderCharts();
+        }
+
+        async function loadAdditionalAnalytics(attendancePayload = {}) {
+            try {
+                const [equipmentResponse, maintenanceResponse, maintenanceListResponse, equipmentListResponse, borrowResponse] = await Promise.all([
+                    fetch(equipmentSummaryEndpoint, { cache: 'no-store' }),
+                    fetch(maintenanceSummaryEndpoint, { cache: 'no-store' }),
+                    fetch('/api/maintenance', { cache: 'no-store' }),
+                    fetch('/api/equipment', { cache: 'no-store' }),
+                    fetch('/api/borrow-records', { cache: 'no-store' })
+                ]);
+
+                if (equipmentResponse.ok) {
+                    const equipmentData = await equipmentResponse.json();
+                    dashboardState.equipment.equipmentTotal = equipmentData.equipmentTotal || 0;
+                    dashboardState.equipment.serviceableCount = equipmentData.serviceableCount || 0;
+                    dashboardState.equipment.unserviceableCount = equipmentData.unserviceableCount || 0;
+                    dashboardState.equipment.lostCount = equipmentData.lostCount || 0;
+                }
+
+                if (maintenanceResponse.ok) {
+                    const maintenanceData = await maintenanceResponse.json();
+                    dashboardState.maintenance.pendingRequests = maintenanceData.pendingRequests || 0;
+                    dashboardState.maintenance.inProgressRequests = maintenanceData.inProgressRequests || 0;
+                    dashboardState.maintenance.resolvedRequests = maintenanceData.resolvedRequests || 0;
+                }
+
+                let maintenanceRequests = [];
+                let equipmentRecords = [];
+                let borrowRecords = [];
+
+                if (maintenanceListResponse.ok) {
+                    maintenanceRequests = await maintenanceListResponse.json();
+                }
+
+                if (equipmentListResponse.ok) {
+                    equipmentRecords = await equipmentListResponse.json();
+                }
+
+                if (borrowResponse.ok) {
+                    borrowRecords = await borrowResponse.json();
+                }
+
+                const today = new Date();
+                const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const activeBorrowRecords = Array.isArray(borrowRecords) ? borrowRecords : [];
+                dashboardState.borrow.totalBorrowed = activeBorrowRecords.length;
+                dashboardState.borrow.borrowed = activeBorrowRecords.filter((record) => String(record.status || '').toLowerCase() === 'borrowed').length;
+                dashboardState.borrow.returned = activeBorrowRecords.filter((record) => String(record.status || '').toLowerCase() === 'returned').length;
+                dashboardState.borrow.pendingReplacement = 0;
+                dashboardState.borrow.overdue = activeBorrowRecords.filter((record) => {
+                    const status = String(record.status || '').toLowerCase();
+                    if (status === 'returned' || status === 'pending replacement') return false;
+                    const expectedDateValue = record.expectedReturnDate || record.expected_return_date;
+                    if (!expectedDateValue) return false;
+                    const expectedDate = new Date(expectedDateValue);
+                    if (Number.isNaN(expectedDate.getTime())) return false;
+                    return expectedDate < todayStart;
+                }).length;
+
+                dashboardState.recent.maintenance = findLatestMaintenanceRequest(maintenanceRequests);
+                dashboardState.recent.equipment = findLatestEquipmentActivity(equipmentRecords);
+                dashboardState.recent.equipmentNeedsAttention = findEquipmentNeedsAttention(equipmentRecords);
+                dashboardState.recent.schedule = findLatestSchedule([]);
+
+                renderAnalyticsSummary();
+                renderCharts();
+            } catch (error) {
+                console.error('Unable to load analytics summary data.', error);
+                renderAnalyticsSummary();
+                renderCharts();
+            }
+        }
+
+        async function refreshDashboardData() {
+            await loadInstructorDashboard();
+            await refreshBorrowNotifications();
+            if (window.syncBorrowSidebarBadge) {
+                window.syncBorrowSidebarBadge();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            hydrateInstructorProfile();
+            updateMaintenanceMonitoringVisibility();
+            ['availabilitySearch', 'availabilityLaboratory', 'availabilityStatus', 'availabilityState'].forEach((id) => {
+                document.getElementById(id)?.addEventListener('input', renderEquipmentAvailability);
+                document.getElementById(id)?.addEventListener('change', renderEquipmentAvailability);
+            });
+            document.getElementById('equipmentAvailabilityBody')?.addEventListener('click', (event) => {
+                const categoryToggle = event.target.closest('[data-availability-category-toggle]');
+                if (categoryToggle) {
+                    const categoryContent = document.getElementById(categoryToggle.dataset.availabilityCategoryToggle);
+                    if (categoryContent) {
+                        const expanded = categoryToggle.getAttribute('aria-expanded') === 'true';
+                        categoryToggle.setAttribute('aria-expanded', String(!expanded));
+                        categoryContent.classList.toggle('expanded', !expanded);
+                    }
+                    return;
+                }
+                const button = event.target.closest('[data-availability-history]');
+                if (button) openAvailabilityHistory(button.dataset.availabilityHistory);
+            });
+            document.getElementById('closeAvailabilityHistory')?.addEventListener('click', closeAvailabilityHistory);
+            document.getElementById('availabilityHistoryModal')?.addEventListener('click', (event) => {
+                if (event.target.id === 'availabilityHistoryModal') closeAvailabilityHistory();
+            });
+            refreshDashboardData().catch((error) => console.error('Unable to refresh dashboard data.', error));
+            document.getElementById('adminBorrowNotificationsButton')?.addEventListener('click', () => {
+                window.location.href = '/borrow-equipment';
+            });
+
+            if (window.__DASHBOARD_POLL_INTERVAL__) {
+                window.clearInterval(window.__DASHBOARD_POLL_INTERVAL__);
+            }
+            window.__DASHBOARD_POLL_INTERVAL__ = window.setInterval(() => {
+                refreshDashboardData().catch((error) => console.error('Background dashboard refresh failed.', error));
+            }, 15000);
+
+            if (window.__BORROW_POLL_INTERVAL__) {
+                window.clearInterval(window.__BORROW_POLL_INTERVAL__);
+            }
+            window.__BORROW_POLL_INTERVAL__ = window.setInterval(() => {
+                refreshBorrowNotifications();
+                if (window.syncBorrowSidebarBadge) {
+                    window.syncBorrowSidebarBadge();
+                }
+            }, 15000);
+        });
+
+        window.addEventListener('focus', () => {
+            refreshDashboardData().catch((error) => console.error('Dashboard refresh on focus failed.', error));
+        });
+
+        window.addEventListener('hashchange', updateMaintenanceMonitoringVisibility);
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                const mainContainer = document.getElementById('mainContainer');
+                if (sidebar) sidebar.classList.remove('mobile-closed', 'mobile-open');
+                if (mainContainer) mainContainer.classList.remove('mobile-full');
+            }
+        });
+    </script>
+    <script src="/js/sidebar-component.js" defer></script>
+    <script src="/js/admin-maintenance.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComLab Student Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        body {
+            background: #0e1b15; /* deep charcoal background to match maintenance pages */
+            color: #e2e8f0;
+        }
+        .page-shell {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+            box-sizing: border-box;
+        }
+        .page-header-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.9rem 1rem;
+            border-radius: 1.2rem;
+            border: 1px solid rgba(74, 222, 128, 0.28);
+            background: linear-gradient(135deg, rgba(8, 24, 18, 0.95), rgba(12, 34, 24, 0.92));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 30px rgba(1, 10, 8, 0.24);
+            backdrop-filter: blur(18px);
+        }
+        .page-header-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #f8fafc;
+            letter-spacing: -0.01em;
+        }
+        .glass-card {
+            background: rgba(17, 33, 25, 0.8); /* dark translucent outer container */
+            border: 1px solid rgba(4, 88, 64, 0.12); /* subtle emerald border tint */
+            box-shadow: 0 20px 50px rgba(4, 15, 43, 0.6), 0 8px 40px rgba(16,185,129,0.035);
+            backdrop-filter: blur(12px);
+            border-radius: 1.25rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #16a34a 0%, #073627 100%);
+            box-shadow: 0 10px 24px rgba(22, 163, 74, 0.18);
+        }
+        .profile-shell {
+            border-radius: 2rem;
+            padding: 1.1rem;
+        }
+        .profile-grid {
+            display: grid;
+            gap: 1.6rem;
+            align-items: center;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        }
+        .profile-photo-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1.1rem 1rem 1rem;
+            border-radius: 1.6rem;
+            background: rgba(14, 32, 24, 0.92); /* dark translucent emerald tint */
+            border: 1px solid rgba(16, 185, 129, 0.18); /* subtle emerald border */
+            box-shadow: 0 24px 60px rgba(5, 18, 14, 0.28), 0 0 30px rgba(16, 185, 129, 0.05);
+        }
+        .avatar-shell {
+            position: relative;
+            width: 10.5rem;
+            height: 10.5rem;
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 2px solid rgba(6, 40, 32, 0.18);
+            background: linear-gradient(135deg, rgba(8,15,13,0.85), rgba(13,19,25,0.9));
+            box-shadow: 0 18px 40px rgba(2,6,8,0.6), 0 6px 24px rgba(16,185,129,0.03);
+        }
+        .avatar-shell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .avatar-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dcfce7;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+        .upload-state {
+            position: absolute;
+            bottom: 0.45rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(14, 49, 5, 0.88);
+            border: 1px solid rgba(16, 185, 129, 0.24);
+            color: #bbf7d0;
+            border-radius: 9999px;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .profile-details-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 0.2rem 0;
+        }
+        .eyebrow {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(110, 231, 183, 0.72);
+        }
+        .profile-name {
+            font-size: clamp(1.95rem, 3.1vw, 2.55rem);
+            font-weight: 700;
+            color: #f8fafc;
+            line-height: 1.1;
+            letter-spacing: 0.01em;
+        }
+        .profile-subtitle {
+            margin-top: 0.25rem;
+            color: #34d399;
+            font-size: 1rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        .detail-list {
+            display: grid;
+            gap: 0.8rem;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.9rem 0.95rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.2); /* emerald border */
+            background: rgba(13, 29, 22, 0.85); /* dark forest-green tint */
+            transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+        .detail-item:hover {
+            box-shadow: 0 0 18px rgba(16, 185, 129, 0.10);
+            transform: translateY(-1px);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .detail-icon {
+            flex-shrink: 0;
+            width: 2.7rem;
+            height: 2.7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.95rem;
+            color: #34d399; /* emerald-400 glyph color */
+            background: rgba(6, 40, 32, 0.12); /* dark emerald circular backdrop */
+        }
+        .detail-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+        .detail-value {
+            margin-top: 0.25rem;
+            color: #f8fafc;
+            font-size: 1.04rem;
+            font-weight: 600;
+        }
+        @media (max-width: 1023px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            .profile-photo-panel {
+                padding: 1.2rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .page-shell {
+                padding-left: 0.7rem;
+                padding-right: 0.7rem;
+            }
+
+            .profile-shell {
+                padding: 1.1rem;
+            }
+
+            .profile-photo-panel {
+                padding: 1rem;
+            }
+
+            .avatar-shell {
+                width: 9rem;
+                height: 9rem;
+            }
+
+            .profile-name {
+                font-size: 2rem;
+            }
+
+            .profile-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .detail-item {
+                padding: 0.8rem;
+            }
+
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .page-header-card {
+                padding-left: 88px;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .page-header-card > div:first-child {
+                min-width: 0;
+            }
+
+            .page-header-title {
+                word-break: break-word;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+    <div class="main-container">
+        <main class="page-shell flex w-full flex-col gap-4 pt-2 pb-0">
+            <div class="page-header-card">
+                <div>
+                    <h1 class="page-header-title">My Profile</h1>
+                    <p class="mt-1 text-xs font-medium uppercase tracking-[0.24em] text-emerald-200/80">Mindoro State University</p>
+                </div>
+                <div class="ml-auto flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" data-user-initials>ST</div>
+                    <span class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200" data-user-role>Student</span>
+                </div>
+            </div>
+            <section class="glass-card profile-shell">
+                <div class="profile-grid">
+                    <div class="profile-photo-panel">
+                        <div class="text-center">
+
+                            <h2 class="profile-name" data-profile-full-name>Student Name</h2>
+                            <p class="profile-subtitle" data-profile-course-inline>Course • Year & Section</p>
+                        </div>
+
+                        <div class="relative mt-8">
+                            <div class="avatar-shell" data-student-photo-frame>
+                                <img data-student-photo-preview alt="Student photo preview">
+                                <div class="avatar-fallback" data-student-photo-fallback>ST</div>
+                            </div>
+                            <div id="photoUploadIndicator" class="upload-state hidden">Uploading…</div>
+                        </div>
+
+                        <label for="studentPhotoInput" class="btn-primary mt-8 inline-flex cursor-pointer items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white">
+                            <i class="fas fa-camera"></i>
+                            Upload Photo
+                        </label>
+
+
+                    </div>
+
+                    <div class="profile-details-panel">
+                        <div class="mb-6">
+
+                            <p class="profile-subtitle">Essential student information</p>
+                        </div>
+
+                        <div class="detail-list">
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-user"></i></div>
+                                <div>
+                                    <p class="detail-label">Student Name</p>
+                                    <p class="detail-value" data-profile-full-name>—</p>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-id-badge"></i></div>
+                                <div>
+                                    <p class="detail-label">Student ID</p>
+                                    <p class="detail-value" data-profile-student-id>—</p>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-graduation-cap"></i></div>
+                                <div>
+                                    <p class="detail-label">Course</p>
+                                    <p class="detail-value" data-profile-course>—</p>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-book-open"></i></div>
+                                <div>
+                                    <p class="detail-label">Year &amp; Section</p>
+                                    <p class="detail-value" data-profile-year-section>—</p>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-university"></i></div>
+                                <div>
+                                    <p class="detail-label">Campus</p>
+                                    <p class="detail-value" data-profile-campus>—</p>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon"><i class="fas fa-envelope"></i></div>
+                                <div>
+                                    <p class="detail-label">Email</p>
+                                    <p class="detail-value" data-profile-email>—</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <input id="studentPhotoInput" class="hidden" type="file" accept="image/png,image/jpeg,image/jpg,image/webp">
+
+    <script>
+        window.__CURRENT_USER__ = typeof window.__CURRENT_USER__ !== 'undefined' ? window.__CURRENT_USER__ : __CURRENT_USER_JSON__;
+
+        function getInitials(name, email) {
+            const value = (name || '').trim() || (email || '').split('@')[0].trim();
+            if (!value) return 'U';
+            return value.split(/\s+/).filter(Boolean).slice(0,2).map(part => part.charAt(0).toUpperCase()).join('') || 'U';
+        }
+
+        function formatRole(role) {
+            if (!role) return 'User';
+            return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+        }
+
+        function hydrateProfilePage() {
+            const user = window.__CURRENT_USER__ || {};
+            const displayName = user.name || user.fullName || 'Student Name';
+            const email = user.email || '—';
+            const course = user.course || user.program || '—';
+            const yearSection = user.yearSection || [user.year, user.section].filter(Boolean).join(' • ') || '—';
+            const campus = user.campus || '—';
+            const studentId = user.student_number || user.studentId || user.student_id || user.id || '—';
+            const courseInline = course !== '—' ? course : '—';
+            const initials = user.initials || getInitials(displayName, email);
+            const roleLabel = formatRole(user.role || 'student');
+
+            document.querySelectorAll('[data-user-initials]').forEach((element) => { element.textContent = initials; });
+            document.querySelectorAll('[data-user-role]').forEach((element) => { element.textContent = roleLabel; });
+            document.querySelectorAll('[data-profile-full-name]').forEach((element) => { element.textContent = displayName; });
+            document.querySelectorAll('[data-profile-course-inline]').forEach((element) => {
+                const suffix = yearSection !== '—' ? ` • ${yearSection}` : '';
+                element.textContent = courseInline === '—' ? '—' : `${courseInline}${suffix}`;
+            });
+            document.querySelectorAll('[data-profile-email]').forEach((element) => { element.textContent = email; });
+            document.querySelectorAll('[data-profile-student-id]').forEach((element) => { element.textContent = studentId; });
+            document.querySelectorAll('[data-profile-course]').forEach((element) => { element.textContent = course; });
+            document.querySelectorAll('[data-profile-year-section]').forEach((element) => { element.textContent = yearSection; });
+            document.querySelectorAll('[data-profile-campus]').forEach((element) => { element.textContent = campus; });
+
+            const preview = document.querySelector('[data-student-photo-preview]');
+            const fallback = document.querySelector('[data-student-photo-fallback]');
+            if (preview && fallback) {
+                const photoUrl = user.photo || user.photoUrl || user.avatarUrl;
+                if (photoUrl) {
+                    preview.src = photoUrl;
+                    preview.style.display = 'block';
+                    fallback.style.display = 'none';
+                } else {
+                    preview.style.display = 'none';
+                    fallback.style.display = 'flex';
+                    fallback.textContent = initials;
+                }
+            }
+        }
+
+        async function uploadStudentPhoto(file) {
+            const preview = document.querySelector('[data-student-photo-preview]');
+            const fallback = document.querySelector('[data-student-photo-fallback]');
+            const indicator = document.getElementById('photoUploadIndicator');
+
+            if (!file || !indicator) return;
+
+            const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+            if (!allowedTypes.includes(file.type)) {
+                alert("Only JPG, JPEG, PNG, and WEBP images are allowed.");
+                return;
+            }
+
+            const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSizeBytes) {
+                alert("Image size must be 5MB or less.");
+                return;
+            }
+
+            indicator.classList.remove('hidden');
+            preview.style.display = 'block';
+            fallback.style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const imageData = e.target.result;
+                preview.src = imageData;
+
+                try {
+                    const response = await fetch('/api/student/photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: imageData, fileName: file.name })
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Failed to upload photo.');
+                    }
+
+                    preview.src = result.photo;
+                } catch (error) {
+                    console.error(error);
+                    alert(error.message || 'Unable to upload profile photo.');
+                    preview.style.display = 'none';
+                    fallback.style.display = 'flex';
+                    fallback.textContent = getInitials(window.__CURRENT_USER__?.name || 'Student', window.__CURRENT_USER__?.email || '');
+                } finally {
+                    indicator.classList.add('hidden');
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            hydrateProfilePage();
+
+            const input = document.getElementById('studentPhotoInput');
+            const preview = document.querySelector('[data-student-photo-preview]');
+            const fallback = document.querySelector('[data-student-photo-fallback]');
+            const indicator = document.getElementById('photoUploadIndicator');
+
+            if (input && preview && fallback && indicator) {
+                input.addEventListener('change', (event) => {
+                    const [file] = event.target.files || [];
+                    if (!file) return;
+                    uploadStudentPhoto(file);
+                });
+            }
+        });
+    </script>
+    <script src="/js/student-sidebar-config.js" defer></script>
+    <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>

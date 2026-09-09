@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratory Schedules | ComLab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+<body class="app-shell">
+  <script>window.__CURRENT_USER_NAME__ = "Administrator";</script>
+  <div id="shared-sidebar"></div>
+  <div class="main-container">
+    <div class="top-header">
+      <div class="header-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h2 class="header-title">Laboratory Schedules</h2>
+          <p class="text-sm text-gray-400 mt-1"></p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search..." />
+        </div>
+        <div class="header-icons"></div>
+        <div class="user-profile">
+          <div class="user-avatar">AD</div>
+          <div class="user-info">
+            <span class="user-name">Admin User</span>
+            <span class="user-role">Administrator</span>
+          </div>
+          <i class="fas fa-chevron-down" style="color: #94f9b3; font-size: 0.75rem;"></i>
+        </div>
+      </div>
+    </div>
+
+    <main class="page-content">
+      <section class="grid gap-4 md:grid-cols-3 mb-6">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <p class="card-title">Next Session</p>
+              <h2 id="nextSessionTitle" class="mt-3 text-3xl font-bold text-white">No upcoming sessions</h2>
+            </div>
+            <div class="card-icon blue"><i class="fas fa-flask"></i></div>
+          </div>
+          <p id="nextSessionMeta" class="text-sm text-gray-400 mt-2">No laboratory schedules available.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <p class="card-title">Available Rooms</p>
+              <h2 id="availableRoomsCount" class="mt-3 text-3xl font-bold text-white">0</h2>
+            </div>
+            <div class="card-icon green"><i class="fas fa-door-open"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <p class="card-title">Confirmed Labs</p>
+              <h2 id="confirmedLabsCount" class="mt-3 text-3xl font-bold text-white">0</h2>
+            </div>
+            <div class="card-icon amber"><i class="fas fa-calendar-check"></i></div>
+          </div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+          <div>
+            <h3 class="text-xl font-semibold text-white">Weekly Schedule</h3>
+          </div>
+          <button id="openScheduleModalBtn" type="button" onclick="openScheduleModal && openScheduleModal()" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700">
+            <i class="fas fa-plus"></i> Add Schedule
+          </button>
+          
+        </div>
+        <div id="scheduleGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+
+        <div id="scheduleModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4">
+          <div class="w-full max-w-2xl rounded-3xl bg-slate-950 border border-slate-800 p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <h3 id="scheduleModalTitle" class="text-2xl font-semibold text-white">Add Lab Schedule</h3>
+                <p id="scheduleModalSubtitle" class="text-sm text-gray-400">Create a new session and assign it to a weekday.</p>
+              </div>
+              <button id="closeScheduleModalBtn" type="button" onclick="window.closeScheduleModal && window.closeScheduleModal()" class="text-gray-400 hover:text-white text-2xl">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <form id="scheduleForm" class="space-y-4" onsubmit="handleScheduleSubmit(event)" enctype="multipart/form-data">
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Day</label>
+                  <select id="scheduleDay" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Room</label>
+                  <input id="scheduleRoom" type="text" placeholder="Room 101" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Subject</label>
+                  <input id="scheduleTitle" type="text" placeholder="e.g., Circuit Design" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Instructor</label>
+                  <input id="scheduleInstructor" type="text" placeholder="e.g., Prof. Santos" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" />
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Campus</label>
+                  <input id="scheduleCampus" type="text" placeholder="Main Campus" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                  <select id="scheduleStatus" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none">
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Start Time</label>
+                  <input id="scheduleStartTime" type="text" placeholder="9:00 AM" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">End Time</label>
+                  <input id="scheduleEndTime" type="text" placeholder="11:00 AM" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                </div>
+              </div>
+              <div class="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] backdrop-blur-sm">
+                <div class="flex items-start gap-3">
+                  <div class="mt-1 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-200">
+                    <i class="fas fa-file-upload"></i>
+                  </div>
+                  <div class="flex-1">
+                    <h4 class="text-lg font-semibold text-white">Student Class List</h4>
+                    <p class="mt-1 text-sm text-emerald-100/80">Upload the official class list for this laboratory schedule.</p>
+                    <p class="mt-2 text-sm text-slate-300">Accepted file formats: .xlsx, .xls, .csv</p>
+                    <label class="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-emerald-500/40 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-emerald-200 hover:bg-slate-900">
+                      <i class="fas fa-cloud-upload-alt"></i>
+                      <span>Choose File</span>
+                      <input id="scheduleClassListFile" type="file" accept=",.csv,.xlsx,.xls" onchange="window.handleClassListFileChange && window.handleClassListFileChange(this.files)" class="hidden" />
+                    </label>
+                    <div id="scheduleClassListStatus" class="mt-4 rounded-2xl border border-slate-700/70 bg-slate-950/50 p-3 text-sm text-slate-300">
+                      <div id="scheduleClassListMessage" class="text-slate-400">No class list selected.</div>
+                      <div id="scheduleClassListMeta" class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400"></div>
+                    </div>
+                    <div id="scheduleClassListValidation" class="mt-3 hidden rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                      Please upload the official class list before creating the laboratory schedule.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <label class="flex items-center gap-3 text-sm text-gray-300">
+                <input id="scheduleQrEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-700 bg-slate-900 text-green-600 focus:ring-green-500" />
+                Enable attendance QR
+              </label>
+              <div class="flex flex-col sm:flex-row gap-3 pt-3">
+                <button type="button" onclick="closeScheduleModal && closeScheduleModal()" class="flex-1 rounded-2xl border border-slate-700 bg-transparent px-4 py-3 text-slate-300 hover:bg-slate-800">Cancel</button>
+                <button type="submit" id="scheduleSubmitButton" class="flex-1 rounded-2xl bg-green-600 px-4 py-3 text-white hover:bg-green-700">Create Schedule</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div id="qrModal" class="hidden fixed inset-0 z-[60] items-center justify-center bg-black/70 p-4">
+          <div class="w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h3 class="text-2xl font-semibold text-white">Attendance QR</h3>
+                <p id="qrModalSubtitle" class="text-sm text-gray-400">Generate a one-time QR for this lab session.</p>
+              </div>
+              <button onclick="closeQrModal()" class="text-gray-400 hover:text-white text-2xl">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="space-y-4">
+              <div class="grid gap-3 md:grid-cols-[1fr_auto]">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">QR Expiration</label>
+                  <select id="qrExpirySelect" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none">
+                    <option value="10">10 minutes</option>
+                    <option value="15" selected>15 minutes</option>
+                    <option value="20">20 minutes</option>
+                    <option value="30">30 minutes</option>
+                  </select>
+                </div>
+                <div class="flex items-end">
+                  <button type="button" onclick="event.preventDefault(); generateCurrentQr();" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-white hover:bg-green-700">Generate QR</button>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <div id="qrPreview" class="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 p-4 text-sm text-gray-400">No QR generated yet.</div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button type="button" onclick="downloadCurrentQr()" class="rounded-2xl border border-slate-700 bg-transparent px-3 py-2 text-sm text-slate-300 hover:bg-slate-800">Download QR</button>
+                  <button type="button" onclick="printCurrentQr()" class="rounded-2xl border border-slate-700 bg-transparent px-3 py-2 text-sm text-slate-300 hover:bg-slate-800">Print QR</button>
+                  <button type="button" onclick="regenerateCurrentQr()" class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20">Regenerate QR</button>
+                </div>
+                <div id="qrStatusRow" class="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-gray-300">
+                  <span>QR Status</span>
+                  <span id="qrStatusBadge" class="rounded-full bg-slate-600/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200">Expired</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style>
+          #scheduleModal.show { display: flex; }
+          #scheduleModal.hidden { display: none; }
+          #qrModal.show { display: flex; }
+          #qrModal.hidden { display: none; }
+        </style>
+
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.3/dist/xlsx.full.min.js"></script>
+        <script>
+          let activeQrScheduleIndex = null;
+          let scheduleData = [];
+          let editingScheduleId = null;
+
+          function getStatusBadge(status) {
+            const map = {
+              Confirmed: 'bg-emerald-500/10 text-emerald-200',
+              'In Progress': 'bg-sky-500/10 text-sky-200',
+              Pending: 'bg-amber-500/10 text-amber-200'
+            };
+            return map[status] || 'bg-slate-500/10 text-slate-200';
+          }
+
+          function getQrStatus(item) {
+            if (!item || !item.qr || !item.qr.url) return 'Not generated';
+            return item.qr.expiresAt && item.qr.expiresAt > Date.now() ? 'Active' : 'Expired';
+          }
+
+          function getQrStatusClass(item) {
+            const status = getQrStatus(item);
+            if (status === 'Active') return 'bg-emerald-500/10 text-emerald-200';
+            if (status === 'Not generated') return 'bg-slate-600/70 text-slate-200';
+            return 'bg-amber-500/10 text-amber-200';
+          }
+
+          const attendanceMonitorEndpoint = '/api/instructor/attendance-dashboard';
+          const attendanceMonitorStatsEndpoint = '/api/attendance/stats';
+          const attendanceSessionEndpoint = '/api/attendance/session';
+          let attendanceSessions = [];
+          let attendanceRefreshId = null;
+
+          async function fetchAttendanceStats() {
+            try {
+              const response = await fetch(attendanceMonitorStatsEndpoint, { cache: 'no-store' });
+              if (!response.ok) throw new Error('Failed to load attendance stats');
+              const stats = await response.json();
+              document.getElementById('totalSessionsValue').textContent = stats.total ?? 0;
+              document.getElementById('presentTodayValue').textContent = stats.present ?? 0;
+              document.getElementById('absentTodayValue').textContent = stats.absent ?? 0;
+              document.getElementById('lateTodayValue').textContent = stats.late ?? 0;
+            } catch (err) {
+              console.error(err);
+            }
+          }
+
+          async function fetchAttendanceRecords() {
+            try {
+              const response = await fetch(attendanceMonitorEndpoint, { cache: 'no-store' });
+              if (!response.ok) throw new Error('Failed to load attendance sessions');
+              const payload = await response.json();
+              attendanceSessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+              renderAttendanceSessionTable(attendanceSessions);
+            } catch (err) {
+              console.error(err);
+            }
+          }
+
+          function getAttendanceStatusClass(status) {
+            const value = (status || '').toLowerCase();
+            if (value === 'late') return 'bg-amber-500/10 text-amber-200';
+            if (value === 'absent') return 'bg-red-500/10 text-red-200';
+            return 'bg-emerald-500/10 text-emerald-200';
+          }
+
+          function formatSessionDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '—';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          }
+
+          function renderAttendanceSessionTable(sessions) {
+            const tbody = document.getElementById('attendanceMonitorTableBody');
+            if (!tbody) return;
+            if (!sessions.length) {
+              tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-400">No completed attendance sessions available yet.</td></tr>';
+              return;
+            }
+
+            const filterValue = document.getElementById('attendanceMonitorSearch').value.toLowerCase();
+            const filtered = sessions.filter((session) => {
+              const content = ((session.subject || '') + ' ' + (session.laboratory || '') + ' ' + (session.instructor || '')).toLowerCase();
+              return !filterValue || content.includes(filterValue);
+            }).sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+
+            tbody.innerHTML = '';
+            filtered.forEach((session) => {
+              const row = document.createElement('tr');
+              row.className = 'hover:bg-slate-900/70';
+              const timeLabel = [session.startTime, session.endTime].filter(Boolean).join(' - ') || session.time || '—';
+              const countsLabel = 'P:' + (session.studentsPresent ?? 0) + ' • L:' + (session.studentsLate ?? 0) + ' • A:' + (session.studentsAbsent ?? 0);
+              row.innerHTML =
+                '<td class="px-4 py-4 text-white">' + (session.subject || '—') + '</td>' +
+                '<td class="px-4 py-4">' + (session.laboratory || '—') + '</td>' +
+                '<td class="px-4 py-4">' + (session.instructor || '—') + '</td>' +
+                '<td class="px-4 py-4">' + formatSessionDate(session.date || session.createdAt) + '</td>' +
+                '<td class="px-4 py-4">' + (timeLabel || '—') + '</td>' +
+                '<td class="px-4 py-4">' + countsLabel + '</td>' +
+                '<td class="px-4 py-4"><span class="inline-flex items-center px-3 py-1 rounded-full ' + getAttendanceStatusClass('Present') + ' text-sm font-semibold">Completed</span></td>' +
+                '<td class="px-4 py-4"><button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800" onclick="openAttendanceSessionModal(\'' + (session.id || session.token || '') + '\')"><i class="fas fa-eye"></i> View Details</button></td>';
+              tbody.appendChild(row);
+            });
+          }
+
+          function attachAttendanceFilters() {
+            const searchInput = document.getElementById('attendanceMonitorSearch');
+            if (searchInput) {
+              searchInput.addEventListener('input', () => renderAttendanceSessionTable(attendanceSessions));
+            }
+          }
+
+          function startAttendanceRefresh() {
+            if (attendanceRefreshId) clearInterval(attendanceRefreshId);
+            attendanceRefreshId = window.setInterval(async () => {
+              await fetchAttendanceRecords();
+              await fetchAttendanceStats();
+            }, 5000);
+          }
+
+          function normalizeScheduleRecord(item) {
+            if (!item || typeof item !== 'object') return null;
+            return {
+              ...item,
+              id: item.id ?? null,
+              subject: item.subject || item.title || '',
+              instructor: item.instructor || '',
+              laboratoryRoom: item.laboratoryRoom || item.room || '',
+              campus: item.campus || '',
+              dayOfWeek: item.dayOfWeek || item.day || '',
+              startTime: item.startTime || '',
+              endTime: item.endTime || '',
+              status: item.status || 'Confirmed',
+              qrEnabled: Boolean(item.qrEnabled)
+            };
+          }
+
+... (TRUNCATED FOR BREVITY) ...
+
+    </main>
+  </div>
+  <script src="/js/sidebar-component.js" defer></script>
+</body>
+</html>
