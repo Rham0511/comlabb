@@ -29,6 +29,11 @@ export const BorrowRecord = sequelize.define("BorrowRecord", {
     type: DataTypes.STRING,
     allowNull: false
   },
+  equipmentRecordId: {
+    type: DataTypes.INTEGER,
+    field: "equipment_record_id",
+    allowNull: true
+  },
   equipmentName: {
     type: DataTypes.STRING,
     allowNull: false
@@ -108,6 +113,11 @@ export const BorrowHistory = sequelize.define("BorrowHistory", {
   equipmentId: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  equipmentRecordId: {
+    type: DataTypes.INTEGER,
+    field: "equipment_record_id",
+    allowNull: true
   },
   equipmentName: {
     type: DataTypes.STRING,

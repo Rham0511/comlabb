@@ -109,6 +109,11 @@
       margin-bottom: 0.85rem;
     }
 
+    .section-title .menu-toggle {
+      position: static !important;
+      flex-shrink: 0;
+    }
+
     .borrow-form-grid {
       display: grid;
       gap: 0.9rem;
@@ -244,7 +249,7 @@
     @media (max-width: 1023px) {
       .page-shell {
         margin-left: 0;
-        padding: 4.5rem 1rem 2rem;
+        padding: 1rem 1rem 2rem;
       }
     }
   </style>
@@ -258,7 +263,13 @@
         <form id="studentBorrowForm">
           <div class="borrow-form-grid">
             <div class="borrow-form-field full">
-              <div class="section-title"><i class="fas fa-user"></i> Borrower Information</div>
+              <div class="section-title">
+                <button id="mobileMenuToggle" type="button" onclick="toggleSidebar()" class="menu-toggle block lg:hidden" aria-label="Open navigation">
+                  <i class="fas fa-bars"></i>
+                </button>
+                <i class="fas fa-user"></i>
+                <span>Borrower Information</span>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -438,7 +449,7 @@
 
     async function loadBorrowEquipmentOptions() {
       try {
-        const response = await fetch('/api/equipment', { cache: 'no-store' });
+        const response = await fetch('/api/student/equipment', { cache: 'no-store' });
         if (!response.ok) throw new Error('Unable to load equipment inventory.');
         const payload = await response.json();
         state.equipment = Array.isArray(payload) ? payload : [];

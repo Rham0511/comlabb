@@ -84,6 +84,8 @@ const normalizeCampusValue = (value) => {
   return normalized;
 };
 
+const recognizedCampusNames = new Set(["bongabong", "victoria", "calapan"]);
+
 /**
  * Check if user can manage (edit/delete) a record.
  * User can manage if:
@@ -96,20 +98,12 @@ const normalizeCampusValue = (value) => {
  * @returns {boolean} - true if user can manage, false if view-only
  */
 export const canManageRecord = (userCampus, recordCampus, userRole = null) => {
-  if (!userCampus) {
-    return false;
-  }
-
-  // Legacy records may have no campus populated yet. For those records, allow the
-  // authenticated campus-scoped admin to continue processing them instead of
-  // blocking all returns/approvals for historical entries.
-  if (!recordCampus || String(recordCampus).trim() === "") {
-    return true;
-  }
-
-  // Normalize campus values for comparison
   const userCampusNorm = normalizeCampusValue(userCampus);
   const recordCampusNorm = normalizeCampusValue(recordCampus);
+
+  if (!recognizedCampusNames.has(userCampusNorm) || !recognizedCampusNames.has(recordCampusNorm)) {
+    return false;
+  }
 
   return userCampusNorm === recordCampusNorm;
 };

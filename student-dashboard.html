@@ -1360,7 +1360,7 @@
 
         async function loadBorrowEquipmentOptions() {
             try {
-                const response = await fetch('/api/equipment', { cache: 'no-store' });
+                const response = await fetch('/api/student/equipment', { cache: 'no-store' });
                 if (!response.ok) throw new Error('Unable to load equipment inventory.');
                 const payload = await response.json();
                 state.equipment = Array.isArray(payload) ? payload : [];

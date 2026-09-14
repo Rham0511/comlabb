@@ -57,7 +57,7 @@ try {
   await sequelize.authenticate();
   console.log("✅ Connected to MySQL database!");
   await ensureClassListEntryTable();
-  await sequelize.sync({ force: false, alter: true, logging: false });
+  await sequelize.sync({ force: false, alter: false, logging: false });
   console.log("✅ Tables created for all models!");
 } catch (err) {
   console.error("❌ Migration failed:", err);

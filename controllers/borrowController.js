@@ -106,9 +106,40 @@ function isUnavailableForBorrowing(status) {
   return normalizedStatus === "unserviceable" || normalizedStatus === "lost";
 }
 
+function canViewBorrowNotifications(role) {
+  const normalizedRole = String(role || "").trim().toLowerCase();
+  return isAdminRole(normalizedRole) ||
+    isTechnicianRole(normalizedRole) ||
+    normalizedRole === "instructor";
+}
+
+function normalizeCampus(campus) {
+  return String(campus || "").trim().toLowerCase().replace(/\s*campus\s*$/i, "");
+}
+
+function isMatchingEquipmentReference(record, equipment) {
+  if (!record || !equipment) return false;
+  if (record.equipmentRecordId && Number(record.equipmentRecordId) !== Number(equipment.id)) return false;
+  return String(record.equipmentId || "").trim() === String(equipment.equipmentId || "").trim() &&
+    String(record.equipmentName || "").trim() === String(equipment.name || "").trim() &&
+    normalizeCampus(record.campus) === normalizeCampus(equipment.campus);
+}
+
+function buildEquipmentDisplay(record, equipment) {
+  const resolved = isMatchingEquipmentReference(record, equipment);
+  return {
+    equipmentReferenceStatus: resolved ? "resolved" : "unresolved",
+    equipmentDisplayName: resolved ? record.equipmentName : "Equipment record unavailable",
+    originalEquipmentId: record.equipmentId || null
+  };
+}
+
 export const listBorrowNotifications = async (req, res) => {
   const scope = await getBorrowAccessScope(req);
   if (!scope.authenticated) return res.status(401).json({ error: "Please log in to view borrow notifications." });
+  if (!canViewBorrowNotifications(scope.role)) {
+    return res.status(403).json({ error: "Admin or technician access is required." });
+  }
   const strictWhere = getStrictBorrowWhere(scope);
   if (!strictWhere) return res.status(403).json({ error: "User campus is not assigned." });
   const records = await BorrowRecord.findAll({
@@ -130,14 +161,18 @@ export const listBorrowNotifications = async (req, res) => {
 export const markBorrowNotificationRead = async (req, res) => {
   const scope = await getBorrowAccessScope(req);
   if (!scope.authenticated) return res.status(401).json({ error: "Please log in to update notifications." });
+  if (!canViewBorrowNotifications(scope.role)) {
+    return res.status(403).json({ error: "Admin or technician access is required." });
+  }
   return res.json({ success: true });
 };
 
-function buildBorrowResponse(record) {
+function buildBorrowResponse(record, equipment = null) {
   const item = record.toJSON ? record.toJSON() : record;
   const effectiveStatus = getBorrowRecordEffectiveStatus(item);
   return {
     ...item,
+    ...buildEquipmentDisplay(item, equipment),
     effectiveStatus,
     status: item.status || "Borrowed",
     borrowDate: item.borrowDate ? item.borrowDate.toString() : null,
@@ -162,6 +197,11 @@ export const listBorrowRecords = async (req, res) => {
       order: [["created_at", "DESC"]]
     });
 
+    const equipmentIds = [...new Set(records.map((record) => record.equipmentId).filter(Boolean))];
+    const equipment = equipmentIds.length
+      ? await Equipment.findAll({ where: { equipmentId: { [Op.in]: equipmentIds } } })
+      : [];
+
     let visibleRecords = records;
     if (String(scope.role || "").toLowerCase() === "student") {
       const student = await User.findByPk(scope.userId, { attributes: ["name"] });
@@ -169,7 +209,7 @@ export const listBorrowRecords = async (req, res) => {
     }
 
     const response = visibleRecords
-      .map(buildBorrowResponse)
+      .map((record) => buildBorrowResponse(record, equipment.find((item) => isMatchingEquipmentReference(record, item))))
       .sort((left, right) => {
         const leftTime = new Date(left.created_at || left.createdAt || left.borrowDate || 0).getTime();
         const rightTime = new Date(right.created_at || right.createdAt || right.borrowDate || 0).getTime();
@@ -281,7 +321,7 @@ export const createBorrowRecord = async (req, res) => {
     });
 
     if (duplicateRequest) {
-      return res.status(200).json(buildBorrowResponse(duplicateRequest));
+      return res.status(200).json(buildBorrowResponse(duplicateRequest, equipment));
     }
 
     const equipmentCampus = String(equipment.campus || "").trim();
@@ -325,6 +365,7 @@ export const createBorrowRecord = async (req, res) => {
       departmentInfo,
       instructorName: instructorName || instructor_name || null,
       equipmentId,
+      equipmentRecordId: equipment.id,
       equipmentName: equipment.name,
       quantity: requestedQty,
       borrowDate: normalizedBorrowDate,
@@ -341,6 +382,7 @@ export const createBorrowRecord = async (req, res) => {
       recordId: record.id,
       borrowerName,
       equipmentId,
+      equipmentRecordId: equipment.id,
       equipmentName: equipment.name,
       borrowDate: normalizedBorrowDate,
       borrowStartTime: record.borrowStartTime,
@@ -379,7 +421,7 @@ export const createBorrowRecord = async (req, res) => {
       }
     });
 
-    res.status(201).json(buildBorrowResponse(record));
+    res.status(201).json(buildBorrowResponse(record, equipment));
   } catch (error) {
     console.error("Failed to create borrow record.", error);
     res.status(500).json({ error: `Failed to create borrow record: ${error.message}` });
@@ -453,6 +495,7 @@ export const approveBorrowRecord = async (req, res) => {
       recordId: updated.id,
       borrowerName: updated.borrowerName,
       equipmentId: updated.equipmentId,
+      equipmentRecordId: equipment.id,
       equipmentName: updated.equipmentName,
       borrowDate: updated.borrowDate,
       borrowStartTime: updated.borrowStartTime,
@@ -470,7 +513,7 @@ export const approveBorrowRecord = async (req, res) => {
       description: `Borrow request ${updated.id} for ${updated.equipmentId} was approved for ${updated.borrowerName}. Status: Approved.`
     });
 
-    res.json(buildBorrowResponse(updated));
+    res.json(buildBorrowResponse(updated, equipment));
   } catch (error) {
     console.error("Failed to approve borrow request.", error);
     res.status(500).json({ error: "Failed to approve borrow request." });
@@ -508,6 +551,7 @@ export const rejectBorrowRecord = async (req, res) => {
       recordId: updated.id,
       borrowerName: updated.borrowerName,
       equipmentId: updated.equipmentId,
+      equipmentRecordId: updated.equipmentRecordId,
       equipmentName: updated.equipmentName,
       borrowDate: updated.borrowDate,
       borrowStartTime: updated.borrowStartTime,
@@ -547,6 +591,21 @@ export const returnBorrowRecord = async (req, res) => {
       return res.status(403).json({ error: "You do not have permission to process returns for another campus." });
     }
 
+    let resolvedEquipment = null;
+    const activeStatus = ["approved", "borrowed", "overdue"].includes(getBorrowRecordEffectiveStatus(record).toLowerCase());
+    if (activeStatus) {
+      resolvedEquipment = await Equipment.findOne({
+        where: {
+          equipmentId: record.equipmentId,
+          campus: { [Op.in]: getCampusVariants(record.campus) },
+          name: record.equipmentName
+        }
+      });
+      if (!resolvedEquipment) {
+        return res.status(409).json({ error: "This historical equipment reference is unresolved and requires manual review before return." });
+      }
+    }
+
     const updated = await record.update({
       status: condition === "Damaged" ? "Returned" : condition === "Lost" ? "Pending Replacement" : "Returned",
       returnDate: new Date().toISOString().split("T")[0],
@@ -559,6 +618,7 @@ export const returnBorrowRecord = async (req, res) => {
       recordId: updated.id,
       borrowerName: updated.borrowerName,
       equipmentId: updated.equipmentId,
+      equipmentRecordId: updated.equipmentRecordId,
       equipmentName: updated.equipmentName,
       borrowDate: updated.borrowDate,
       borrowStartTime: updated.borrowStartTime,
@@ -586,7 +646,7 @@ export const returnBorrowRecord = async (req, res) => {
       });
     }
 
-    res.json(buildBorrowResponse(updated));
+    res.json(buildBorrowResponse(updated, resolvedEquipment));
   } catch (error) {
     console.error("Failed to update borrow return.", error);
     res.status(500).json({ error: "Failed to update borrow return." });
@@ -644,6 +704,7 @@ export const markBorrowRecordLost = async (req, res) => {
       recordId: updated.id,
       borrowerName: updated.borrowerName,
       equipmentId: updated.equipmentId,
+      equipmentRecordId: updated.equipmentRecordId,
       equipmentName: updated.equipmentName,
       borrowDate: updated.borrowDate,
       borrowStartTime: updated.borrowStartTime,
@@ -665,7 +726,7 @@ export const markBorrowRecordLost = async (req, res) => {
       actorRole: "Technician"
     });
 
-    res.json(buildBorrowResponse(updated));
+    res.json(buildBorrowResponse(updated, equipment));
   } catch (error) {
     console.error("Failed to mark borrow record as lost.", error);
     res.status(500).json({ error: "Failed to mark equipment as lost." });

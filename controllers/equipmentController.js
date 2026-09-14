@@ -31,7 +31,14 @@ import { Op } from "sequelize";
 import { Equipment, EquipmentSequence, EquipmentCategory, sequelize } from "../models/equipmentModel.js";
 import { User } from "../models/userModel.js";
 import { logAuditEntry } from "./auditController.js";
-import { getUserCampusFromSession, canManageRecord } from "./campusAuthController.js";
+import {
+  getUserAuthContext,
+  getUserCampusFromSession,
+  canManageRecord,
+  isAdminRole,
+  isTechnicianRole,
+  normalizeRoleName
+} from "./campusAuthController.js";
 
 function buildEquipmentQrUrl(equipmentId) {
   const baseUrl = process.env.BASE_URL?.trim();
@@ -193,6 +200,12 @@ function getCanonicalCampusName(campus) {
   return campusName ? `${campusName} Campus` : "";
 }
 
+function getCampusVariants(campus) {
+  const normalizedCampus = String(campus || "").trim();
+  const campusName = normalizedCampus.replace(/\s*Campus\s*$/i, "").trim();
+  return [...new Set([normalizedCampus, campusName, `${campusName} Campus`].filter(Boolean))];
+}
+
 await Equipment.sync();
 await EquipmentSequence.sync();
 await EquipmentCategory.sync();
@@ -201,7 +214,7 @@ await seedDefaultCategories();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(import.meta.url);
 
-async function findEquipmentByIdentifier(identifier) {
+async function findEquipmentByIdentifier(identifier, req = null) {
   if (identifier === undefined || identifier === null) {
     return null;
   }
@@ -211,19 +224,41 @@ async function findEquipmentByIdentifier(identifier) {
     return null;
   }
 
+  const authContext = req ? await getUserAuthContext(req) : null;
+  const campusVariants = authContext?.campus ? getCampusVariants(authContext.campus) : [];
+  const campusWhere = campusVariants.length ? { campus: { [Op.in]: campusVariants } } : null;
   const numericId = Number(normalized);
   if (Number.isInteger(numericId)) {
-    const byPk = await Equipment.findByPk(numericId);
+    const byPk = await Equipment.findOne({
+      where: { id: numericId, ...(campusWhere || {}) }
+    });
     if (byPk) {
       return byPk;
     }
   }
 
-  return Equipment.findOne({ where: { equipmentId: normalized } });
+  const matches = await Equipment.findAll({
+    where: { equipmentId: normalized, ...(campusWhere || {}) },
+    limit: 2
+  });
+  return matches.length === 1 ? matches[0] : null;
 }
 
 export const inventoryPage = async (req, res) => {
   try {
+    const authContext = await getUserAuthContext(req);
+    if (!authContext.userId) {
+      return res.redirect("/login");
+    }
+
+    const normalizedRole = normalizeRoleName(authContext.role);
+    const canViewInventoryPage = isAdminRole(normalizedRole) ||
+      isTechnicianRole(normalizedRole) ||
+      normalizedRole === "instructor";
+    if (!canViewInventoryPage) {
+      return res.status(403).send("Forbidden: admin or technician access required.");
+    }
+
     const currentUserId = req.session?.userId;
     let currentUser = null;
 
@@ -269,7 +304,7 @@ export const inventoryPage = async (req, res) => {
 export const viewEquipmentPage = async (req, res) => {
   try {
     const { equipmentId } = req.params;
-    const equipment = await findEquipmentByIdentifier(equipmentId);
+    const equipment = await findEquipmentByIdentifier(equipmentId, req);
 
     if (!equipment) {
       return res.status(404).send(`<!DOCTYPE html><html><body><h1>Equipment not found</h1></body></html>`);
@@ -456,8 +491,21 @@ export const viewEquipmentPage = async (req, res) => {
 export const getEquipment = async (req, res) => {
   const { search = "", status, campus } = req.query;
   try {
+    const authContext = await getUserAuthContext(req);
+    if (!authContext.userId) {
+      return res.status(401).json({ error: "Please log in to view equipment inventory." });
+    }
+
+    const normalizedRole = normalizeRoleName(authContext.role);
+    const canViewInventory = isAdminRole(normalizedRole) ||
+      isTechnicianRole(normalizedRole) ||
+      normalizedRole === "instructor";
+    if (!canViewInventory) {
+      return res.status(403).json({ error: "Admin or technician access is required." });
+    }
+
     const where = {};
-    const userCampus = await getUserCampusFromSession(req);
+    const userCampus = authContext.campus || await getUserCampusFromSession(req);
     const requestedCampus = String(campus || "").trim();
     const isAllCampuses = !requestedCampus || /^all\s+campuses?$/i.test(requestedCampus);
 
@@ -513,11 +561,70 @@ export const getEquipment = async (req, res) => {
   }
 };
 
+export const getStudentEquipment = async (req, res) => {
+  try {
+    const authContext = await getUserAuthContext(req);
+    if (!authContext.userId) {
+      return res.status(401).json({ error: "Please log in to view available equipment." });
+    }
+
+    if (normalizeRoleName(authContext.role) !== "student") {
+      return res.status(403).json({ error: "Student access is required." });
+    }
+
+    const campusName = String(authContext.campus || "").trim().replace(/\s*Campus\s*$/i, "");
+    if (!campusName) {
+      return res.status(403).json({ error: "User campus is not assigned." });
+    }
+
+    const records = await Equipment.findAll({
+      where: {
+        campus: {
+          [Op.in]: [campusName, `${campusName} Campus`]
+        }
+      },
+      attributes: ["equipmentId", "name", "category", "laboratoryRoom", "status", "quantity"],
+      order: [["name", "ASC"], ["equipmentId", "ASC"]]
+    });
+
+    return res.json(records);
+  } catch (error) {
+    console.error("[equipment] Get student equipment error:", error);
+    return res.status(500).json({ error: "Failed to load available equipment." });
+  }
+};
+
 export const getEquipmentCampusTotals = async (req, res) => {
   try {
-    const userCampus = await getUserCampusFromSession(req);
+    const authContext = await getUserAuthContext(req);
+    if (!authContext.userId) {
+      return res.status(401).json({ error: "Please log in to view equipment campus totals." });
+    }
+
+    const normalizedRole = normalizeRoleName(authContext.role);
+    const canViewTotals = isAdminRole(normalizedRole) ||
+      isTechnicianRole(normalizedRole) ||
+      normalizedRole === "instructor";
+    if (!canViewTotals) {
+      return res.status(403).json({ error: "Admin or technician access is required." });
+    }
+
+    const userCampus = authContext.campus || null;
+    const campusName = String(userCampus || "").trim().replace(/\s*Campus\s*$/i, "");
+    if (isTechnicianRole(normalizedRole) && !campusName) {
+      return res.status(403).json({ error: "User campus is not assigned." });
+    }
+
+    const where = isTechnicianRole(normalizedRole)
+      ? {
+          campus: {
+            [Op.in]: [campusName, `${campusName} Campus`]
+          }
+        }
+      : {};
 
     const rows = await Equipment.findAll({
+      where,
       attributes: [
         "campus",
         [sequelize.fn("COUNT", sequelize.col("id")), "total"],
@@ -564,7 +671,7 @@ export const getEquipmentCampusTotals = async (req, res) => {
 export const getEquipmentQr = async (req, res) => {
   const { id } = req.params;
   try {
-    const equipment = await findEquipmentByIdentifier(id);
+    const equipment = await findEquipmentByIdentifier(id, req);
     if (!equipment) {
       return res.status(404).json({ error: "Equipment not found." });
     }
@@ -685,7 +792,7 @@ export const updateEquipment = async (req, res) => {
   }
 
   try {
-    const equipment = await Equipment.findByPk(id);
+    const equipment = await findEquipmentByIdentifier(id, req);
     if (!equipment) {
       return res.status(404).json({ error: "Equipment not found." });
     }
@@ -709,22 +816,18 @@ export const updateEquipment = async (req, res) => {
     // Authorization rules for modification:
     // 1. User with campus must match equipment's campus
     // 2. User without campus (legacy) can modify any equipment
-    if (userCampus && equipmentCampus) {
-      // Both have campus: user's campus must match equipment's current campus
-      if (!canManageRecord(userCampus, equipmentCampus)) {
-        return res.status(403).json({ 
-          error: "You do not have permission to modify equipment from another campus." 
-        });
-      }
-
-      // Also prevent changing equipment to another campus
-      if (!canManageRecord(userCampus, campus)) {
-        return res.status(403).json({ 
-          error: "You do not have permission to assign equipment to another campus." 
-        });
-      }
+    if (!userCampus || !canManageRecord(userCampus, equipmentCampus)) {
+      return res.status(403).json({
+        error: "You do not have permission to modify equipment from another campus."
+      });
     }
-    // If either doesn't have campus, allow the update (legacy case)
+
+    // Also prevent changing equipment to another campus.
+    if (!canManageRecord(userCampus, campus)) {
+      return res.status(403).json({
+        error: "You do not have permission to assign equipment to another campus."
+      });
+    }
 
     const oldCampus = equipment.campus;
     const nextStatus = requestedStatus || equipment.status || "Serviceable";
@@ -756,7 +859,7 @@ export const updateEquipmentStatus = async (req, res) => {
   }
 
   try {
-    const equipment = await findEquipmentByIdentifier(id);
+    const equipment = await findEquipmentByIdentifier(id, req);
     if (!equipment) {
       return res.status(404).json({ error: "Equipment not found." });
     }
@@ -801,7 +904,7 @@ export const updateEquipmentStatus = async (req, res) => {
 export const deleteEquipment = async (req, res) => {
   const { id } = req.params;
   try {
-    const equipment = await Equipment.findOne({ where: { equipmentId: id } });
+    const equipment = await findEquipmentByIdentifier(id, req);
     if (!equipment) {
       return res.status(404).json({ error: "Equipment not found." });
     }
@@ -820,18 +923,14 @@ export const deleteEquipment = async (req, res) => {
     // 1. User with campus must match equipment's campus
     // 2. User without campus (legacy) can manage any equipment
     // 3. Both must have appropriate role (checked via middleware elsewhere)
-    if (userCampus && equipmentCampus) {
-      // Both have campus: must match
-      if (!canManageRecord(userCampus, equipmentCampus)) {
-        return res.status(403).json({ 
-          error: "Unauthorized: You can only manage equipment belonging to your campus." 
-        });
-      }
+    if (!userCampus || !canManageRecord(userCampus, equipmentCampus)) {
+      return res.status(403).json({
+        error: "Unauthorized: You can only manage equipment belonging to your campus."
+      });
     }
-    // If either doesn't have a campus, allow (legacy data or edge case)
 
     const equipmentData = equipment.toJSON();
-    const removed = await Equipment.destroy({ where: { equipmentId: id } });
+    const removed = await Equipment.destroy({ where: { id: equipment.id } });
     if (!removed) {
       return res.status(404).json({ error: "Equipment not found." });
     }

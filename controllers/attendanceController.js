@@ -180,7 +180,7 @@ const getScheduleAttendanceWindow = (schedule, referenceDate = new Date()) => {
   return { startTime, endTime, presentUntil, lateUntil };
 };
 
-const getAttendanceStatusForSchedule = (schedule, now = new Date(), referenceDate = now) => {
+export const getAttendanceStatusForSchedule = (schedule, now = new Date(), referenceDate = now) => {
   const window = getScheduleAttendanceWindow(schedule, referenceDate);
   if (!window) return "Present";
 
@@ -201,9 +201,12 @@ const getAttendanceStatusForSchedule = (schedule, now = new Date(), referenceDat
     return "Present";
   }
 
-  // Any check-in after the present window but before the end time is Late
-  if (scanTime < endTime) {
+  if (scanTime <= lateUntil) {
     return "Late";
+  }
+
+  if (scanTime < endTime) {
+    return "Absent";
   }
 
   return "Closed";
@@ -243,8 +246,7 @@ export const deriveAttendanceStatusFromRecord = (record, schedule, session = nul
     return "Present";
   }
 
-  // Any check-in after the present window but before the end time is Late
-  if (scanTime < window.endTime) {
+  if (scanTime <= window.lateUntil) {
     return "Late";
   }
 
@@ -534,7 +536,7 @@ export const createAttendanceSession = async (req, res) => {
 
       if (classListEntries.length) {
         const today = new Date().toISOString().slice(0, 10);
-        const placeholders = classListEntries.map((entry) => ({
+        const placeholders = classListEntries.filter((entry) => entry.matchStatus === "matched" && entry.studentId).map((entry) => ({
           studentId: entry.studentId,
           fullName: entry.fullName,
           courseSection: entry.courseSection || "",
@@ -628,7 +630,7 @@ const getInstructorScheduleScope = async (req) => {
   if (user.role === "student") {
     return {
       kind: "student",
-      studentId: user.student_number || user.studentId || user.student_id || String(user.id)
+      studentId: user.student_number || ""
     };
   }
 
@@ -845,6 +847,20 @@ const getInstructorAttendanceContext = async (req) => {
       })
     : [];
 
+  const classListEntries = scheduleIds.length
+    ? await ClassListEntry.findAll({
+        where: { laboratoryScheduleId: { [Op.in]: scheduleIds } },
+        order: [["fullName", "ASC"]]
+      })
+    : [];
+  const rosterBySchedule = classListEntries.reduce((map, entry) => {
+    const key = String(entry.laboratoryScheduleId || "");
+    if (!key) return map;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(entry);
+    return map;
+  }, new Map());
+
   // Trigger finalization of attendance for sessions but do not await each
   // finalization operation — this prevents expensive DB writes from blocking
   // the dashboard API response and improves perceived load time.
@@ -866,16 +882,20 @@ const getInstructorAttendanceContext = async (req) => {
   const sessionsWithRecords = sessions.map((session) => {
     const matchedRecords = recordsByToken.get(session.token) || recordsByToken.get(String(session.laboratoryScheduleId || "")) || [];
     const schedule = session.laboratoryScheduleId ? scheduleLookup.get(String(session.laboratoryScheduleId)) : null;
+    const roster = rosterBySchedule.get(String(session.laboratoryScheduleId || "")) || [];
     const courseSection = getInstructorCourseSection(session, matchedRecords);
     const sectionDetails = splitCourseSection(courseSection);
     const presentCount = matchedRecords.filter((record) => deriveAttendanceStatusFromRecord(record, schedule, session, now) === "Present").length;
     const lateCount = matchedRecords.filter((record) => deriveAttendanceStatusFromRecord(record, schedule, session, now) === "Late").length;
-    const absentCount = matchedRecords.filter((record) => deriveAttendanceStatusFromRecord(record, schedule, session, now) === "Absent").length;
+    const attendanceStatus = getSessionCompletionStatus(session, schedule, now);
+    const absentCount = attendanceStatus === "Completed"
+      ? Math.max(0, roster.length - presentCount - lateCount)
+      : 0;
     const subject = session.title || schedule?.subject || matchedRecords[0]?.subject || "—";
     const laboratory = session.room || schedule?.laboratoryRoom || matchedRecords[0]?.lab || "—";
     const time = session.time || [schedule?.startTime, schedule?.endTime].filter(Boolean).join(" - ") || "—";
     const sessionDate = session.createdAt || matchedRecords[0]?.date || now;
-    const status = getSessionCompletionStatus(session, schedule, now);
+    const status = attendanceStatus;
 
     return {
       id: session.id,
@@ -895,7 +915,7 @@ const getInstructorAttendanceContext = async (req) => {
       attendanceStatus: status,
       createdAt: session.createdAt,
       scheduleId: session.laboratoryScheduleId || null,
-      totalStudents: matchedRecords.length,
+      totalStudents: roster.length,
       records: matchedRecords
     };
   });
@@ -1125,7 +1145,7 @@ export const getAttendanceStats = async (req, res) => {
 
 const buildAttendanceRecordPayload = async (req, session, token) => {
   const student = req.session?.userId ? await User.findByPk(req.session.userId) : null;
-  const studentId = student?.student_number || student?.studentId || student?.student_id || req.query.studentId || req.body.studentId || "—";
+  const studentId = student?.student_number || "";
   const fullName = student?.name || req.query.fullName || req.body.fullName || "Student";
   const program = student?.program || student?.course || student?.programName || student?.department || "—";
   const yearLevel = student?.year || student?.yearLevel || student?.yearLevelName || "—";
@@ -1156,6 +1176,9 @@ const buildAttendanceRecordPayload = async (req, session, token) => {
 
 const recordAttendance = async (req, res, token, session) => {
   const payload = await buildAttendanceRecordPayload(req, session, token);
+  if (!payload.student || !payload.studentId) {
+    return res.status(403).json({ success: false, error: "Attendance requires a registered student account with an official Student ID." });
+  }
   const now = new Date();
   let schedule = null;
 
@@ -1211,6 +1234,25 @@ const recordAttendance = async (req, res, token, session) => {
 
     if (req.accepts("html")) return res.status(410).send(html);
     return res.status(410).json({ success: false, error: closedMessage });
+  }
+
+  if (attendanceStatus === "Absent") {
+    const absentMessage = "The Present and Late attendance windows have ended. No check-in is recorded.";
+    const html = renderAttendancePageHtml({
+      title: "Attendance Window Closed",
+      heading: "Attendance Window Closed",
+      message: absentMessage,
+      detailRows: [["Status", "Absent"]],
+      statusLabel: "Absent",
+      primaryLabel: "Back to Dashboard",
+      primaryHref: "/student/dashboard",
+      secondaryLabel: "Close",
+      secondaryHref: "#",
+      success: false
+    });
+
+    if (req.accepts("html")) return res.status(410).send(html);
+    return res.status(410).json({ success: false, error: absentMessage, status: "Absent" });
   }
 
   const existing = await Attendance.findOne({

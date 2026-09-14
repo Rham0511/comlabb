@@ -22,6 +22,18 @@ function isValidBorrowRecord(record) {
   return String(record?.status || "").trim().toLowerCase() !== "rejected";
 }
 
+function normalizeCampus(campus) {
+  return String(campus || "").trim().toLowerCase().replace(/\s*campus\s*$/i, "");
+}
+
+function isMatchingEquipmentReference(record, equipment) {
+  if (!record || !equipment) return false;
+  if (record.equipmentRecordId && Number(record.equipmentRecordId) !== Number(equipment.id)) return false;
+  return String(record.equipmentId || "").trim() === String(equipment.equipmentId || "").trim() &&
+    String(record.equipmentName || "").trim() === String(equipment.name || "").trim() &&
+    normalizeCampus(record.campus) === normalizeCampus(equipment.campus);
+}
+
 function isCurrentlyBorrowed(record, now = new Date()) {
   const status = String(record?.status || "").trim().toLowerCase();
   if (status !== "approved" && status !== "borrowed") return false;
@@ -105,7 +117,7 @@ export const listEquipmentAvailability = async (req, res) => {
     const validRecords = borrowRecords.filter(isValidBorrowRecord);
     const now = new Date();
     const response = equipment.map((item) => {
-      const itemRecords = validRecords.filter((record) => record.equipmentId === item.equipmentId);
+      const itemRecords = validRecords.filter((record) => isMatchingEquipmentReference(record, item));
       const status = String(item.status || "Serviceable");
       const unavailable = status.toLowerCase() === "unserviceable" || status.toLowerCase() === "lost";
       const currentlyBorrowed = !unavailable && itemRecords.some((record) => isCurrentlyBorrowed(record, now));

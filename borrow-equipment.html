@@ -1264,6 +1264,17 @@
       return expected && expected < now && record.status === 'Borrowed' ? 'status-overdue' : 'status-borrowed';
     }
 
+    function getEquipmentDisplay(record) {
+      const unresolved = record?.equipmentReferenceStatus === 'unresolved';
+      return {
+        name: unresolved ? 'Equipment record unavailable' : (record?.equipmentName || '—'),
+        id: record?.equipmentId || '—',
+        text: unresolved
+          ? `Equipment record unavailable (Original Equipment ID: ${record?.equipmentId || '—'})`
+          : `${record?.equipmentName || '—'} (${record?.equipmentId || '—'})`
+      };
+    }
+
     function getFilteredRecords() {
       const search = state.filters.search.toLowerCase();
       const status = state.filters.status;
@@ -1271,7 +1282,8 @@
       const date = state.filters.date;
 
       return state.records.filter((record) => {
-        const matchesSearch = !search || `${record.borrowerName || ''} ${record.equipmentName || ''}`.toLowerCase().includes(search);
+        const equipmentDisplay = getEquipmentDisplay(record);
+        const matchesSearch = !search || `${record.borrowerName || ''} ${record.equipmentName || ''} ${equipmentDisplay.id}`.toLowerCase().includes(search);
         const matchesStatus = status === 'all' || getDisplayStatus(record) === status;
         const matchesType = type === 'all' || record.borrowerType === type;
         const matchesDate = !date || record.borrowDate === date;
@@ -1339,13 +1351,14 @@
       recordsBody.innerHTML = pageRecords.map((record) => {
         const statusLabel = getDisplayStatus(record);
         const statusClass = getStatusBadgeClass(record);
+        const equipmentDisplay = getEquipmentDisplay(record);
         const canReturn = state.activeTab === 'current' && String(record.status || '').trim().toLowerCase() === 'borrowed';
       const isPending = String(record.status || '').trim().toLowerCase() === 'pending';
       const isApproved = String(record.status || '').trim().toLowerCase() === 'approved';
       return `
           <tr>
             <td>${record.borrowerName || '—'}</td>
-            <td>${record.equipmentName || '—'}<div class="text-xs text-slate-400">${record.equipmentId || '—'}</div></td>
+            <td>${equipmentDisplay.name}<div class="text-xs text-slate-400">${record.equipmentReferenceStatus === 'unresolved' ? `Original Equipment ID: ${equipmentDisplay.id}` : equipmentDisplay.id}</div></td>
             <td>${formatDate(record.borrowDate)}</td>
             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
             <td>
@@ -1411,8 +1424,9 @@
       const returnStatusSmall = document.getElementById('returnStatusSmall');
 
       if (borrowerEl) borrowerEl.textContent = record.borrowerName || '—';
-      if (equipmentEl) equipmentEl.textContent = `${record.equipmentName || '—'} (${record.equipmentId || '—'})`;
-      if (equipmentLineEl) equipmentLineEl.textContent = `${record.equipmentName || '—'} (${record.equipmentId || '—'})`;
+      const equipmentDisplay = getEquipmentDisplay(record);
+      if (equipmentEl) equipmentEl.textContent = equipmentDisplay.text;
+      if (equipmentLineEl) equipmentLineEl.textContent = equipmentDisplay.text;
       const qty = Number(record.quantity || 1);
       if (qtyEl) qtyEl.textContent = `${qty} Unit${qty === 1 ? '' : 's'}`;
       if (borrowDateEl) borrowDateEl.textContent = formatDate(record.borrowDate);
@@ -1702,7 +1716,7 @@
       document.getElementById('detailBorrowerType').textContent = record.borrowerType || '—';
       document.getElementById('detailDepartment').textContent = record.departmentInfo || '—';
       document.getElementById('detailInstructorName').textContent = record.instructorName || record.instructor_name || '—';
-      document.getElementById('detailEquipmentLabel').textContent = `${record.equipmentName || '—'} (${record.equipmentId || '—'})`;
+      document.getElementById('detailEquipmentLabel').textContent = getEquipmentDisplay(record).text;
       const qty = Number(record.quantity || 1);
       document.getElementById('detailQuantity').textContent = `${qty} Unit${qty === 1 ? '' : 's'}`;
       document.getElementById('detailBorrowDate').textContent = formatDate(record.borrowDate);

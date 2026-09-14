@@ -25,14 +25,13 @@
     */
     
 import bcrypt from "bcrypt";
+import { Op } from "sequelize";
 import fs from "fs";
 import path from "path";
 import { User } from "../models/userModel.js";
 import { logAuditEntry } from "./auditController.js";
 import crypto from 'crypto';
 import { sendMail, sendOtpMail } from '../utils/mailer.js';
-await User.sync({ alter: true });
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const getSafeRedirectTarget = (redirectTo) => {
@@ -158,6 +157,8 @@ export const loginUser = async (req, res) => {
 
 export const registerUser = async (req, res) => {
   const { name, email, password, confirmPassword, role, student_number, program, year, section, campus } = req.body;
+  const normalizedRole = normalizeUserRole(role);
+  const officialStudentId = String(student_number || "").trim();
 
   if (!name || !email || !password || !confirmPassword || !campus) {
     req.flash("error_msg", "Please complete all registration fields, including campus.");
@@ -175,13 +176,30 @@ export const registerUser = async (req, res) => {
     return res.redirect("/register");
   }
 
+  if (normalizedRole === "student" && !officialStudentId) {
+    req.flash("error_msg", "Student ID is required for student registration.");
+    return res.redirect("/register");
+  }
+
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser && existingUser.email_verified) {
     req.flash("error_msg", "An account with that email already exists.");
     return res.redirect("/register");
   }
 
-  const normalizedRole = normalizeUserRole(role);
+  if (officialStudentId) {
+    const existingStudent = await User.findOne({
+      where: {
+        student_number: officialStudentId,
+        ...(existingUser ? { id: { [Op.ne]: existingUser.id } } : {})
+      }
+    });
+    if (existingStudent) {
+      req.flash("error_msg", "That Student ID is already registered.");
+      return res.redirect("/register");
+    }
+  }
+
   const hashed         = await bcrypt.hash(password, 8);
   const otp            = generateOtp();
   const otpExpiresAt   = new Date(Date.now() + OTP_TTL_MS);
@@ -193,7 +211,7 @@ export const registerUser = async (req, res) => {
       name,
       password: hashed,
       role: normalizedRole,
-      student_number: student_number?.trim() || null,
+      student_number: officialStudentId || null,
       program: program?.trim() || null,
       year: year?.trim() || null,
       section: section?.trim() || null,
@@ -209,7 +227,7 @@ export const registerUser = async (req, res) => {
       email,
       password: hashed,
       role: normalizedRole,
-      student_number: student_number?.trim() || null,
+      student_number: officialStudentId || null,
       program: program?.trim() || null,
       year: year?.trim() || null,
       section: section?.trim() || null,
@@ -511,20 +529,55 @@ export const updateProfile = async (req, res) => {
     return res.status(401).json({ success: false, error: "Please log in to update your profile." });
   }
 
-  const { student_number, program, year, section } = req.body;
-  const payload = {
-    student_number: student_number?.trim() || null,
-    program: program?.trim() || null,
-    year: year?.trim() || null,
-    section: section?.trim() || null
-  };
+  const user = await User.findByPk(req.session.userId, { attributes: ["id", "role", "student_number"] });
+  if (!user) {
+    return res.status(404).json({ success: false, error: "User account was not found." });
+  }
 
-  await User.update(payload, { where: { id: req.session.userId } });
+  const payload = {};
+  for (const field of ["program", "year", "section"]) {
+    if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+      payload[field] = String(req.body[field] || "").trim() || null;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body, "student_number")) {
+    const officialStudentId = String(req.body.student_number || "").trim();
+    if (!officialStudentId && String(user.student_number || "").trim()) {
+      return res.status(400).json({ success: false, error: "An existing Student ID cannot be cleared." });
+    }
+
+    if (officialStudentId) {
+      const existingStudent = await User.findOne({
+        where: {
+          student_number: officialStudentId,
+          id: { [Op.ne]: user.id }
+        },
+        attributes: ["id"]
+      });
+      if (existingStudent) {
+        return res.status(409).json({ success: false, error: "That Student ID is already registered." });
+      }
+    }
+
+    payload.student_number = officialStudentId || null;
+  }
+
+  try {
+    if (Object.keys(payload).length) {
+      await User.update(payload, { where: { id: user.id } });
+    }
+  } catch (error) {
+    if (error?.name === "SequelizeUniqueConstraintError") {
+      return res.status(409).json({ success: false, error: "That Student ID is already registered." });
+    }
+    throw error;
+  }
   await logAuditEntry(req, {
     action: "User Updated",
     module: "User Management",
-    resourceId: req.session.userId,
-    description: `User profile updated for ${req.session.userId}.`,
+    resourceId: user.id,
+    description: `User profile updated for ${user.id}.`,
     details: payload
   });
 
@@ -532,7 +585,7 @@ export const updateProfile = async (req, res) => {
     req.flash("success_msg", "Profile updated successfully.");
     return res.redirect("/student/profile");
   }
-  return res.json({ success: true, profile: payload });
+  return res.json({ success: true, profile: { ...payload, student_number: payload.student_number ?? user.student_number ?? null } });
 };
 
 export const logoutUser = async (req, res) => {

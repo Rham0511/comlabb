@@ -18,7 +18,7 @@ import { BorrowRecord } from "../models/borrowRecordModel.js";
 import { MaintenanceRequest } from "../models/maintenanceRequestModel.js";
 import { loginPage, registerPage, loginUser, registerUser, dashboardPage, logoutUser, forgotPasswordPage, forgotPassword, verifyOtpPage, verifyOtp, resendOtp, resetPasswordPage, resetPassword, verifyEmail, updateProfile, uploadStudentPhoto } from "../controllers/authController.js";
 import { homePage } from "../controllers/homeController.js";
-import { inventoryPage, viewEquipmentPage, getEquipment, getEquipmentCampusTotals, createEquipment, updateEquipment, updateEquipmentStatus, deleteEquipment, getEquipmentQr, getEquipmentCategories, createEquipmentCategory, deleteEquipmentCategory } from "../controllers/equipmentController.js";
+import { inventoryPage, viewEquipmentPage, getEquipment, getStudentEquipment, getEquipmentCampusTotals, createEquipment, updateEquipment, updateEquipmentStatus, deleteEquipment, getEquipmentQr, getEquipmentCategories, createEquipmentCategory, deleteEquipmentCategory } from "../controllers/equipmentController.js";
 import { listBorrowRecords, createBorrowRecord, returnBorrowRecord, getBorrowHistory, approveBorrowRecord, rejectBorrowRecord, listBorrowNotifications, markBorrowNotificationRead, markBorrowRecordLost } from "../controllers/borrowController.js";
 import { listEquipmentAvailability, getEquipmentBorrowingHistory } from "../controllers/equipmentAvailabilityController.js";
 import { getAttendanceRecords, getAttendanceStats, getInstructorAttendanceDashboard, getInstructorAttendanceSessionDetails, scanAttendance, createAttendanceSession } from "../controllers/attendanceController.js";
@@ -40,6 +40,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
+
+const getUploadedFileBuffer = (uploadedFile) => {
+  if (uploadedFile?.buffer) return uploadedFile.buffer;
+  if (uploadedFile?.path && fs.existsSync(uploadedFile.path)) {
+    return fs.readFileSync(uploadedFile.path);
+  }
+  return null;
+};
 
 const router = express.Router();
 
@@ -1315,6 +1323,7 @@ const pageConfigs = {
                     <h4 class="text-lg font-semibold text-white">Student Class List</h4>
                     <p class="mt-1 text-sm text-emerald-100/80">Upload the official class list for this laboratory schedule.</p>
                     <p class="mt-2 text-sm text-slate-300">Accepted file formats: .xlsx, .xls, .csv</p>
+                    <p class="mt-2 text-xs text-slate-400">Columns: Last Name, First Name, Middle Initial. Course, Year, and Section are supported when available.</p>
                     <label class="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-emerald-500/40 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-emerald-200 hover:bg-slate-900">
                       <i class="fas fa-cloud-upload-alt"></i>
                       <span>Choose File</span>
@@ -1555,6 +1564,23 @@ const pageConfigs = {
               console.error(err);
             }
           }
+
+          function stopAttendanceRefresh() {
+            if (attendanceRefreshId !== null) {
+              window.clearInterval(attendanceRefreshId);
+              attendanceRefreshId = null;
+            }
+          }
+
+          function startAttendanceRefresh() {
+            if (attendanceRefreshId !== null) return;
+            attendanceRefreshId = window.setInterval(() => {
+              fetchAttendanceRecords();
+              fetchAttendanceStats();
+            }, 30000);
+          }
+
+          window.addEventListener('pagehide', stopAttendanceRefresh, { once: true });
 
           function getAttendanceStatusClass(status) {
             const value = (status || '').toLowerCase();
@@ -2210,16 +2236,20 @@ const pageConfigs = {
               const normalizedKey = String(key).trim().toLowerCase();
               normalized[normalizedKey] = String(value ?? '').trim();
             });
-            const studentId = normalized.studentid || normalized.student_id || normalized.studentnumber || normalized['student number'] || normalized['student no'] || normalized['student id'] || normalized.id || '';
+            const lastName = normalized.lastname || normalized['last name'] || '';
+            const firstName = normalized.firstname || normalized['first name'] || '';
+            const middleInitial = normalized.middleinitial || normalized['middle initial'] || '';
             const fullName = normalized.fullname || normalized.name || normalized['full name'] || '';
             const courseSection = normalized.coursesection || normalized.course_section || normalized['course section'] || '';
             const program = normalized.program || '';
             const year = normalized.year || '';
             const section = normalized.section || '';
             const email = normalized.email || '';
-            if (!studentId && !fullName) return null;
+            if (!fullName && !(lastName && firstName)) return null;
             return {
-              studentId,
+              lastName,
+              firstName,
+              middleInitial,
               fullName,
               courseSection,
               program,
@@ -2233,19 +2263,21 @@ const pageConfigs = {
             const lines = csv.split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean);
             if (!lines.length) return [];
             const headerRow = lines[0].split(/,|\\t/).map((field) => field.trim().toLowerCase());
-            const hasHeaders = ['studentid', 'fullname', 'coursesection', 'program', 'year', 'section', 'email'].every((key) => headerRow.includes(key));
+            const hasHeaders = ['lastname', 'firstname', 'middleinitial'].every((key) => headerRow.includes(key));
             return lines.slice(hasHeaders ? 1 : 0).map((line) => {
               const values = line.split(/,|\\t/).map((cell) => cell.trim());
               return {
-                studentId: values[headerRow.indexOf('studentid')] || values[0] || '',
-                fullName: values[headerRow.indexOf('fullname')] || values[1] || '',
-                courseSection: values[headerRow.indexOf('coursesection')] || values[2] || '',
-                program: values[headerRow.indexOf('program')] || values[3] || '',
-                year: values[headerRow.indexOf('year')] || values[4] || '',
-                section: values[headerRow.indexOf('section')] || values[5] || '',
-                email: values[headerRow.indexOf('email')] || values[6] || ''
+                lastName: values[headerRow.indexOf('lastname')] || values[0] || '',
+                firstName: values[headerRow.indexOf('firstname')] || values[1] || '',
+                middleInitial: values[headerRow.indexOf('middleinitial')] || values[2] || '',
+                fullName: values[headerRow.indexOf('fullname')] || '',
+                courseSection: values[headerRow.indexOf('coursesection')] || '',
+                program: values[headerRow.indexOf('program')] || '',
+                year: values[headerRow.indexOf('year')] || '',
+                section: values[headerRow.indexOf('section')] || '',
+                email: values[headerRow.indexOf('email')] || ''
               };
-            }).filter((row) => row.studentId && row.fullName);
+            }).filter((row) => row.fullName || (row.lastName && row.firstName));
           }
 
           function parseExcelToClassList(workbook) {
@@ -2307,6 +2339,12 @@ const pageConfigs = {
               return;
             }
 
+            if (!isEditing && !hasClassListSelection) {
+              classListValidation?.classList.remove('hidden');
+              alert('Please upload the official class list before creating the laboratory schedule.');
+              return;
+            }
+
             classListValidation?.classList.add('hidden');
 
             try {
@@ -2336,7 +2374,7 @@ const pageConfigs = {
 
               if (!response.ok) {
                 const result = await response.json().catch(() => ({}));
-                throw new Error(result.error || 'Unable to save schedule');
+                throw new Error(result.message || result.error || 'Unable to save schedule');
               }
 
               const result = await response.json().catch(() => ({}));
@@ -4135,7 +4173,11 @@ const pageConfigs = {
         }
         @media (max-width: 1023px) {
           .page-hero-card {
-            gap: 0.75rem;
+            gap: 16px;
+          }
+          .page-hero-card > .menu-toggle {
+            position: static !important;
+            flex-shrink: 0;
           }
         }
         @media (max-width: 480px) {
@@ -4143,9 +4185,9 @@ const pageConfigs = {
             flex-wrap: wrap;
           }
           .page-hero-card > .page-hero-meta {
-            flex: 1 1 100%;
+            flex: 1 1 auto;
             min-width: 0;
-            padding-left: 3.5rem;
+            padding-left: 0;
           }
           .page-hero-card > .page-hero-student-badge {
             margin-left: 3.5rem;
@@ -4156,7 +4198,7 @@ const pageConfigs = {
         <button id="mobileMenuToggle" type="button" onclick="toggleSidebar()" class="menu-toggle block lg:hidden" aria-label="Open navigation">
           <i class="fas fa-bars"></i>
         </button>
-        <div class="page-hero-meta min-w-0 flex-1 pl-14 lg:pl-0">
+        <div class="page-hero-meta min-w-0 flex-1">
           <h2 class="page-title">Reports</h2>
         </div>
         <div class="page-hero-student-badge ml-auto flex shrink-0 items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
@@ -5622,8 +5664,8 @@ const serveHtmlPage = (req, res) => {
         name: userName,
         email: user.email || "",
         role: user.role || (page === "student-dashboard" ? "student" : "technician"),
-        studentId: user.student_number || user.studentId || user.student_id || "",
-        student_number: user.student_number || user.studentId || user.student_id || "",
+        studentId: user.student_number || "",
+        student_number: user.student_number || "",
         program: user.program || "",
         year: user.year || "",
         section: user.section || "",
@@ -5709,6 +5751,21 @@ const serveFeaturePage = async (req, res) => {
   const page = req.params.page;
   const config = pageConfigs[page];
   if (!config) return res.status(404).send("Page not found");
+
+  if (page === "reports") {
+    const authContext = await getUserAuthContext(req);
+    if (!authContext.userId) {
+      return res.status(403).send("Forbidden: admin or technician access required.");
+    }
+
+    const normalizedRole = normalizeRoleName(authContext.role);
+    const canViewReportsPage = isCampusAdminRole(normalizedRole) ||
+      normalizedRole === "instructor" ||
+      normalizedRole === "technician";
+    if (!canViewReportsPage) {
+      return res.status(403).send("Forbidden: admin or technician access required.");
+    }
+  }
 
   if (page === "audit-logs") {
     if (canBypassAuditAccessForDev(req)) {
@@ -5799,23 +5856,26 @@ const normalizeCampus = (value) => {
 // Allowed days for scheduling
 const ALLOWED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Parse time string (e.g., "9:00 AM") to date
-const parseScheduleClockTime = (value, referenceDate = new Date()) => {
-  if (!value) return null;
-  const text = String(value).trim();
-  const match = text.match(/^(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM)$/i);
+// Parse supported schedule times into minutes after midnight.
+const parseScheduleClockTime = (value) => {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i) || text.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
 
   let hours = Number(match[1]);
-  const minutes = Number(match[2] || 0);
-  const meridiem = match[3].toUpperCase();
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || minutes > 59) return null;
 
-  if (meridiem === "AM" && hours === 12) hours = 0;
-  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (match[3]) {
+    const meridiem = match[3].toUpperCase();
+    if (hours < 1 || hours > 12) return null;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    if (meridiem === 'PM' && hours !== 12) hours += 12;
+  } else if (hours > 23) {
+    return null;
+  }
 
-  const date = new Date(referenceDate);
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  return hours * 60 + minutes;
 };
 
 // Check if two time ranges overlap
@@ -5823,30 +5883,31 @@ const timeRangesOverlap = (start1, end1, start2, end2) => {
   return start1 < end2 && start2 < end1;
 };
 
+const normalizeStoredCampus = (value) => normalizeCampus(String(value || '').replace(/\s*Campus\s*$/i, '').trim());
+const normalizeStoredRoom = (value) => normalizeRoom(value) || String(value || '').trim().toLowerCase();
+
 // Find conflicting schedules
 const findConflictingSchedule = async ({ laboratoryRoom, dayOfWeek, campus, startTime, endTime, excludeId = null } = {}) => {
   if (!laboratoryRoom || !dayOfWeek || !campus || !startTime || !endTime) return null;
 
   try {
-    const schedules = await LaboratorySchedule.findAll({
-      where: {
-        laboratoryRoom,
-        dayOfWeek,
-        campus
-      }
-    });
-
     const checkStart = parseScheduleClockTime(startTime);
     const checkEnd = parseScheduleClockTime(endTime);
-    if (!checkStart || !checkEnd) return null;
+    if (checkStart === null || checkEnd === null || checkStart >= checkEnd) return null;
+
+    const schedules = await LaboratorySchedule.findAll({ where: { dayOfWeek } });
+    const requestedCampus = normalizeStoredCampus(campus);
+    const requestedRoom = normalizeStoredRoom(laboratoryRoom);
 
     for (const schedule of schedules) {
       // Skip the current schedule if editing
       if (excludeId && schedule.id == excludeId) continue;
+      if (normalizeStoredCampus(schedule.campus) !== requestedCampus) continue;
+      if (normalizeStoredRoom(schedule.laboratoryRoom) !== requestedRoom) continue;
 
       const scheduleStart = parseScheduleClockTime(schedule.startTime);
       const scheduleEnd = parseScheduleClockTime(schedule.endTime);
-      if (!scheduleStart || !scheduleEnd) continue;
+      if (scheduleStart === null || scheduleEnd === null || scheduleStart >= scheduleEnd) continue;
 
       if (timeRangesOverlap(checkStart, checkEnd, scheduleStart, scheduleEnd)) {
         return schedule;
@@ -5871,7 +5932,9 @@ const parseClassListRows = async (buffer, originalname = "") => {
 
     return rows
       .map((row) => ({
-        studentId: row['Student ID'] || row['studentId'] || row['ID'] || row['id'] || '',
+        lastName: row['Last Name'] || row['lastName'] || row['last_name'] || '',
+        firstName: row['First Name'] || row['firstName'] || row['first_name'] || '',
+        middleInitial: row['Middle Initial'] || row['middleInitial'] || row['middle_initial'] || '',
         fullName: row['Full Name'] || row['fullName'] || row['Name'] || row['name'] || '',
         courseSection: row['Course Section'] || row['courseSection'] || row['Section'] || row['section'] || '',
         program: row['Program'] || row['program'] || '',
@@ -5879,11 +5942,135 @@ const parseClassListRows = async (buffer, originalname = "") => {
         section: row['Section'] || row['section'] || '',
         email: row['Email'] || row['email'] || ''
       }))
-      .filter((row) => row.studentId && row.fullName);
+      .filter((row) => row.fullName || (row.lastName && row.firstName));
   } catch (error) {
     console.error("Error parsing class list:", error);
     return [];
   }
+};
+
+const normalizeStudentName = (value) => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/[^a-z0-9]/g, "");
+
+const getNameParts = (value) => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, " ")
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean);
+
+const buildClassListName = (entry) => {
+  const fullName = String(entry.fullName || "").trim();
+  if (fullName) return fullName;
+  return [entry.firstName, entry.middleInitial, entry.lastName].filter(Boolean).join(" ").trim();
+};
+
+const getRegisteredStudentsForCampus = async (campus) => User.findAll({
+  where: {
+    role: "student",
+    [Op.or]: [
+      { campus },
+      { campus: `${String(campus || "").replace(/\s*Campus\s*$/i, "").trim()} Campus` }
+    ]
+  },
+  attributes: ["id", "name", "student_number", "program", "year", "section", "campus"]
+});
+
+const matchClassListEntryToStudent = (entry, registeredStudents) => {
+  const normalizedName = normalizeStudentName(buildClassListName(entry));
+  let candidates = registeredStudents.filter((student) => normalizeStudentName(student.name) === normalizedName);
+
+  if (!candidates.length) {
+    const classListFullName = String(entry.fullName || "").trim();
+    const commaParts = classListFullName.split(",").map((part) => part.trim()).filter(Boolean);
+    const classFirstNameParts = entry.firstName
+      ? getNameParts(entry.firstName)
+      : commaParts.length > 1
+        ? getNameParts(commaParts.slice(1).join(" "))
+        : getNameParts(classListFullName);
+    const classLastNameParts = entry.lastName
+      ? getNameParts(entry.lastName)
+      : commaParts.length > 1
+        ? getNameParts(commaParts[0])
+        : getNameParts(classListFullName).slice(-1);
+    const classFirstName = classFirstNameParts[0];
+    const classLastName = classLastNameParts[classLastNameParts.length - 1];
+    candidates = registeredStudents.filter((student) => {
+      const registeredNameParts = getNameParts(student.name);
+      return classFirstName
+        && classLastName
+        && registeredNameParts[0] === classFirstName
+        && registeredNameParts[registeredNameParts.length - 1] === classLastName;
+    });
+  }
+
+  if (candidates.length > 1) {
+    candidates = candidates.filter((student) => {
+      const sameProgram = !entry.program || normalizeStudentName(student.program) === normalizeStudentName(entry.program);
+      const sameYear = !entry.year || normalizeStudentName(student.year) === normalizeStudentName(entry.year);
+      const sameSection = !entry.section || normalizeStudentName(student.section) === normalizeStudentName(entry.section);
+      return sameProgram && sameYear && sameSection;
+    });
+  }
+
+  return {
+    student: candidates.length === 1 ? candidates[0] : null,
+    status: candidates.length > 1 ? "review" : candidates.length === 1 ? "matched" : "unmatched"
+  };
+};
+
+const reconcileClassListIdentities = async (entries, campus) => {
+  if (!entries.length) return entries;
+  const registeredStudents = await getRegisteredStudentsForCampus(campus);
+
+  await Promise.all(entries.map(async (entry) => {
+    const { student, status } = matchClassListEntryToStudent(entry, registeredStudents);
+    const officialStudentId = student?.student_number || null;
+    const identityStatus = status === "matched" && !String(officialStudentId || "").trim()
+      ? "incomplete_id"
+      : status;
+    const nextValues = {
+      matchedUserId: student?.id || null,
+      studentId: officialStudentId,
+      matchStatus: identityStatus
+    };
+    if (entry.matchedUserId !== nextValues.matchedUserId || entry.studentId !== nextValues.studentId || entry.matchStatus !== nextValues.matchStatus) {
+      await entry.update(nextValues);
+    }
+  }));
+
+  return entries;
+};
+
+const resolveClassListEntries = async (entries = [], laboratoryScheduleId, campus) => {
+  const registeredStudents = await getRegisteredStudentsForCampus(campus);
+
+  return entries
+    .map((entry) => {
+      const fullName = buildClassListName(entry);
+      const { student: matchedStudent, status: matchStatus } = matchClassListEntryToStudent(entry, registeredStudents);
+      const identityStatus = matchStatus === "matched" && !String(matchedStudent?.student_number || "").trim()
+        ? "incomplete_id"
+        : matchStatus;
+      return {
+        laboratoryScheduleId,
+        studentId: matchedStudent?.student_number || null,
+        matchedUserId: matchedStudent?.id || null,
+        matchStatus: identityStatus,
+        fullName,
+        courseSection: entry.courseSection ? String(entry.courseSection).trim() : null,
+        program: entry.program ? String(entry.program).trim() : matchedStudent?.program || null,
+        year: entry.year ? String(entry.year).trim() : matchedStudent?.year || null,
+        section: entry.section ? String(entry.section).trim() : matchedStudent?.section || null,
+        email: entry.email ? String(entry.email).trim() : null
+      };
+    })
+    .filter((entry) => entry.fullName);
 };
 
 // ==================== End Laboratory Schedule Helper Functions ====================
@@ -5965,6 +6152,7 @@ router.get("/dashboard", dashboardPage);
 router.get("/logout", logoutUser);
 
 router.get("/api/equipment", getEquipment);
+router.get("/api/student/equipment", getStudentEquipment);
 router.get("/api/equipment/campus-totals", getEquipmentCampusTotals);
 router.get("/api/equipment/:id/qr", getEquipmentQr);
 router.post("/api/equipment", createEquipment);
@@ -6074,8 +6262,14 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
     console.log("[schedule-upload] session userId:", sessionUserId);
     console.log("[schedule-upload] session userRole:", req.session?.userRole);
 
+    const uploadedClassListBuffer = getUploadedFileBuffer(uploadedFile);
+    const hasClassListInput = Boolean(uploadedClassListBuffer || (typeof classList === "string" && classList.length) || (Array.isArray(classList) && classList.length));
+
     if (!subject || !laboratoryRoom || !campus || !dayOfWeek || !startTime || !endTime) {
       return res.status(400).json({ error: "All schedule fields are required" });
+    }
+    if (!hasClassListInput) {
+      return res.status(400).json({ error: "An official class list is required when creating a laboratory schedule." });
     }
 
     // Campus-based authorization check
@@ -6102,6 +6296,12 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
       return res.status(400).json({ error: "Invalid day. Allowed: Monday–Sunday" });
     }
 
+    const parsedStartTime = parseScheduleClockTime(startTime);
+    const parsedEndTime = parseScheduleClockTime(endTime);
+    if (parsedStartTime === null || parsedEndTime === null || parsedStartTime >= parsedEndTime) {
+      return res.status(400).json({ error: "Invalid schedule time. Use a valid start and end time where the end is after the start." });
+    }
+
     // Check for schedule conflicts before creating (authoritative server-side check)
     const conflict = await findConflictingSchedule({ laboratoryRoom: canonicalRoom, dayOfWeek, campus: canonicalCampus, startTime, endTime });
     if (conflict) {
@@ -6111,7 +6311,9 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
         conflict: {
           id: conflict.id,
           subject: conflict.subject,
+          instructor: conflict.instructor,
           laboratoryRoom: conflict.laboratoryRoom,
+          campus: conflict.campus,
           dayOfWeek: conflict.dayOfWeek,
           startTime: conflict.startTime,
           endTime: conflict.endTime
@@ -6155,8 +6357,6 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
       }
 
       let parsedStudents = [];
-      const hasClassListInput = Boolean(uploadedFile?.buffer || (typeof classList === "string" && classList.length) || (Array.isArray(classList) && classList.length));
-
       if (typeof classList === "string") {
         try {
           const parsedJson = JSON.parse(classList);
@@ -6168,8 +6368,8 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
         parsedStudents = classList;
       }
 
-      if (!parsedStudents.length && uploadedFile?.buffer) {
-        parsedStudents = await parseClassListRows(uploadedFile.buffer, uploadedFile.originalname);
+      if (!parsedStudents.length && uploadedClassListBuffer) {
+        parsedStudents = await parseClassListRows(uploadedClassListBuffer, uploadedFile.originalname);
         console.log("[schedule-upload] parsed rows count:", parsedStudents.length);
         if (parsedStudents[0]) {
           console.log(parsedStudents[0]);
@@ -6180,18 +6380,15 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
         }
       }
 
-      const validEntries = parsedStudents
-        .filter((entry) => entry && entry.studentId && entry.fullName)
-        .map((entry) => ({
-          laboratoryScheduleId: schedule.id,
-          studentId: String(entry.studentId).trim(),
-          fullName: String(entry.fullName).trim(),
-          courseSection: entry.courseSection ? String(entry.courseSection).trim() : null,
-          program: entry.program ? String(entry.program).trim() : null,
-          year: entry.year ? String(entry.year).trim() : null,
-          section: entry.section ? String(entry.section).trim() : null,
-          email: entry.email ? String(entry.email).trim() : null
-        }));
+      const validEntries = await resolveClassListEntries(parsedStudents, schedule.id, canonicalCampus);
+
+      console.log("[attendance-roster-debug] schedule class-list import", {
+        scheduleId: schedule.id,
+        campus: canonicalCampus,
+        parsedRows: parsedStudents.length,
+        resolvedRows: validEntries.length,
+        sampleNames: validEntries.slice(0, 3).map((entry) => normalizeStudentName(entry.fullName))
+      });
 
       const students = validEntries;
       console.dir(students, { depth: null });
@@ -6205,9 +6402,9 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
         console.dir(students[0], { depth: null });
       }
 
-      if (students.length) {
+      if (students.some((entry) => entry.matchStatus === "matched" && entry.studentId)) {
         const session = await AttendanceSession.findOne({ where: { laboratoryScheduleId: schedule.id }, transaction });
-        const placeholderRecords = students.map((entry) => ({
+        const placeholderRecords = students.filter((entry) => entry.matchStatus === "matched" && entry.studentId).map((entry) => ({
           studentId: entry.studentId,
           fullName: entry.fullName,
           courseSection: entry.courseSection || "",
@@ -6343,6 +6540,7 @@ router.put("/api/laboratory-schedules/:id", upload.single("classListFile"), asyn
 
     const { subject, instructor, laboratoryRoom, campus, dayOfWeek, startTime, endTime, status, qrEnabled, classList } = req.body;
     const uploadedFile = req.file;
+    const uploadedClassListBuffer = getUploadedFileBuffer(uploadedFile);
     console.log("[schedule-upload-edit] content-type:", req.headers["content-type"]);
     console.log("[schedule-upload-edit] req.body:", req.body);
     console.log("[schedule-upload-edit] request.file:", uploadedFile ? { fieldname: uploadedFile.fieldname, originalname: uploadedFile.originalname, mimetype: uploadedFile.mimetype, size: uploadedFile.size } : null);
@@ -6363,6 +6561,12 @@ router.put("/api/laboratory-schedules/:id", upload.single("classListFile"), asyn
 
     if (!ALLOWED_DAYS.includes(dayOfWeek)) {
       return res.status(400).json({ error: "Invalid day. Allowed: Monday–Sunday" });
+    }
+
+    const parsedStartTime = parseScheduleClockTime(startTime);
+    const parsedEndTime = parseScheduleClockTime(endTime);
+    if (parsedStartTime === null || parsedEndTime === null || parsedStartTime >= parsedEndTime) {
+      return res.status(400).json({ error: "Invalid schedule time. Use a valid start and end time where the end is after the start." });
     }
 
     const transaction = await sequelize.transaction();
@@ -6389,7 +6593,9 @@ router.put("/api/laboratory-schedules/:id", upload.single("classListFile"), asyn
           conflict: {
             id: editConflict.id,
             subject: editConflict.subject,
+            instructor: editConflict.instructor,
             laboratoryRoom: editConflict.laboratoryRoom,
+            campus: editConflict.campus,
             dayOfWeek: editConflict.dayOfWeek,
             startTime: editConflict.startTime,
             endTime: editConflict.endTime
@@ -6397,12 +6603,12 @@ router.put("/api/laboratory-schedules/:id", upload.single("classListFile"), asyn
         });
       }
 
-      if (uploadedFile?.buffer || typeof classList === "string" || Array.isArray(classList)) {
+      if (uploadedClassListBuffer || typeof classList === "string" || Array.isArray(classList)) {
         await ClassListEntry.destroy({ where: { laboratoryScheduleId: schedule.id }, transaction });
 
         let parsedStudents = [];
-        if (uploadedFile?.buffer) {
-          parsedStudents = await parseClassListRows(uploadedFile.buffer, uploadedFile.originalname);
+        if (uploadedClassListBuffer) {
+          parsedStudents = await parseClassListRows(uploadedClassListBuffer, uploadedFile.originalname);
           console.log("[schedule-upload-edit] parsed rows count:", parsedStudents.length);
           if (parsedStudents[0]) {
             console.log(parsedStudents[0]);
@@ -6422,18 +6628,15 @@ router.put("/api/laboratory-schedules/:id", upload.single("classListFile"), asyn
           parsedStudents = classList;
         }
 
-        const validEntries = parsedStudents
-          .filter((entry) => entry && entry.studentId && entry.fullName)
-          .map((entry) => ({
-            laboratoryScheduleId: schedule.id,
-            studentId: String(entry.studentId).trim(),
-            fullName: String(entry.fullName).trim(),
-            courseSection: entry.courseSection ? String(entry.courseSection).trim() : null,
-            program: entry.program ? String(entry.program).trim() : null,
-            year: entry.year ? String(entry.year).trim() : null,
-            section: entry.section ? String(entry.section).trim() : null,
-            email: entry.email ? String(entry.email).trim() : null
-          }));
+        const validEntries = await resolveClassListEntries(parsedStudents, schedule.id, canonicalCampus);
+
+        console.log("[attendance-roster-debug] schedule class-list edit", {
+          scheduleId: schedule.id,
+          campus: canonicalCampus,
+          parsedRows: parsedStudents.length,
+          resolvedRows: validEntries.length,
+          sampleNames: validEntries.slice(0, 3).map((entry) => normalizeStudentName(entry.fullName))
+        });
 
         const students = validEntries;
         console.dir(students, { depth: null });
@@ -6527,6 +6730,10 @@ const getAttendanceCampusWhere = (campus) => {
   };
 };
 
+const isAttendanceSessionCompleted = (session) => Boolean(
+  session?.expiresAt && new Date(session.expiresAt).getTime() <= Date.now()
+);
+
 router.get('/api/attendance-sessions', async (req, res) => {
   try {
     const access = await getAttendanceAccessContext(req);
@@ -6551,7 +6758,9 @@ router.get('/api/attendance-sessions', async (req, res) => {
     const results = [];
     for (const s of schedules) {
       const id = s.id;
-      const total = await ClassListEntry.count({ where: { laboratoryScheduleId: id } });
+      const rosterEntries = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id } });
+      await reconcileClassListIdentities(rosterEntries, s.campus);
+      const total = rosterEntries.length;
       const session = await AttendanceSession.findOne({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'DESC']] });
       const attendanceRecords = session
         ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
@@ -6564,7 +6773,23 @@ router.get('/api/attendance-sessions', async (req, res) => {
       });
       const present = [...latestStatusByStudent.values()].filter((status) => status === 'Present').length;
       const late = [...latestStatusByStudent.values()].filter((status) => status === 'Late').length;
-      const absent = Math.max(0, total - present - late);
+      const absent = isAttendanceSessionCompleted(session)
+        ? Math.max(0, total - present - late)
+        : 0;
+
+      console.log("[attendance-roster-debug] monitoring session", {
+        sessionId: session?.id || null,
+        scheduleId: id,
+        campus: s.campus,
+        subject: s.subject,
+        laboratory: s.laboratoryRoom,
+        classListEntryCount: rosterEntries.length,
+        rosterCount: total,
+        sampleNames: rosterEntries.slice(0, 3).map((entry) => normalizeStudentName(entry.fullName)),
+        attendanceRecordCount: attendanceRecords.length,
+        present,
+        late
+      });
 
       results.push({
         id,
@@ -6579,7 +6804,7 @@ router.get('/api/attendance-sessions', async (req, res) => {
         present,
         absent,
         late,
-        status: s.status || 'Completed'
+        status: isAttendanceSessionCompleted(session) ? 'Completed' : 'Active'
       });
     }
 
@@ -6611,6 +6836,7 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
       const classList = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id } });
       const toCreate = [];
       for (const c of classList) {
+        if (!c.studentId || c.matchStatus === "review") continue;
         const existing = await Attendance.findOne({ where: { sessionToken: session.token, studentId: c.studentId } });
         if (!existing) {
           toCreate.push({
@@ -6634,6 +6860,7 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
     }
 
     const students = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id }, order: [['fullName', 'ASC']] });
+    await reconcileClassListIdentities(students, schedule.campus);
     const attendance = session && session.token
       ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
       : await Attendance.findAll({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'ASC']] });
@@ -6642,13 +6869,14 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
     const attendanceMap = new Map(attendance.map(a => [String(a.studentId), a]));
 
     const rows = students.map((c) => {
-      const a = attendanceMap.get(String(c.studentId));
+      const a = c.studentId ? attendanceMap.get(String(c.studentId)) : null;
+      const sessionCompleted = isAttendanceSessionCompleted(session);
       return {
-        studentId: c.studentId,
+        studentId: c.studentId || 'Not provided',
         fullName: c.fullName,
-        status: a?.status || 'Absent',
+        status: c.matchStatus === 'review' ? 'Requires Review' : c.matchStatus === 'incomplete_id' ? 'ID Required' : a?.status || (sessionCompleted ? 'Absent' : 'Not Yet Recorded'),
         timeIn: a?.timeIn || null,
-        remarks: a?.remarks || (a ? '' : 'Automatically marked absent')
+        remarks: c.matchStatus === 'review' ? 'Multiple registered students match this name.' : c.matchStatus === 'incomplete_id' ? 'Registered student matched, but the official Student ID is not provided.' : c.studentId ? (a?.remarks || (a ? '' : 'Automatically marked absent')) : 'No registered student matched this name.'
       };
     });
 
@@ -6660,9 +6888,9 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
         ['Laboratory', schedule.laboratoryRoom || ''],
         ['Campus', schedule.campus || ''],
         [],
-        ['Student ID', 'Full Name', 'Status', 'Time In', 'Remarks']
+        ['Student ID', 'Full Name', 'Status', 'Time In']
       ];
-      for (const r of rows) wsData.push([r.studentId, r.fullName, r.status, r.timeIn || '', r.remarks || '']);
+      for (const r of rows) wsData.push([r.studentId || 'Not provided', r.fullName, r.status, r.timeIn || '']);
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
@@ -6675,11 +6903,26 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
 
     const present = rows.filter(r => r.status === 'Present').length;
     const late = rows.filter(r => r.status === 'Late').length;
-    const absent = Math.max(0, rows.length - present - late);
+    const absent = rows.filter(r => r.status === 'Absent').length;
+    const trackedRows = rows.filter(r => ['Present', 'Late', 'Absent'].includes(r.status));
+
+    console.log("[attendance-roster-debug] monitoring details", {
+      sessionId: session?.id || null,
+      scheduleId: id,
+      campus: schedule.campus,
+      subject: schedule.subject,
+      laboratory: schedule.laboratoryRoom,
+      classListEntryCount: students.length,
+      rosterCount: rows.length,
+      sampleNames: students.slice(0, 3).map((entry) => normalizeStudentName(entry.fullName)),
+      attendanceRecordCount: attendance.length,
+      present,
+      late
+    });
 
     res.json({
       schedule: schedule.toJSON(),
-      summary: { total: rows.length, present, absent, late, attendancePercentage: rows.length ? Math.round((present / rows.length) * 100) : 0 },
+      summary: { total: rows.length, present, absent, late, attendancePercentage: trackedRows.length ? Math.round((present / trackedRows.length) * 100) : 0 },
       rows
     });
   } catch (error) {
@@ -6704,19 +6947,21 @@ router.get('/api/attendance-sessions/:id/export', async (req, res) => {
     }
     const session = await AttendanceSession.findOne({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'DESC']] });
     const students = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id }, order: [['fullName', 'ASC']] });
+    await reconcileClassListIdentities(students, schedule.campus);
     const attendance = session && session.token
       ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
       : await Attendance.findAll({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'ASC']] });
     const attendanceMap = new Map(attendance.map(a => [String(a.studentId), a]));
 
     const rows = students.map((c) => {
-      const a = attendanceMap.get(String(c.studentId));
+      const a = c.studentId ? attendanceMap.get(String(c.studentId)) : null;
+      const sessionCompleted = isAttendanceSessionCompleted(session);
       return {
-        studentId: c.studentId,
+        studentId: c.studentId || 'Not provided',
         fullName: c.fullName,
-        status: a?.status || 'Absent',
+        status: c.matchStatus === 'review' ? 'Requires Review' : c.matchStatus === 'incomplete_id' ? 'ID Required' : a?.status || (sessionCompleted ? 'Absent' : 'Not Yet Recorded'),
         timeIn: a?.timeIn || '',
-        remarks: a?.remarks || (a ? '' : 'Automatically marked absent')
+        remarks: c.matchStatus === 'review' ? 'Multiple registered students match this name.' : c.matchStatus === 'incomplete_id' ? 'Registered student matched, but the official Student ID is not provided.' : c.studentId ? (a?.remarks || (a ? '' : 'Automatically marked absent')) : 'No registered student matched this name.'
       };
     });
 
@@ -6727,9 +6972,9 @@ router.get('/api/attendance-sessions/:id/export', async (req, res) => {
         ['Laboratory', schedule.laboratoryRoom || ''],
         ['Campus', schedule.campus || ''],
         [],
-        ['Student ID', 'Full Name', 'Status', 'Time In', 'Remarks']
+        ['Student ID', 'Full Name', 'Status', 'Time In']
       ];
-      for (const r of rows) wsData.push([r.studentId, r.fullName, r.status, r.timeIn || '', r.remarks || '']);
+      for (const r of rows) wsData.push([r.studentId || 'Not provided', r.fullName, r.status, r.timeIn || '']);
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
@@ -6740,8 +6985,8 @@ router.get('/api/attendance-sessions/:id/export', async (req, res) => {
     }
 
     let html = `<!doctype html><html><head><meta charset='utf8'><title>Attendance ${schedule.subject}</title></head><body>`;
-    html += `<h1>${schedule.subject}</h1><p>Instructor: ${schedule.instructor || ''}</p><table border='1' cellpadding='6' cellspacing='0'><thead><tr><th>Student ID</th><th>Full Name</th><th>Status</th><th>Time In</th><th>Remarks</th></tr></thead><tbody>`;
-    for (const r of rows) html += `<tr><td>${r.studentId}</td><td>${r.fullName}</td><td>${r.status}</td><td>${r.timeIn || ''}</td><td>${r.remarks || ''}</td></tr>`;
+    html += `<h1>${schedule.subject}</h1><p>Instructor: ${schedule.instructor || ''}</p><table border='1' cellpadding='6' cellspacing='0'><thead><tr><th>Student ID</th><th>Full Name</th><th>Status</th><th>Time In</th></tr></thead><tbody>`;
+    for (const r of rows) html += `<tr><td>${r.studentId || 'Not provided'}</td><td>${r.fullName}</td><td>${r.status}</td><td>${r.timeIn || ''}</td></tr>`;
     html += `</tbody></table></body></html>`;
     res.setHeader('Content-Disposition', `inline; filename=attendance-${id}.html`);
     res.setHeader('Content-Type', 'text/html');

@@ -14,7 +14,16 @@ export const ClassListEntry = sequelize.define("ClassListEntry", {
   },
   studentId: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
+  },
+  matchedUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  matchStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "unmatched"
   },
   fullName: {
     type: DataTypes.STRING,
@@ -57,7 +66,7 @@ ClassListEntry.belongsTo(LaboratorySchedule, {
 
 export const ensureClassListEntryTable = async () => {
   try {
-    await ClassListEntry.sync({ alter: true, logging: false });
+    await ClassListEntry.sync({ alter: false, logging: false });
     return true;
   } catch (error) {
     console.warn("⚠️ Failed to ensure class_list_entries table exists:", error.message);

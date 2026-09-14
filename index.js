@@ -52,15 +52,26 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+const sessionSecret = String(process.env.SESSION_SECRET || "").trim();
+
+if (!sessionSecret || sessionSecret.length < 32) {
+  const environmentLabel = process.env.NODE_ENV === "production" ? "production" : "local development";
+  throw new Error(`SESSION_SECRET must be configured with at least 32 characters before starting ${environmentLabel}.`);
+}
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use(session({
-  secret: "xianfire-secret-key",
+  secret: sessionSecret,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax"
+  }
 }));
 app.use(flash());
 
@@ -139,7 +150,7 @@ if (!process.env.ELECTRON) {
 
         try {
           await ensureClassListEntryTable();
-          await sequelize.sync({ force: false, alter: true, logging: false });
+          await sequelize.sync({ force: false, alter: false, logging: false });
           console.log("✅ Database tables are ready");
         } catch (syncError) {
           console.warn("⚠️ Database schema sync skipped:", syncError.message);

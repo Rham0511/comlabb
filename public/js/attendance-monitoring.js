@@ -236,15 +236,14 @@
         </div>
       </div>`;
 
-      // Table: Student ID | Full Name | Status | Time In | Time Out
-      html += `<div class="attendance-table-wrap"><table class="attendance-detail-table min-w-full text-left divide-y"><thead><tr><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Student ID</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Full Name</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Status</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Time In</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Time Out</th></tr></thead><tbody id="attendanceDetailTableBody" class="divide-y text-sm">`;
+      // Table: Student ID | Full Name | Status | Time In
+      html += `<div class="attendance-table-wrap"><table class="attendance-detail-table min-w-full text-left divide-y"><thead><tr><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Student ID</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Full Name</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Status</th><th class="px-5 py-3.5 text-sm font-semibold text-emerald-100/80">Time In</th></tr></thead><tbody id="attendanceDetailTableBody" class="divide-y text-sm">`;
       (data.rows||[]).forEach(r=>{
         const studentId = r.studentId || r.id || '';
-        const status = r.status || r.attendanceStatus || 'Absent';
-        const statusClass = status === 'Present' ? 'text-green-300' : status === 'Late' ? 'text-amber-300' : 'text-red-300';
+        const status = r.status || r.attendanceStatus || 'Not Yet Recorded';
+        const statusClass = status === 'Present' ? 'text-green-300' : status === 'Late' ? 'text-amber-300' : status === 'Not Yet Recorded' ? 'text-slate-300' : 'text-red-300';
         const timeIn = r.timeIn || r.time || r.scannedAt || 'Not recorded';
-        const timeOut = r.timeOut || 'Not recorded';
-        html += `<tr class="hover:bg-slate-900/60"><td data-label="Student ID" class="px-4 py-3">${escapeHtml(studentId || '—')}</td><td data-label="Full Name" class="px-4 py-3 attendance-student-name">${escapeHtml(r.fullName || r.studentName || '—')}</td><td data-label="Status" class="px-4 py-3 ${statusClass}"><span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold">${escapeHtml(status)}</span></td><td data-label="Time In" class="px-4 py-3">${escapeHtml(timeIn)}</td><td data-label="Time Out" class="px-4 py-3">${escapeHtml(timeOut)}</td></tr>`;
+        html += `<tr class="hover:bg-slate-900/60"><td data-label="Student ID" class="px-4 py-3">${escapeHtml(studentId || '—')}</td><td data-label="Full Name" class="px-4 py-3 attendance-student-name">${escapeHtml(r.fullName || r.studentName || '—')}</td><td data-label="Status" class="px-4 py-3 ${statusClass}"><span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold">${escapeHtml(status)}</span></td><td data-label="Time In" class="px-4 py-3">${escapeHtml(timeIn)}</td></tr>`;
       });
       html += `</tbody></table></div>`;
 
@@ -337,7 +336,7 @@
             { header: 'Status', dataKey: 'status' },
             { header: 'Time In', dataKey: 'timeIn' }
           ];
-          const rows = (data.rows || []).map(r => ({ studentId: r.studentId || r.id || '', fullName: r.fullName || r.studentName || '', status: r.status || r.attendanceStatus || 'Absent', timeIn: r.timeIn || r.time || '' }));
+          const rows = (data.rows || []).map(r => ({ studentId: r.studentId || r.id || '', fullName: r.fullName || r.studentName || '', status: r.status || r.attendanceStatus || 'Not Yet Recorded', timeIn: r.timeIn || r.time || '' }));
 
           // Start table below header
           doc.autoTable({

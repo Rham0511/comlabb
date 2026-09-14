@@ -7,6 +7,7 @@
     "xian-start": "node index.js",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",
+    "migrate:borrow-equipment-reference": "node migrate-borrow-equipment-reference.mjs",
     "create:model": "node create.js model",
     "create:controller": "node create.js controller"
   },

@@ -94,6 +94,12 @@ const normalizeStudentIdentifiers = (student) => {
   return Array.from(ids);
 };
 
+const getCampusVariants = (campus) => {
+  const normalizedCampus = String(campus || "").trim();
+  const campusName = normalizedCampus.replace(/\s*Campus\s*$/i, "").trim();
+  return [...new Set([normalizedCampus, campusName, `${campusName} Campus`].filter(Boolean))];
+};
+
 const getDayOfWeekName = (date = new Date()) => {
   const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   return names[date.getDay()] || "";
@@ -218,8 +224,20 @@ const getStudentAttendanceStatusForEquipment = async (student, equipmentId) => {
     };
   }
 
+  const studentCampus = String(student.campus || "").trim();
+  if (!studentCampus) {
+    return {
+      canSubmitReport: false,
+      attendanceStatus: "Invalid",
+      attendanceMessage: "Report Not Allowed: Your account does not have a campus assigned."
+    };
+  }
+
   const equipment = await Equipment.findOne({
-    where: { equipmentId: equipmentIdentifier }
+    where: {
+      equipmentId: equipmentIdentifier,
+      campus: { [Op.in]: getCampusVariants(studentCampus) }
+    }
   });
 
   if (!equipment) {
@@ -230,7 +248,6 @@ const getStudentAttendanceStatusForEquipment = async (student, equipmentId) => {
     };
   }
 
-  const studentCampus = String(student.campus || "").trim();
   const equipmentCampus = String(equipment.campus || "").trim();
   if (studentCampus && equipmentCampus && !canManageRecord(studentCampus, equipmentCampus)) {
     return {
@@ -376,12 +393,18 @@ const getStudentMaintenanceContext = async (req, equipmentId = null) => {
   }
 
   try {
-    const equipmentRows = await Equipment.findAll({
-      order: [["name", "ASC"]]
-    });
+    const studentCampus = String(student?.campus || "").trim();
+    const equipmentRows = studentCampus
+      ? await Equipment.findAll({
+          where: { campus: { [Op.in]: getCampusVariants(studentCampus) } },
+          attributes: ["equipmentId", "name", "laboratoryRoom"],
+          order: [["name", "ASC"], ["equipmentId", "ASC"]]
+        })
+      : [];
     equipment = equipmentRows.map((item) => ({
       equipmentId: item.equipmentId,
-      name: item.name
+      name: item.name,
+      laboratoryRoom: item.laboratoryRoom || null
     }));
   } catch (error) {
     console.warn("Unable to load equipment list for maintenance context:", error.message);
@@ -408,6 +431,9 @@ export const getStudentMaintenanceContextRoute = async (req, res) => {
 
   try {
     const context = await getStudentMaintenanceContext(req, equipmentId);
+    if (String(context?.student?.role || "").trim().toLowerCase() !== "student") {
+      return res.status(403).json({ error: "Student access is required." });
+    }
     const equipmentMeta = context?.equipmentMeta || null;
 
     return res.json({
@@ -451,12 +477,21 @@ export const createMaintenanceRequest = async (req, res) => {
       console.warn("Unable to load student record while creating maintenance request:", error.message);
     }
 
-    const equipment = await Equipment.findOne({ where: { equipmentId: resolvedEquipmentId } });
-    if (!equipment) {
-      return res.status(404).json({ error: "Equipment not found." });
+    const studentCampus = String((student?.campus || studentContext?.student?.campus || "").trim());
+    if (!studentCampus) {
+      return res.status(403).json({ error: "Report Not Allowed: Your account does not have a campus assigned." });
     }
 
-    const studentCampus = String((student?.campus || studentContext?.student?.campus || "").trim());
+    const equipment = await Equipment.findOne({
+      where: {
+        equipmentId: resolvedEquipmentId,
+        campus: { [Op.in]: getCampusVariants(studentCampus) }
+      }
+    });
+    if (!equipment) {
+      return res.status(404).json({ error: "Equipment not found in your campus." });
+    }
+
     if (studentCampus && String(equipment.campus || "").trim() && !canManageRecord(studentCampus, equipment.campus)) {
       return res.status(403).json({
         error: `Report Not Allowed: This equipment belongs to another campus. You can only report equipment from ${studentCampus} Campus.`
@@ -692,7 +727,7 @@ export const getMaintenanceRequestById = async (req, res) => {
 
     // Campus-based authorization check
     const userCampus = req.session?.userCampus;
-    if (userCampus && maintenance.campus && !canManageRecord(userCampus, maintenance.campus)) {
+    if (!userCampus || !canManageRecord(userCampus, maintenance.campus)) {
       return res.status(403).json({ error: "You do not have permission to view this maintenance request." });
     }
 

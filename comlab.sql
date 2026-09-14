@@ -8592,6 +8592,7 @@ CREATE TABLE `borrow_histories` (
   `recordId` varchar(255) NOT NULL,
   `borrowerName` varchar(255) NOT NULL,
   `equipmentId` varchar(255) NOT NULL,
+  `equipment_record_id` int DEFAULT NULL,
   `equipmentName` varchar(255) NOT NULL,
   `borrowDate` date NOT NULL,
   `returnDate` date DEFAULT NULL,
@@ -8684,6 +8685,7 @@ CREATE TABLE `borrow_records` (
   `borrowerType` varchar(255) NOT NULL DEFAULT 'Student',
   `departmentInfo` varchar(255) DEFAULT NULL,
   `equipmentId` varchar(255) NOT NULL,
+  `equipment_record_id` int DEFAULT NULL,
   `equipmentName` varchar(255) NOT NULL,
   `quantity` int NOT NULL DEFAULT '1',
   `borrowDate` date NOT NULL,
@@ -8745,7 +8747,9 @@ INSERT INTO `borrow_records` (`id`, `borrowerName`, `borrowerType`, `departmentI
 CREATE TABLE `class_list_entries` (
   `id` int NOT NULL,
   `laboratoryScheduleId` int NOT NULL,
-  `studentId` varchar(255) NOT NULL,
+  `studentId` varchar(255) DEFAULT NULL,
+  `matchedUserId` int DEFAULT NULL,
+  `matchStatus` varchar(255) NOT NULL DEFAULT 'unmatched',
   `fullName` varchar(255) NOT NULL,
   `courseSection` varchar(255) DEFAULT NULL,
   `program` varchar(255) DEFAULT NULL,
@@ -10109,7 +10113,8 @@ ALTER TABLE `borrow_records`
 --
 ALTER TABLE `class_list_entries`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `laboratoryScheduleId` (`laboratoryScheduleId`);
+  ADD KEY `laboratoryScheduleId` (`laboratoryScheduleId`),
+  ADD KEY `matchedUserId` (`matchedUserId`);
 
 --
 -- Indexes for table `equipment`
@@ -10212,7 +10217,8 @@ ALTER TABLE `maintenance_requests`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `users_student_number_unique` (`student_number`);
 
 --
 -- AUTO_INCREMENT for dumped tables

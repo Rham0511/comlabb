@@ -147,14 +147,14 @@ ComLab - Computer Laboratory Management System
               </p>
 
               <!-- OTP Code Box -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="text-align: center;">
+                <tr align="center" style="text-align: center;">
                   <td align="center" style="padding:20px 0;">
-                    <div style="background-color:#0d2818;border:2px solid rgba(34,197,94,0.3);border-radius:12px;padding:20px;display:inline-block;">
-                      <p style="margin:0 0 10px;color:#6ee7b7;font-size:11px;text-transform:uppercase;letter-spacing:1px;">
+                    <div align="center" style="margin: 24px auto; text-align: center; width: 100%; max-width: 320px; display: block; background-color: #022814; border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 12px; padding: 20px; box-sizing: border-box;">
+                      <p style="text-align: center; display: block; font-size: 11px; letter-spacing: 2px; color: #34D399; margin: 0 0 8px; text-transform: uppercase;">
                         Your verification code
                       </p>
-                      <p style="margin:0;color:#22c55e;font-size:36px;font-weight:bold;letter-spacing:8px;font-family:monospace;">
+                      <p style="text-align: center; display: block; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #34D399; margin: 0 auto; line-height: 40px; white-space: nowrap;">
                         ${otp}
                       </p>
                     </div>
