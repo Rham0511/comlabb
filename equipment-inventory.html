@@ -865,12 +865,21 @@
                             <input id="searchInput" type="text" placeholder="Search equipment..." oninput="filterEquipment()" class="w-full bg-transparent text-white placeholder-slate-400 focus:outline-none">
                         </div>
                         <div class="flex min-w-[180px] items-center gap-3 rounded-xl border border-emerald-800/40 bg-transparent px-3 py-2.5">
+                            <i class="fas fa-eye text-emerald-400"></i>
+                            <select id="viewModeFilter" onchange="changeViewMode()" class="w-full bg-transparent text-white focus:outline-none">
+                                <option value="all">All Equipment</option>
+                                <option value="pc-sets">PC Sets Only</option>
+                            </select>
+                        </div>
+                        <div class="flex min-w-[180px] items-center gap-3 rounded-xl border border-emerald-800/40 bg-transparent px-3 py-2.5">
                             <i class="fas fa-filter text-emerald-400"></i>
                             <select id="statusFilter" onchange="filterEquipment()" class="w-full bg-transparent text-white focus:outline-none">
                                 <option value="">All Status</option>
                                 <option value="Serviceable">Serviceable</option>
                                 <option value="Unserviceable">Unserviceable</option>
                                 <option value="Lost">Lost</option>
+                                <option value="Missing">Missing</option>
+                                <option value="Under Maintenance">Under Maintenance</option>
                             </select>
                         </div>
                         <div class="flex min-w-[180px] items-center gap-3 rounded-xl border border-emerald-800/40 bg-transparent px-3 py-2.5">
@@ -887,6 +896,9 @@
                         <button type="button" onclick="openCategoryModal()" class="rounded-xl border border-emerald-800/40 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-emerald-900/20">
                             Manage Equipment Types
                         </button>
+                        <button type="button" id="missingFilterBtn" onclick="toggleMissingView()" class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-all" style="border-color:rgba(251,191,36,.3);color:#fcd34d;background:rgba(251,191,36,.08);" title="Show all Missing equipment">
+                            <i class="fas fa-exclamation-triangle mr-1.5"></i><span id="missingFilterLabel">Missing Equipment</span>
+                        </button>
                         <button onclick="openModal('addModal')" class="btn-primary flex items-center justify-center space-x-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium text-white">
                             <i class="fas fa-plus"></i>
                             <span>Add Equipment</span>
@@ -895,73 +907,56 @@
                 </div>
             </section>
 
-            <!-- Equipment Stats -->
-            <div class="equipment-stats-grid grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <p class="card-title text-emerald-300">Total</p>
-                            <h3 class="text-slate-100 text-sm font-semibold mb-1">Total Equipment</h3>
+            <!-- Missing Equipment Panel (hidden by default) -->
+            <section id="missingEquipmentSection" class="card overflow-hidden mb-4" style="display:none;border-color:rgba(251,191,36,.25);">
+                <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(251,191,36,.15);background:rgba(251,191,36,.04);">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);">
+                            <i class="fas fa-exclamation-triangle" style="color:#fcd34d;font-size:0.875rem;"></i>
                         </div>
-                        <div class="card-icon blue">
-                            <i class="fas fa-microchip"></i>
+                        <div>
+                            <h3 class="font-semibold text-white text-sm">Missing Equipment</h3>
+                            <p class="text-xs text-slate-500" id="missingCountLabel">Loading...</p>
                         </div>
                     </div>
-                    <p id="totalCount" class="text-4xl font-bold text-white">0</p>
+                    <button onclick="toggleMissingView()" class="text-slate-400 hover:text-white text-lg"><i class="fas fa-times"></i></button>
                 </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <p class="card-title text-emerald-300">Available</p>
-                            <h3 class="text-slate-100 text-sm font-semibold mb-1">Serviceable</h3>
-                        </div>
-                        <div class="card-icon green">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                    <p id="serviceableCount" class="text-4xl font-bold text-white">0</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead style="background:linear-gradient(180deg,rgba(7,21,15,.98),rgba(4,12,9,.98));border-bottom:1px solid rgba(251,191,36,.12);">
+                            <tr>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Equipment ID</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Name</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Serial No.</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Original Set</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Campus</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Date Reported</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Reported By</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Reason</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style="color:rgba(251,191,36,.7);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missingEquipmentTable" class="divide-y" style="border-color:rgba(251,191,36,.06);">
+                            <tr><td colspan="9" class="px-5 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <p class="card-title text-emerald-300">Inactive</p>
-                            <h3 class="text-slate-100 text-sm font-semibold mb-1">Unserviceable</h3>
-                        </div>
-                        <div class="card-icon red">
-                            <i class="fas fa-exclamation-circle"></i>
-                        </div>
-                    </div>
-                    <p id="unserviceableCount" class="text-4xl font-bold text-white">0</p>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <p class="card-title text-emerald-300">Unavailable</p>
-                            <h3 class="text-slate-100 text-sm font-semibold mb-1">Lost</h3>
-                        </div>
-                        <div class="card-icon red">
-                            <i class="fas fa-circle-exclamation"></i>
-                        </div>
-                    </div>
-                    <p id="lostCount" class="text-4xl font-bold text-white">0</p>
-                </div>
-            </div>
+            </section>
 
             <!-- Equipment Table -->
-            <section class="card overflow-hidden border-2 border-[#1f4a31] bg-[#142b1f]/90">
+            <section class="card overflow-hidden border-2 border-[#1f4a31] bg-[#142b1f]/90" id="equipmentTableSection">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-[linear-gradient(180deg,_rgba(24,53,41,.98),_rgba(19,45,35,.98))] border-b border-[rgba(90,255,150,0.08)]">
-                            <tr>
+                            <tr id="tableHeaderRow">
                                 <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Equipment ID</th>
                                 <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Equipment Name</th>
+                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Serial Number</th>
+                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">PC Station</th>
                                 <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Campus</th>
-                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Status</th>
+                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Condition</th>
                                 <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Date Added</th>
-                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">QR Code</th>
+                                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">QR</th>
                                 <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Actions</th>
                             </tr>
                         </thead>
@@ -1005,6 +1000,16 @@
                         <button type="button" onclick="openCategoryModal()" class="mt-2 text-xs font-medium text-emerald-400 underline hover:text-emerald-300">
                             Manage equipment types
                         </button>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-emerald-400">Serial Number <span class="text-emerald-600 font-normal">(must be unique)</span></label>
+                            <input id="addSerialNumber" name="serialNumber" type="text" placeholder="e.g., CPU-SN-001" class="w-full rounded-xl border border-emerald-600/50 bg-[#06100b] px-4 py-3 text-emerald-100 placeholder:text-emerald-500/70 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400" autocomplete="off">
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-emerald-400">PC Set ID <span class="text-emerald-600 font-normal">(optional)</span></label>
+                            <input id="addSetId" name="setId" type="text" placeholder="e.g., PC-SET-001" class="w-full rounded-xl border border-emerald-600/50 bg-[#06100b] px-4 py-3 text-emerald-100 placeholder:text-emerald-500/70 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400" autocomplete="off">
+                        </div>
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-semibold text-emerald-400">Laboratory Room</label>
@@ -1120,6 +1125,17 @@
                         <label class="block text-sm font-medium text-emerald-300 mb-2">Equipment ID</label>
                         <input type="text" id="editEquipmentId" class="w-full rounded-2xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 focus:border-emerald-500 focus:outline-none" readonly>
                     </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-emerald-300 mb-2">Serial Number <span class="text-emerald-700 font-normal text-xs">(unique)</span></label>
+                            <input type="text" id="editSerialNumber" placeholder="e.g., CPU-SN-001" class="w-full rounded-2xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-300/40 focus:border-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-emerald-300 mb-2">PC Set ID <span class="text-emerald-700 font-normal text-xs">(optional)</span></label>
+                            <input type="text" id="editSetId" placeholder="e.g., PC-SET-001" class="w-full rounded-2xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-300/40 focus:border-emerald-500 focus:outline-none">
+                            <p class="mt-1 text-xs text-amber-400/70"><i class="fas fa-info-circle mr-1"></i>Use Transfer action to change set for Missing equipment.</p>
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-emerald-300 mb-2">Equipment Name</label>
                         <input type="text" id="editEquipmentName" list="equipmentTypeList" placeholder="Choose equipment type" class="w-full rounded-2xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-300/60 focus:border-emerald-500 focus:outline-none" autocomplete="off" required>
@@ -1212,6 +1228,14 @@
                     <div class="qr-detail-row">
                         <span class="qr-detail-label">Equipment Name</span>
                         <span class="qr-detail-value" id="qrModalEquipmentName"></span>
+                    </div>
+                    <div class="qr-detail-row">
+                        <span class="qr-detail-label">Serial Number</span>
+                        <span class="qr-detail-value font-mono" id="qrModalSerialNumber">—</span>
+                    </div>
+                    <div class="qr-detail-row">
+                        <span class="qr-detail-label">PC Set</span>
+                        <span class="qr-detail-value font-mono" id="qrModalSetId">—</span>
                     </div>
                     <div class="qr-detail-row">
                         <span class="qr-detail-label">Laboratory</span>
@@ -1480,7 +1504,7 @@
                 const campusMessage = activeCampus ? `${activeCampus}` : 'the selected campus';
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-5 py-6 text-center">
+                        <td colspan="9" class="px-5 py-6 text-center">
                             <div class="bg-red-950/20 border border-red-500/30 rounded-xl p-5 max-w-lg mx-auto shadow-lg shadow-red-950/30 backdrop-blur-md border-l-4 border-l-red-500">
                                 <div class="flex items-start gap-3">
                                     <div class="mt-0.5 text-red-400 shrink-0">
@@ -1507,39 +1531,88 @@
             const { pageItems } = getPagedEquipment(sourceItems);
 
             tbody.innerHTML = pageItems.length ? pageItems.map(item => {
-                const badgeClass = item.status === 'Serviceable' ? 'badge-serviceable' : item.status === 'Lost' ? 'badge-lost' : 'badge-unserviceable';
-                const safeName = escapeHtml(item.name || '');
-                const safeId = escapeHtml(item.equipmentId || '');
+                const statusBadgeMap = {
+                    'Serviceable':       'background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3);',
+                    'Unserviceable':     'background:rgba(107,114,128,.15);color:#d1d5db;border:1px solid rgba(107,114,128,.3);',
+                    'Lost':              'background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);',
+                    'Missing':           'background:rgba(251,191,36,.2);color:#fcd34d;border:1px solid rgba(251,191,36,.4);',
+                    'Under Maintenance': 'background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.3);',
+                };
+                const badgeStyle = statusBadgeMap[item.status] || statusBadgeMap['Unserviceable'];
+                const safeName   = escapeHtml(item.name || '');
+                const safeId     = escapeHtml(item.equipmentId || '');
                 const safeCampus = escapeHtml(item.campus || '');
                 const safeStatus = escapeHtml(item.status || '');
-                const safeLab = escapeHtml(item.laboratoryRoom || '');
-                const formattedDate = item.dateAdded ? new Date(item.dateAdded).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+                const safeLab    = escapeHtml(item.laboratoryRoom || '');
+                const safeSN     = escapeHtml(item.serialNumber || '');
+                const safeSetId  = escapeHtml(item.setId || '');
+                const formattedDate = item.dateAdded ? new Date(item.dateAdded).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+                const isMissing = item.status === 'Missing';
+                const rowStyle  = isMissing ? 'background:rgba(251,191,36,.04);' : '';
                 return `
-                    <tr class="table-row-hover">
-                        <td class="px-5 py-3 text-sm font-medium text-gray-900">${safeId}</td>
-                        <td class="px-5 py-3 text-sm text-gray-600">${safeName}</td>
-                        <td class="px-5 py-3 text-sm text-gray-600">${safeCampus}</td>
-                        <td class="px-5 py-3"><span class="${badgeClass}">${safeStatus}</span></td>
-                        <td class="px-5 py-3 text-sm text-gray-600">${formattedDate}</td>
+                    <tr class="table-row-hover" style="${rowStyle}">
+                        <td class="px-5 py-3 text-sm font-mono font-medium text-emerald-300">${safeId}</td>
+                        <td class="px-5 py-3 text-sm text-white font-medium">${safeName}</td>
+                        <td class="px-5 py-3 text-sm font-mono text-slate-300">${safeSN || '<span class="text-slate-600 text-xs italic">—</span>'}</td>
+                        <td class="px-5 py-3 text-sm">
+                            ${safeSetId
+                                ? `<span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold" style="background:rgba(74,222,128,.12);color:#6ee7b7;border:1px solid rgba(74,222,128,.2);">${safeSetId}</span>`
+                                : '<span class="text-slate-600 text-xs italic">—</span>'}
+                        </td>
+                        <td class="px-5 py-3 text-sm text-slate-300">${safeCampus}</td>
                         <td class="px-5 py-3">
-                            <button type="button" data-action="view-qr" data-id="${safeId}" class="action-btn action-btn-qr">
-                                <i class="fas fa-qrcode mr-1"></i>View QR
+                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style="${badgeStyle}">
+                                ${isMissing ? '<i class="fas fa-exclamation-triangle" style="font-size:0.65rem;"></i>' : ''}
+                                ${safeStatus}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3 text-xs text-slate-400">${formattedDate}</td>
+                        <td class="px-5 py-3">
+                            <button type="button" data-action="view-qr" data-id="${safeId}" class="action-btn action-btn-qr" title="View QR">
+                                <i class="fas fa-qrcode"></i>
                             </button>
                         </td>
                         <td class="px-5 py-3">
-                            <div class="flex gap-2">
-                                <button type="button" data-action="edit" data-id="${safeId}" data-name="${safeName}" data-campus="${safeCampus}" data-status="${safeStatus}" data-lab="${safeLab}" class="action-btn action-btn-edit">
-                                    <i class="fas fa-edit mr-1"></i>Edit
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" data-action="edit"
+                                    data-id="${safeId}" data-name="${safeName}" data-campus="${safeCampus}"
+                                    data-status="${safeStatus}" data-lab="${safeLab}"
+                                    data-sn="${safeSN}" data-setid="${safeSetId}"
+                                    class="action-btn action-btn-edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" data-action="delete" data-id="${safeId}" class="action-btn action-btn-delete">
-                                    <i class="fas fa-trash mr-1"></i>Delete
+                                ${isMissing
+                                    ? `<button type="button" data-action="mark-found" data-id="${safeId}" data-name="${safeName}"
+                                            class="action-btn" title="Mark as Found"
+                                            style="background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.25);">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>`
+                                    : `<button type="button" data-action="report-missing" data-id="${safeId}" data-name="${safeName}"
+                                            class="action-btn" title="Report Missing"
+                                            style="background:rgba(251,191,36,.12);color:#fcd34d;border:1px solid rgba(251,191,36,.25);">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>`
+                                }
+                                <button type="button" data-action="transfer-set"
+                                    data-id="${safeId}" data-name="${safeName}" data-setid="${safeSetId}"
+                                    class="action-btn" title="Transfer Set"
+                                    style="background:rgba(139,92,246,.12);color:#c4b5fd;border:1px solid rgba(139,92,246,.25);">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <button type="button" data-action="view-history" data-id="${safeId}" data-name="${safeName}"
+                                    class="action-btn" title="View History"
+                                    style="background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.25);">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <button type="button" data-action="delete" data-id="${safeId}" class="action-btn action-btn-delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>`;
             }).join('') : `
                 <tr>
-                    <td colspan="7" class="px-5 py-6 text-center text-gray-500">No equipment found. Add a new item to get started.</td>
+                    <td colspan="9" class="px-5 py-6 text-center text-slate-500">No equipment found.</td>
                 </tr>`;
 
             renderPaginationControls();
@@ -1558,10 +1631,20 @@
                     button.dataset.name,
                     button.dataset.campus,
                     button.dataset.status,
-                    button.dataset.lab
+                    button.dataset.lab,
+                    button.dataset.sn,
+                    button.dataset.setid
                 );
             } else if (action === 'delete') {
                 deleteEquipment(id);
+            } else if (action === 'report-missing') {
+                openReportMissingModal(id, button.dataset.name);
+            } else if (action === 'mark-found') {
+                openMarkFoundModal(id, button.dataset.name);
+            } else if (action === 'transfer-set') {
+                openTransferSetModal(id, button.dataset.name, button.dataset.setid);
+            } else if (action === 'view-history') {
+                openEquipmentHistoryModal(id, button.dataset.name);
             }
         }
 
@@ -1598,12 +1681,14 @@
             }
         }
 
-        function editEquipment(id, name, campus, status, laboratoryRoom) {
+        function editEquipment(id, name, campus, status, laboratoryRoom, serialNumber, setId) {
             document.getElementById('editEquipmentId').value = id;
             document.getElementById('editEquipmentName').value = name.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
             document.getElementById('editCampus').value = campus;
             document.getElementById('editLaboratoryRoom').value = laboratoryRoom || '';
             document.getElementById('editEquipmentStatusHidden').value = status || 'Serviceable';
+            document.getElementById('editSerialNumber').value = serialNumber || '';
+            document.getElementById('editSetId').value = setId || '';
             openModal('editModal');
         }
 
@@ -1632,8 +1717,13 @@
                 name: document.getElementById('addEquipmentName')?.value?.trim() || '',
                 campus: document.getElementById('addCampus')?.value || '',
                 laboratoryRoom: document.getElementById('addLaboratoryRoom')?.value?.trim() || '',
+                serialNumber: document.getElementById('addSerialNumber')?.value?.trim() || null,
+                setId: document.getElementById('addSetId')?.value?.trim() || null,
                 status: 'Serviceable'
             };
+            // Remove null/empty optional fields
+            if (!data.serialNumber) delete data.serialNumber;
+            if (!data.setId) delete data.setId;
 
             const response = await fetch('/api/equipment', {
                 method: 'POST',
@@ -1644,9 +1734,8 @@
             if (response.ok) {
                 await loadEquipment();
                 closeModal('addModal');
-                if (form && typeof form.reset === 'function') {
-                    form.reset();
-                }
+                if (form && typeof form.reset === 'function') form.reset();
+                initializeCampusDefaults();
             } else {
                 const result = await response.json().catch(() => ({}));
                 alert(result.error || 'Failed to add equipment.');
@@ -1660,8 +1749,12 @@
                 name: document.getElementById('editEquipmentName')?.value?.trim() || '',
                 campus: document.getElementById('editCampus')?.value || '',
                 laboratoryRoom: document.getElementById('editLaboratoryRoom')?.value?.trim() || '',
-                status: document.getElementById('editEquipmentStatusHidden')?.value || 'Serviceable'
+                status: document.getElementById('editEquipmentStatusHidden')?.value || 'Serviceable',
+                serialNumber: document.getElementById('editSerialNumber')?.value?.trim() || null,
             };
+            // Only send setId if the field has a value (don't accidentally clear it)
+            const editSetIdVal = document.getElementById('editSetId')?.value?.trim();
+            if (editSetIdVal !== undefined) data.setId = editSetIdVal || null;
 
             const response = await fetch(`/api/equipment/${encodeURIComponent(id)}`, {
                 method: 'PUT',
@@ -1688,6 +1781,379 @@
             currentEquipmentPage = 1;
             renderEquipmentTable(getFilteredEquipment());
             renderStats();
+        }
+
+        async function changeViewMode() {
+            const viewMode = document.getElementById('viewModeFilter')?.value || 'all';
+            
+            if (viewMode === 'pc-sets') {
+                // Show PC sets in table with expandable rows
+                await loadPCSetsTable();
+            } else {
+                // Show regular equipment view - restore headers
+                const thead = document.getElementById('tableHeaderRow');
+                thead.innerHTML = `
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Equipment ID</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Equipment Name</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Serial Number</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">PC Station</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Campus</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Condition</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Date Added</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">QR</th>
+                    <th class="px-5 py-3 text-left text-sm font-semibold text-slate-300 uppercase">Actions</th>
+                `;
+                await filterEquipment();
+            }
+        }
+
+        async function loadPCSets() {
+            try {
+                const response = await fetch('/api/equipment-sets');
+                if (!response.ok) throw new Error('Failed to fetch PC sets');
+                
+                const data = await response.json();
+                if (data.success) {
+                    renderPCSetsView(data.sets);
+                }
+            } catch (error) {
+                console.error('Error loading PC sets:', error);
+                alert('Failed to load PC sets');
+            }
+        }
+
+        function renderPCSetsView(sets) {
+            const tableSection = document.querySelector('.card.overflow-hidden');
+            if (!tableSection) return;
+
+            if (!sets || sets.length === 0) {
+                tableSection.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fas fa-desktop text-4xl mb-4 text-emerald-800"></i>
+                        <p class="text-lg">No PC sets found</p>
+                        <button onclick="window.location.href='/pc-set-management'" class="mt-4 btn-primary rounded-lg px-4 py-2 text-sm">
+                            <i class="fas fa-plus"></i> Create PC Set
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Create grid layout for PC sets
+            tableSection.innerHTML = `
+                <div class="p-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        ${sets.map(set => createPCSetCard(set)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPCSetCard(set) {
+            const statusColors = {
+                'active':      'background:rgba(34,197,94,.15);color:#86efac;border-color:rgba(34,197,94,.3);',
+                'incomplete':  'background:rgba(251,191,36,.15);color:#fcd34d;border-color:rgba(251,191,36,.3);',
+                'maintenance': 'background:rgba(139,92,246,.15);color:#c4b5fd;border-color:rgba(139,92,246,.3);',
+                'retired':     'background:rgba(107,114,128,.15);color:#d1d5db;border-color:rgba(107,114,128,.3);',
+            };
+            const sc = statusColors[set.status] || statusColors['incomplete'];
+            const missing   = Number(set.missingCount || 0);
+            const total     = Number(set.componentCount || 0);
+            const pct       = Number(set.completenessPercent ?? (total > 0 ? Math.round((Number(set.serviceableCount||0)/total)*100) : 0));
+            const barColor  = pct === 100 ? '#22c55e' : pct >= 75 ? '#84cc16' : pct >= 50 ? '#eab308' : '#ef4444';
+
+            return `
+                <div class="card-hover rounded-xl p-5" style="border:1px solid rgba(74,222,128,.15);">
+                    <!-- Header -->
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-lg font-bold text-emerald-400 font-mono">${escapeHtml(set.setId)}</h3>
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border" style="${sc}">${escapeHtml(set.status||'unknown')}</span>
+                                ${missing > 0 ? `<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold" style="background:rgba(251,191,36,.15);color:#fcd34d;border:1px solid rgba(251,191,36,.3);"><i class="fas fa-exclamation-triangle" style="font-size:0.6rem;"></i>${missing} missing</span>` : ''}
+                            </div>
+                            <p class="text-sm text-slate-300 mt-0.5">${escapeHtml(set.setName||'')}</p>
+                            ${set.location ? `<p class="text-xs text-slate-500 mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(set.location)}</p>` : ''}
+                        </div>
+                        <div class="ml-3 text-right shrink-0">
+                            <div class="text-lg font-bold" style="color:${barColor};">${pct}%</div>
+                            <div class="text-xs text-slate-500">complete</div>
+                        </div>
+                    </div>
+
+                    <!-- Completeness bar -->
+                    <div class="mb-4 rounded-full h-1.5 overflow-hidden" style="background:rgba(255,255,255,.07);">
+                        <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${barColor};"></div>
+                    </div>
+
+                    ${set.description ? `<p class="text-xs text-slate-500 mb-3">${escapeHtml(set.description)}</p>` : ''}
+
+                    <!-- Components -->
+                    <div class="rounded-lg p-3 mb-4" style="background:rgba(0,0,0,.25);border:1px solid rgba(74,222,128,.08);">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-slate-400"><i class="fas fa-cube mr-1 text-emerald-600"></i>Components</span>
+                            <span class="text-xs text-slate-500">${total} item${total!==1?'s':''}</span>
+                        </div>
+                        <div id="components-${escapeHtml(set.setId)}" class="space-y-1.5">
+                            ${set.components ? parseComponentsEnhanced(set.components) : '<p class="text-xs text-slate-600 italic">No components yet</p>'}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="viewSetComponents('${escapeHtml(set.setId)}')" class="flex-1 btn-secondary rounded-lg px-3 py-2 text-sm font-medium">
+                            <i class="fas fa-list mr-1"></i> Manage
+                        </button>
+                        <button onclick="editPCSet('${escapeHtml(set.setId)}')" class="btn-secondary rounded-lg px-3 py-2 text-sm font-medium" title="Edit Set">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function parseComponentsEnhanced(componentsString) {
+            if (!componentsString) return '<p class="text-xs text-slate-600 italic">No components</p>';
+            // Format from getAllPCSets: "Category - Name [Status], ..."
+            const parts = componentsString.split(', ');
+            return parts.map(comp => {
+                const statusMatch = comp.match(/\[([^\]]+)\]$/);
+                const status = statusMatch ? statusMatch[1] : 'Serviceable';
+                const namepart = comp.replace(/\s*\[[^\]]+\]$/, '');
+                const icon = getCategoryIcon(namepart);
+                const isMissing = status === 'Missing';
+                const isUnderMaint = status === 'Under Maintenance';
+                const dotColor = isMissing ? '#fcd34d' : isUnderMaint ? '#c4b5fd' : status === 'Serviceable' ? '#86efac' : '#9ca3af';
+                return `
+                    <div class="flex items-center gap-2 text-xs ${isMissing ? 'opacity-80' : ''}">
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${dotColor};"></span>
+                        <i class="${icon} text-emerald-600 w-3 flex-shrink-0" style="font-size:0.65rem;"></i>
+                        <span class="${isMissing ? 'line-through text-slate-500' : 'text-slate-300'}">${escapeHtml(namepart)}</span>
+                        ${isMissing ? `<span class="ml-auto font-semibold" style="color:#fcd34d;font-size:0.6rem;">MISSING</span>` : ''}
+                        ${isUnderMaint ? `<span class="ml-auto font-semibold" style="color:#c4b5fd;font-size:0.6rem;">MAINT.</span>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        function parseComponents(componentsString) {
+            if (!componentsString) return '<p class="text-sm text-slate-400">No components</p>';
+            
+            const components = componentsString.split(', ');
+            return components.map(comp => {
+                const icon = getCategoryIcon(comp);
+                return `
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                        <i class="${icon} text-emerald-400 w-4"></i>
+                        <span>${comp}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getCategoryIcon(component) {
+            if (component.includes('CPU')) return 'fas fa-microchip';
+            if (component.includes('Monitor')) return 'fas fa-desktop';
+            if (component.includes('Keyboard')) return 'fas fa-keyboard';
+            if (component.includes('Mouse')) return 'fas fa-mouse';
+            if (component.includes('AVR')) return 'fas fa-plug';
+            return 'fas fa-cube';
+        }
+
+        async function viewSetComponents(setId) {
+            try {
+                const response = await fetch(`/api/equipment-sets/${setId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showComponentsModal(data.set, data.components);
+                }
+            } catch (error) {
+                console.error('Error loading components:', error);
+                alert('Failed to load components');
+            }
+        }
+
+        function showComponentsModal(set, components) {
+            const modal = document.createElement('div');
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content mx-auto w-full max-w-3xl">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">${set.setName}</h3>
+                            <p class="text-slate-400 mt-1">${set.setId} - Components</p>
+                        </div>
+                        <button onclick="this.closest('.modal').remove()" class="text-2xl text-emerald-400 hover:text-emerald-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-3 max-h-96 overflow-y-auto mb-6">
+                        ${components.length === 0 ? '<p class="text-slate-400 text-center py-8">No components in this set</p>' : 
+                            components.map(comp => {
+                                const isMissing = comp.status === 'Missing';
+                                const isUnderMaint = comp.status === 'Under Maintenance';
+                                const statusStyle = isMissing
+                                    ? 'background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);'
+                                    : isUnderMaint
+                                        ? 'background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);'
+                                        : 'background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.15);';
+                                const statusColor = isMissing ? '#fcd34d' : isUnderMaint ? '#c4b5fd' : comp.status === 'Serviceable' ? '#86efac' : '#9ca3af';
+                                return `
+                                <div class="rounded-lg p-4 flex items-start justify-between" style="${statusStyle}">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold flex items-center gap-2 ${isMissing ? 'text-yellow-200' : 'text-white'}">
+                                            <i class="${getCategoryIcon(comp.category)} text-emerald-400"></i>
+                                            ${escapeHtml(comp.name)}
+                                            ${isMissing ? '<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:rgba(251,191,36,.2);color:#fcd34d;">MISSING</span>' : ''}
+                                            ${isUnderMaint ? '<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:rgba(139,92,246,.2);color:#c4b5fd;">MAINTENANCE</span>' : ''}
+                                        </div>
+                                        <div class="text-sm text-slate-400 mt-1">
+                                            ${escapeHtml(comp.category)} •
+                                            SN: <span class="font-mono">${escapeHtml(comp.serialNumber || 'N/A')}</span> •
+                                            <span style="color:${statusColor};">${escapeHtml(comp.status)}</span>
+                                        </div>
+                                        ${comp.manufacturer || comp.model ? `<div class="text-xs text-slate-500 mt-1">${escapeHtml(comp.manufacturer||'')} ${escapeHtml(comp.model||'')}</div>` : ''}
+                                        ${comp.location ? `<div class="text-xs text-slate-500"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(comp.location)}</div>` : ''}
+                                    </div>
+                                    ${!isMissing ? `
+                                    <button onclick="removeComponentFromSet('${escapeHtml(set.setId)}', ${comp.id})"
+                                            class="text-red-400 hover:text-red-300 ml-4 flex-shrink-0" title="Remove from set">
+                                        <i class="fas fa-times"></i>
+                                    </button>` : `
+                                    <div class="ml-4 flex-shrink-0 text-xs text-yellow-500/60 italic">Cannot remove<br>while missing</div>`}
+                                </div>`;
+                            }).join('')
+                        }
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="addComponentsToSet('${set.setId}')" class="flex-1 btn-primary rounded-lg px-4 py-2.5 text-sm font-medium">
+                            <i class="fas fa-plus"></i> Add Components
+                        </button>
+                        <button onclick="this.closest('.modal').remove()" class="btn-secondary rounded-lg px-4 py-2.5 text-sm font-medium">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function removeComponentFromSet(setId, componentId) {
+            if (!confirm('Remove this component from the set?')) return;
+
+            try {
+                const response = await fetch(`/api/equipment-sets/${setId}/components/${componentId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Close modal and reload
+                    document.querySelectorAll('.modal').forEach(m => m.remove());
+                    await loadPCSets();
+                    alert('Component removed successfully');
+                } else {
+                    alert(data.message || 'Failed to remove component');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to remove component');
+            }
+        }
+
+        async function addComponentsToSet(setId) {
+            try {
+                const response = await fetch('/api/equipment/available-for-sets');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAddComponentsModal(setId, data.equipment);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load available equipment');
+            }
+        }
+
+        function showAddComponentsModal(setId, equipment) {
+            const modal = document.createElement('div');
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content mx-auto w-full max-w-3xl">
+                    <div class="flex items-start justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-white">Add Components to Set</h3>
+                        <button onclick="this.closest('.modal').remove()" class="text-2xl text-emerald-400 hover:text-emerald-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto mb-6" id="availableEquipmentList">
+                        ${equipment.length === 0 ? '<p class="text-slate-400 text-center py-8">No available equipment</p>' :
+                            equipment.map(item => `
+                                <label class="bg-emerald-950/30 border border-emerald-800/40 rounded-lg p-4 flex items-start gap-3 cursor-pointer hover:border-emerald-600/40">
+                                    <input type="checkbox" value="${item.id}" class="mt-1 component-checkbox" />
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-white">${item.name}</div>
+                                        <div class="text-sm text-slate-400 mt-1">
+                                            ${item.category} • SN: ${item.serialNumber || 'N/A'} • ${item.campus || 'N/A'}
+                                        </div>
+                                    </div>
+                                </label>
+                            `).join('')
+                        }
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="saveSelectedComponents('${setId}')" class="flex-1 btn-primary rounded-lg px-4 py-2.5 text-sm font-medium">
+                            <i class="fas fa-check"></i> Add Selected
+                        </button>
+                        <button onclick="this.closest('.modal').remove()" class="btn-secondary rounded-lg px-4 py-2.5 text-sm font-medium">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function saveSelectedComponents(setId) {
+            const checkboxes = document.querySelectorAll('.component-checkbox:checked');
+            const equipmentIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            if (equipmentIds.length === 0) {
+                alert('Please select at least one component');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/equipment-sets/${setId}/components`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ equipmentIds })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.querySelectorAll('.modal').forEach(m => m.remove());
+                    await loadPCSets();
+                    alert(data.message);
+                } else {
+                    alert(data.message || 'Failed to add components');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add components');
+            }
+        }
+
+        function editPCSet(setId) {
+            window.location.href = '/pc-set-management';
+        }
+
+        function navigateToPCSetManagement() {
+            window.location.href = '/pc-set-management';
         }
 
         function openCategoryModal() {
@@ -1942,13 +2408,17 @@
 
             document.getElementById('qrModalEquipmentId').textContent = equipment.equipmentId || id;
             document.getElementById('qrModalEquipmentName').textContent = equipmentName;
+            document.getElementById('qrModalSerialNumber').textContent = equipment.serialNumber || '—';
+            document.getElementById('qrModalSetId').textContent = equipment.setId || '—';
             document.getElementById('qrModalLaboratory').textContent = equipment.laboratoryRoom || 'Not Assigned';
             document.getElementById('qrModalCampus').textContent = equipment.campus || 'Not Assigned';
             document.getElementById('qrModalTitle').textContent = equipmentName;
             document.getElementById('qrModalSubtitle').textContent = `Asset record • ${equipmentName}`;
             const statusValue = equipment.status || 'Not Assigned';
             const statusElement = document.getElementById('qrModalStatus');
-            statusElement.innerHTML = `<span class="qr-status-pill">${statusValue}</span>`;
+            const statusColors = { 'Serviceable':'rgba(34,197,94,.15);color:#86efac', 'Missing':'rgba(251,191,36,.15);color:#fcd34d', 'Under Maintenance':'rgba(139,92,246,.15);color:#c4b5fd', 'Unserviceable':'rgba(107,114,128,.15);color:#d1d5db', 'Lost':'rgba(239,68,68,.15);color:#fca5a5' };
+            const sc = statusColors[statusValue] || statusColors['Unserviceable'];
+            statusElement.innerHTML = `<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.65rem;border-radius:999px;font-size:0.8rem;font-weight:700;background:${sc.split(';')[0]};${sc.split(';')[1]}">${statusValue}</span>`;
             document.getElementById('qrModalDateAdded').textContent = equipment.dateAdded ? new Date(equipment.dateAdded).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not Assigned';
             document.getElementById('qrModalPayload').value = payload;
             document.getElementById('qrModalDownloadFilename').value = `${(equipment.equipmentId || id || 'equipment').replace(/[^a-z0-9]+/gi, '-')}-sticker.png`;
@@ -2229,7 +2699,603 @@
             await loadCategories();
             await loadEquipment();
         });
+
+        // ===== MISSING EQUIPMENT VIEW =====
+        let missingViewActive = false;
+
+        async function toggleMissingView() {
+            missingViewActive = !missingViewActive;
+            const section = document.getElementById('missingEquipmentSection');
+            const btn     = document.getElementById('missingFilterBtn');
+            const label   = document.getElementById('missingFilterLabel');
+            if (missingViewActive) {
+                section.style.display = 'block';
+                btn.style.background  = 'rgba(251,191,36,.2)';
+                btn.style.borderColor = 'rgba(251,191,36,.5)';
+                label.textContent     = 'Hide Missing';
+                await loadMissingEquipment();
+            } else {
+                section.style.display = 'none';
+                btn.style.background  = 'rgba(251,191,36,.08)';
+                btn.style.borderColor = 'rgba(251,191,36,.3)';
+                label.textContent     = 'Missing Equipment';
+            }
+        }
+
+        async function loadMissingEquipment() {
+            const tbody = document.getElementById('missingEquipmentTable');
+            const countLabel = document.getElementById('missingCountLabel');
+            tbody.innerHTML = '<tr><td colspan="9" class="px-5 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
+            try {
+                const res  = await fetch('/api/equipment/missing');
+                const data = await res.json().catch(() => []);
+                const list = Array.isArray(data) ? data : [];
+                countLabel.textContent = `${list.length} item${list.length !== 1 ? 's' : ''} currently missing`;
+
+                if (!list.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="px-5 py-10 text-center text-slate-500"><i class="fas fa-check-circle mr-2 text-emerald-700"></i>No missing equipment — all items accounted for.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = list.map(item => {
+                    const reportedDate = item.missingReportedAt
+                        ? new Date(item.missingReportedAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+                        : '—';
+                    const reason = item.missingReason ? escapeHtml(item.missingReason) : '—';
+                    const displayReason = reason.length > 40 ? reason.slice(0, 40) + '…' : reason;
+                    return `<tr style="background:rgba(251,191,36,.02);">
+                        <td class="px-5 py-3 text-xs font-mono font-semibold text-yellow-300">${escapeHtml(item.equipmentId||'—')}</td>
+                        <td class="px-5 py-3 text-sm text-white font-medium">${escapeHtml(item.name||'—')}</td>
+                        <td class="px-5 py-3 text-xs font-mono text-slate-300">${escapeHtml(item.serialNumber||'—')}</td>
+                        <td class="px-5 py-3 text-xs font-mono">
+                            ${item.setId
+                                ? `<span class="px-2 py-0.5 rounded text-xs font-semibold" style="background:rgba(74,222,128,.1);color:#6ee7b7;border:1px solid rgba(74,222,128,.2);">${escapeHtml(item.setId)}</span>`
+                                : '<span class="text-slate-600">—</span>'}
+                        </td>
+                        <td class="px-5 py-3 text-xs text-slate-400">${escapeHtml(item.campus||'—')}</td>
+                        <td class="px-5 py-3 text-xs text-slate-400">${reportedDate}</td>
+                        <td class="px-5 py-3 text-xs text-slate-400">${escapeHtml(item.missingReportedByName||'—')}</td>
+                        <td class="px-5 py-3 text-xs text-slate-400" title="${escapeHtml(item.missingReason||'')}">
+                            <span class="italic">${displayReason}</span>
+                        </td>
+                        <td class="px-5 py-3">
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="openMarkFoundModal('${escapeHtml(item.equipmentId)}','${escapeHtml(item.name||'')}')"
+                                    class="rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                    style="background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.25);">
+                                    <i class="fas fa-check-circle mr-1"></i>Found
+                                </button>
+                                <button type="button" onclick="openEquipmentHistoryModal('${escapeHtml(item.equipmentId)}','${escapeHtml(item.name||'')}')"
+                                    class="rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                    style="background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.25);">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="9" class="px-5 py-8 text-center text-red-400">Failed to load missing equipment.</td></tr>';
+            }
+        }
     </script>
+    <!-- ===== REPORT MISSING MODAL ===== -->
+    <div id="reportMissingModal" class="modal">
+        <div class="modal-content mx-auto w-full max-w-xl rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);">
+                        <i class="fas fa-exclamation-triangle" style="color:#fcd34d;"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Report Missing Equipment</h3>
+                        <p class="text-sm text-slate-400 mt-0.5">Select what is missing</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('reportMissingModal')" class="text-xl text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Step 1: Choose scope -->
+            <div id="reportMissingStep1">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">What are you reporting as missing?</p>
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <button type="button" onclick="selectReportScope('single')"
+                        id="scopeSingleBtn"
+                        class="flex flex-col items-center gap-2 rounded-xl p-4 border transition-all text-center"
+                        style="border-color:rgba(74,222,128,.2);background:rgba(74,222,128,.05);">
+                        <i class="fas fa-cube text-2xl text-emerald-400"></i>
+                        <span class="text-sm font-semibold text-white">One Specific Component</span>
+                        <span class="text-xs text-slate-400">e.g. just the Keyboard or Monitor</span>
+                    </button>
+                    <button type="button" onclick="selectReportScope('set')"
+                        id="scopeSetBtn"
+                        class="flex flex-col items-center gap-2 rounded-xl p-4 border transition-all text-center"
+                        style="border-color:rgba(74,222,128,.2);background:rgba(74,222,128,.05);">
+                        <i class="fas fa-desktop text-2xl text-emerald-400"></i>
+                        <span class="text-sm font-semibold text-white">Entire PC Station</span>
+                        <span class="text-xs text-slate-400">All components of one station</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2a: Single component -->
+            <div id="reportMissingSinglePanel" style="display:none;">
+                <div class="rounded-xl p-4 mb-4" style="background:rgba(255,255,255,.03);border:1px solid rgba(74,222,128,.12);">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Component Being Reported</p>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                            <span class="text-slate-500 text-xs">Name</span>
+                            <p id="reportMissingName" class="text-white font-semibold mt-0.5">—</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 text-xs">Equipment ID</span>
+                            <p id="reportMissingId" class="text-emerald-400 font-mono font-semibold mt-0.5">—</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 text-xs">Serial Number</span>
+                            <p id="reportMissingSN" class="text-slate-300 font-mono mt-0.5">—</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 text-xs">PC Station</span>
+                            <p id="reportMissingSet" class="text-slate-300 font-mono mt-0.5">—</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-xl p-3 mb-4" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);">
+                    <p class="text-xs" style="color:#fcd34d;"><i class="fas fa-info-circle mr-1"></i>This component will remain linked to its original PC Station even while marked Missing.</p>
+                </div>
+                <label class="block text-sm font-semibold text-emerald-400 mb-1.5">Reason / Notes <span class="text-red-400">*</span></label>
+                <textarea id="reportMissingReason" rows="3" placeholder="When and where was it last seen? Any details..." class="w-full rounded-xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-600/60 focus:border-emerald-500 focus:outline-none resize-none"></textarea>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" onclick="resetReportScope()" class="rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-900/50">← Back</button>
+                    <button type="button" onclick="submitReportMissing()" class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white" style="background:linear-gradient(135deg,#b45309,#d97706);">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Mark as Missing
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2b: Entire PC Set -->
+            <div id="reportMissingSetPanel" style="display:none;">
+                <div class="rounded-xl p-4 mb-4" style="background:rgba(255,255,255,.03);border:1px solid rgba(74,222,128,.12);">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">PC Station Being Reported</p>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
+                        <div>
+                            <span class="text-slate-500 text-xs">Station Name</span>
+                            <p id="reportMissingSetName" class="text-white font-semibold mt-0.5">—</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 text-xs">Station ID</span>
+                            <p id="reportMissingSetId" class="text-emerald-400 font-mono font-semibold mt-0.5">—</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Components that will be marked Missing</p>
+                    <div id="reportMissingSetComponents" class="space-y-1.5 max-h-40 overflow-y-auto"></div>
+                </div>
+                <div class="rounded-xl p-3 mb-4" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);">
+                    <p class="text-xs" style="color:#fcd34d;"><i class="fas fa-exclamation-triangle mr-1"></i>All components listed above will be marked as Missing at once.</p>
+                </div>
+                <label class="block text-sm font-semibold text-emerald-400 mb-1.5">Reason / Notes <span class="text-red-400">*</span></label>
+                <textarea id="reportMissingSetReason" rows="2" placeholder="e.g. Entire station stolen, room was broken into..." class="w-full rounded-xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-600/60 focus:border-emerald-500 focus:outline-none resize-none"></textarea>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" onclick="resetReportScope()" class="rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-900/50">← Back</button>
+                    <button type="button" onclick="submitReportMissingSet()" class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white" style="background:linear-gradient(135deg,#b45309,#d97706);">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Mark All as Missing
+                    </button>
+                </div>
+            </div>
+
+            <input type="hidden" id="reportMissingEquipmentId">
+        </div>
+    </div>
+
+    <!-- ===== MARK AS FOUND MODAL ===== -->
+    <div id="markFoundModal" class="modal">
+        <div class="modal-content mx-auto w-full max-w-lg rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);">
+                        <i class="fas fa-check-circle" style="color:#86efac;"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Mark Equipment as Found</h3>
+                        <p class="text-sm text-slate-400 mt-0.5">Status will return to Serviceable.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('markFoundModal')" class="text-xl text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Equipment info card -->
+            <div class="rounded-xl p-4 mb-4" style="background:rgba(255,255,255,.03);border:1px solid rgba(74,222,128,.12);">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Equipment Being Found</p>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div>
+                        <span class="text-slate-500 text-xs">Name</span>
+                        <p id="markFoundName" class="text-white font-semibold mt-0.5">—</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 text-xs">Equipment ID</span>
+                        <p id="markFoundId" class="text-emerald-400 font-mono font-semibold mt-0.5">—</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 text-xs">Serial Number</span>
+                        <p id="markFoundSN" class="text-slate-300 font-mono mt-0.5">—</p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 text-xs">PC Station</span>
+                        <p id="markFoundSet" class="text-slate-300 font-mono mt-0.5">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-xl p-3 mb-4" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);">
+                <p class="text-xs text-emerald-300"><i class="fas fa-info-circle mr-1"></i>Equipment ID, Serial Number, and PC Station assignment will remain unchanged.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-emerald-400 mb-1.5">Notes <span class="text-slate-500 font-normal">(optional)</span></label>
+                <textarea id="markFoundNotes" rows="2" placeholder="Where was it found? Any notes..." class="w-full rounded-xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-600/60 focus:border-emerald-500 focus:outline-none resize-none"></textarea>
+            </div>
+            <input type="hidden" id="markFoundEquipmentId">
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeModal('markFoundModal')" class="flex-1 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-900/50">Cancel</button>
+                <button type="button" onclick="submitMarkFound()" class="flex-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500">
+                    <i class="fas fa-check-circle mr-1"></i>Mark as Found
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TRANSFER SET MODAL ===== -->
+    <div id="transferSetModal" class="modal">
+        <div class="modal-content mx-auto w-full max-w-lg rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);">
+                        <i class="fas fa-exchange-alt" style="color:#c4b5fd;"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Transfer to Another Set</h3>
+                        <p id="transferSetSubtitle" class="text-sm text-slate-400 mt-0.5"></p>
+                    </div>
+                </div>
+                <button onclick="closeModal('transferSetModal')" class="text-xl text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1.5">Current Set</label>
+                    <input type="text" id="transferCurrentSetId" readonly class="w-full rounded-xl border border-emerald-800/40 bg-[#060e0a] px-4 py-2.5 text-slate-400 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-emerald-400 mb-1.5">Target Set ID <span class="text-red-400">*</span></label>
+                    <input type="text" id="transferTargetSetId" placeholder="e.g., PC-SET-002 (leave blank to remove from set)" class="w-full rounded-xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-600/60 focus:border-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-emerald-400 mb-1.5">Reason <span class="text-red-400">*</span></label>
+                    <textarea id="transferReason" rows="2" placeholder="Why is this equipment being transferred?" class="w-full rounded-xl border border-emerald-800/60 bg-[#060e0a] px-4 py-3 text-emerald-100 placeholder:text-emerald-600/60 focus:border-emerald-500 focus:outline-none resize-none" required></textarea>
+                </div>
+            </div>
+            <input type="hidden" id="transferEquipmentId">
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeModal('transferSetModal')" class="flex-1 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-900/50">Cancel</button>
+                <button type="button" onclick="submitTransferSet()" class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white" style="background:linear-gradient(135deg,#5b21b6,#7c3aed);">
+                    <i class="fas fa-exchange-alt mr-1"></i>Transfer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EQUIPMENT HISTORY MODAL ===== -->
+    <div id="equipmentHistoryModal" class="modal">
+        <div class="modal-content mx-auto w-full max-w-2xl rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);">
+                        <i class="fas fa-history" style="color:#7dd3fc;"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Equipment History</h3>
+                        <p id="historyModalSubtitle" class="text-sm text-slate-400 mt-0.5"></p>
+                    </div>
+                </div>
+                <button onclick="closeModal('equipmentHistoryModal')" class="text-xl text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Equipment info bar -->
+            <div id="historyEquipmentInfo" class="rounded-xl p-3 mb-4 text-sm" style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);"></div>
+            <!-- History events -->
+            <div id="historyEventList" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+                <p class="text-slate-500 text-center py-8">Loading history...</p>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button type="button" onclick="closeModal('equipmentHistoryModal')" class="rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-900/50">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== REPORT MISSING =====
+        function openReportMissingModal(equipmentId, name) {
+            document.getElementById('reportMissingEquipmentId').value = equipmentId;
+            document.getElementById('reportMissingName').textContent = name || equipmentId;
+            document.getElementById('reportMissingId').textContent = equipmentId;
+            const btn = document.querySelector(`button[data-action="report-missing"][data-id="${equipmentId}"]`);
+            document.getElementById('reportMissingSN').textContent = btn?.dataset.sn || '—';
+            const setId = btn?.dataset.setid || '';
+            document.getElementById('reportMissingSet').textContent = setId || 'Not assigned';
+            document.getElementById('reportMissingReason').value = '';
+            // Reset to step 1
+            resetReportScope();
+            // Pre-select single if no set, or show both options if has set
+            if (!setId) {
+                selectReportScope('single');
+            }
+            openModal('reportMissingModal');
+        }
+
+        function resetReportScope() {
+            document.getElementById('reportMissingStep1').style.display = '';
+            document.getElementById('reportMissingSinglePanel').style.display = 'none';
+            document.getElementById('reportMissingSetPanel').style.display = 'none';
+            // Reset button styles
+            ['scopeSingleBtn','scopeSetBtn'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.style.borderColor = 'rgba(74,222,128,.2)'; el.style.background = 'rgba(74,222,128,.05)'; }
+            });
+        }
+
+        async function selectReportScope(scope) {
+            document.getElementById('reportMissingStep1').style.display = 'none';
+            if (scope === 'single') {
+                document.getElementById('reportMissingSinglePanel').style.display = '';
+                document.getElementById('reportMissingSetPanel').style.display = 'none';
+            } else {
+                // Load set components
+                document.getElementById('reportMissingSinglePanel').style.display = 'none';
+                document.getElementById('reportMissingSetPanel').style.display = '';
+                const equipmentId = document.getElementById('reportMissingEquipmentId').value;
+                const btn = document.querySelector(`button[data-action="report-missing"][data-id="${equipmentId}"]`);
+                const setId = btn?.dataset.setid || '';
+                document.getElementById('reportMissingSetId').textContent = setId || '—';
+                // Find set name from equipmentData
+                const eq = (window.equipmentData || []).find(e => e.setId === setId);
+                document.getElementById('reportMissingSetName').textContent = setId || '—';
+                const compContainer = document.getElementById('reportMissingSetComponents');
+                compContainer.innerHTML = '<p class="text-slate-500 text-xs italic">Loading...</p>';
+                if (setId) {
+                    try {
+                        const res = await fetch(`/api/equipment-sets/${encodeURIComponent(setId)}`);
+                        const data = await res.json();
+                        const components = data.components || [];
+                        document.getElementById('reportMissingSetName').textContent = data.set?.setName || setId;
+                        const serviceable = components.filter(c => c.status === 'Serviceable');
+                        if (!serviceable.length) {
+                            compContainer.innerHTML = '<p class="text-yellow-400 text-xs">No serviceable components to mark missing.</p>';
+                        } else {
+                            compContainer.innerHTML = serviceable.map(c => `
+                                <div class="flex items-center gap-2 text-xs py-1" style="border-bottom:1px solid rgba(74,222,128,.06);">
+                                    <i class="fas fa-cube text-emerald-600 w-3"></i>
+                                    <span class="text-white font-medium flex-1">${c.name}</span>
+                                    <span class="font-mono text-slate-500">${c.serialNumber || '—'}</span>
+                                </div>`).join('');
+                            // Store IDs for submission
+                            document.getElementById('reportMissingSetPanel').dataset.componentIds = serviceable.map(c => c.equipmentId).join(',');
+                        }
+                    } catch (e) {
+                        compContainer.innerHTML = '<p class="text-red-400 text-xs">Failed to load components.</p>';
+                    }
+                } else {
+                    compContainer.innerHTML = '<p class="text-slate-500 text-xs italic">No PC Station assigned.</p>';
+                }
+            }
+        }
+
+        async function submitReportMissing() {
+            const id = document.getElementById('reportMissingEquipmentId').value;
+            const reason = document.getElementById('reportMissingReason').value.trim();
+            if (!reason) { alert('Please provide a reason.'); return; }
+
+            const btn = document.querySelector('#reportMissingSetPanel + * button[onclick="submitReportMissing()"], #reportMissingSinglePanel button[onclick="submitReportMissing()"]') ||
+                        document.querySelector('[onclick="submitReportMissing()"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+            try {
+                const res = await fetch(`/api/equipment/${encodeURIComponent(id)}/report-missing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Failed to report missing.'); return; }
+                closeModal('reportMissingModal');
+                await loadEquipment();
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Mark as Missing'; }
+            }
+        }
+
+        async function submitReportMissingSet() {
+            const reason = document.getElementById('reportMissingSetReason').value.trim();
+            if (!reason) { alert('Please provide a reason.'); return; }
+            const panel = document.getElementById('reportMissingSetPanel');
+            const ids = (panel.dataset.componentIds || '').split(',').filter(Boolean);
+            if (!ids.length) { alert('No serviceable components found to mark missing.'); return; }
+
+            const submitBtn = document.querySelector('[onclick="submitReportMissingSet()"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+            try {
+                // Report each component missing one by one
+                let errors = [];
+                for (const equipmentId of ids) {
+                    const res = await fetch(`/api/equipment/${encodeURIComponent(equipmentId)}/report-missing`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason })
+                    });
+                    if (!res.ok) {
+                        const d = await res.json().catch(() => ({}));
+                        errors.push(`${equipmentId}: ${d.error || 'Failed'}`);
+                    }
+                }
+                closeModal('reportMissingModal');
+                await loadEquipment();
+                if (errors.length) alert('Some items could not be marked:\n' + errors.join('\n'));
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Mark All as Missing'; }
+            }
+        }
+
+        async function submitReportMissing() {
+            const id = document.getElementById('reportMissingEquipmentId').value;
+            const reason = document.getElementById('reportMissingReason').value.trim();
+            if (!reason) { alert('Please provide a reason.'); return; }
+
+            const btn = document.querySelector('#reportMissingModal button[onclick="submitReportMissing()"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+            try {
+                const res = await fetch(`/api/equipment/${encodeURIComponent(id)}/report-missing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Failed to report missing.'); return; }
+                closeModal('reportMissingModal');
+                await loadEquipment();
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Mark as Missing'; }
+            }
+        }
+
+        // ===== MARK AS FOUND =====
+        function openMarkFoundModal(equipmentId, name) {
+            document.getElementById('markFoundEquipmentId').value = equipmentId;
+            document.getElementById('markFoundName').textContent = name || equipmentId;
+            document.getElementById('markFoundId').textContent = equipmentId;
+            const btn = document.querySelector(`button[data-action="mark-found"][data-id="${equipmentId}"]`);
+            document.getElementById('markFoundSN').textContent = btn?.dataset.sn || '—';
+            document.getElementById('markFoundSet').textContent = btn?.dataset.setid || 'Not assigned';
+            document.getElementById('markFoundNotes').value = '';
+            openModal('markFoundModal');
+        }
+
+        async function submitMarkFound() {
+            const id = document.getElementById('markFoundEquipmentId').value;
+            const notes = document.getElementById('markFoundNotes').value.trim();
+
+            const btn = document.querySelector('#markFoundModal button[onclick="submitMarkFound()"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+            try {
+                const res = await fetch(`/api/equipment/${encodeURIComponent(id)}/mark-found`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Failed to mark as found.'); return; }
+                closeModal('markFoundModal');
+                await loadEquipment();
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Mark as Found'; }
+            }
+        }
+
+        // ===== TRANSFER SET =====
+        function openTransferSetModal(equipmentId, name, currentSetId) {
+            document.getElementById('transferEquipmentId').value = equipmentId;
+            document.getElementById('transferSetSubtitle').textContent = `${name || equipmentId} — ${equipmentId}`;
+            document.getElementById('transferCurrentSetId').value = currentSetId || '(No PC Station assigned)';
+            document.getElementById('transferTargetSetId').value = '';
+            document.getElementById('transferReason').value = '';
+            openModal('transferSetModal');
+        }
+
+        async function submitTransferSet() {
+            const id = document.getElementById('transferEquipmentId').value;
+            const targetSetId = document.getElementById('transferTargetSetId').value.trim();
+            const reason = document.getElementById('transferReason').value.trim();
+            if (!reason) { alert('Please provide a reason for the transfer.'); return; }
+
+            const btn = document.querySelector('#transferSetModal button[onclick="submitTransferSet()"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Transferring...'; }
+
+            try {
+                const res = await fetch(`/api/equipment/${encodeURIComponent(id)}/transfer-set`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetSetId: targetSetId || null, reason })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Failed to transfer equipment.'); return; }
+                closeModal('transferSetModal');
+                await loadEquipment();
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-exchange-alt mr-1"></i>Transfer'; }
+            }
+        }
+
+        // ===== EQUIPMENT HISTORY =====
+        async function openEquipmentHistoryModal(equipmentId, name) {
+            document.getElementById('historyModalSubtitle').textContent = name || equipmentId;
+            document.getElementById('historyEventList').innerHTML = '<p class="text-slate-500 text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Loading history...</p>';
+            document.getElementById('historyEquipmentInfo').innerHTML = '';
+            openModal('equipmentHistoryModal');
+
+            try {
+                const res = await fetch(`/api/equipment/${encodeURIComponent(equipmentId)}/history`);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    document.getElementById('historyEventList').innerHTML = `<p class="text-red-400 text-center py-8">${data.error || 'Failed to load history.'}</p>`;
+                    return;
+                }
+
+                const eq = data.equipment || {};
+                document.getElementById('historyEquipmentInfo').innerHTML = `
+                    <div class="flex flex-wrap gap-4 text-xs">
+                        <span><span class="text-slate-500 uppercase tracking-wide">ID</span><br><span class="text-white font-mono font-semibold">${escapeHtml(eq.equipmentId||'—')}</span></span>
+                        <span><span class="text-slate-500 uppercase tracking-wide">Serial No</span><br><span class="text-emerald-300 font-mono">${escapeHtml(eq.serialNumber||'—')}</span></span>
+                        <span><span class="text-slate-500 uppercase tracking-wide">Set</span><br><span class="text-emerald-300 font-mono">${escapeHtml(eq.setId||'—')}</span></span>
+                        <span><span class="text-slate-500 uppercase tracking-wide">Status</span><br><span class="font-semibold" style="color:${eq.status==='Missing'?'#fcd34d':eq.status==='Serviceable'?'#86efac':'#d1d5db'}">${escapeHtml(eq.status||'—')}</span></span>
+                        <span><span class="text-slate-500 uppercase tracking-wide">Campus</span><br><span class="text-slate-300">${escapeHtml(eq.campus||'—')}</span></span>
+                    </div>`;
+
+                const events = Array.isArray(data.history) ? data.history : [];
+                if (!events.length) {
+                    document.getElementById('historyEventList').innerHTML = '<p class="text-slate-500 text-center py-8 text-sm"><i class="fas fa-inbox mr-2"></i>No history events yet.</p>';
+                    return;
+                }
+
+                const eventConfig = {
+                    'reported_missing': { icon: 'fa-exclamation-triangle', color: '#fcd34d', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)', label: 'Reported Missing' },
+                    'found':            { icon: 'fa-check-circle',         color: '#86efac', bg: 'rgba(34,197,94,.08)',   border: 'rgba(34,197,94,.2)',   label: 'Marked Found' },
+                    'transferred':      { icon: 'fa-exchange-alt',         color: '#c4b5fd', bg: 'rgba(139,92,246,.08)', border: 'rgba(139,92,246,.2)', label: 'Set Transfer' },
+                };
+
+                document.getElementById('historyEventList').innerHTML = events.map(ev => {
+                    const cfg = eventConfig[ev.eventType] || { icon:'fa-circle', color:'#94a3b8', bg:'rgba(100,116,139,.08)', border:'rgba(100,116,139,.2)', label: ev.eventType };
+                    const date = ev.reportedAt ? new Date(ev.reportedAt).toLocaleString() : '—';
+                    return `
+                        <div class="rounded-xl p-4" style="background:${cfg.bg};border:1px solid ${cfg.border};">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas ${cfg.icon} text-sm" style="color:${cfg.color};"></i>
+                                <span class="text-sm font-semibold" style="color:${cfg.color};">${cfg.label}</span>
+                                <span class="ml-auto text-xs text-slate-500">${date}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 space-y-0.5">
+                                ${ev.reportedByName ? `<div><span class="text-slate-500">By:</span> ${escapeHtml(ev.reportedByName)}</div>` : ''}
+                                ${ev.setId ? `<div><span class="text-slate-500">Set:</span> <span class="font-mono text-emerald-400">${escapeHtml(ev.setId)}</span></div>` : ''}
+                                ${ev.serialNumber ? `<div><span class="text-slate-500">SN:</span> <span class="font-mono">${escapeHtml(ev.serialNumber)}</span></div>` : ''}
+                                ${ev.reason ? `<div class="mt-1 text-slate-300 italic">"${escapeHtml(ev.reason)}"</div>` : ''}
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) {
+                document.getElementById('historyEventList').innerHTML = '<p class="text-red-400 text-center py-8">Failed to load history.</p>';
+            }
+        }
+    </script>
+
+    <script src="/js/pc-sets-table.js?v=4"></script>
     <script src="/js/sidebar-component.js" defer></script>
 </body>
 </html>

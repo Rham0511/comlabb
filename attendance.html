@@ -411,6 +411,315 @@
             color: #bbf7d0;
             font-size: 1.25rem;
         }
+
+        /* PC Seat Selector Modal */
+        .pc-selector-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .pc-selector-backdrop.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pc-selector-modal {
+            width: min(1100px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 1.5rem;
+            background: linear-gradient(180deg, rgba(15,36,27,.98), rgba(10,29,21,.98));
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            box-shadow: 0 30px 80px rgba(2, 8, 23, 0.6);
+            animation: slideUp 0.3s ease;
+        }
+
+        .pc-selector-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .pc-selector-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin: 0;
+        }
+
+        .pc-selector-close {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(10, 29, 21, 0.8);
+            color: #bbf7d0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pc-selector-close:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .pc-selector-body {
+            padding: 1.5rem;
+        }
+
+        .pc-selector-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .pc-selector-info i {
+            font-size: 1.5rem;
+            color: #93c5fd;
+        }
+
+        .pc-selector-info-text h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f8fafc;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .pc-selector-info-text p {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        .pc-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 1rem;
+            background: rgba(15, 36, 27, 0.5);
+            border: 1px solid rgba(74, 222, 128, 0.1);
+        }
+
+        .pc-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+
+        .pc-legend-box {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+            border: 2px solid;
+        }
+
+        .pc-legend-box.available {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.4);
+        }
+
+        .pc-legend-box.occupied {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .pc-legend-box.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.6);
+        }
+
+        .pc-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .pc-grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 0.5rem;
+            }
+        }
+
+        .pc-seat {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            border-radius: 0.75rem;
+            border: 2px solid;
+            background: rgba(15, 36, 27, 0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .pc-seat.available {
+            border-color: rgba(34, 197, 94, 0.4);
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .pc-seat.available:hover {
+            border-color: rgba(34, 197, 94, 0.7);
+            background: rgba(34, 197, 94, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .pc-seat.occupied {
+            border-color: rgba(148, 163, 184, 0.3);
+            background: rgba(148, 163, 184, 0.08);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pc-seat.selected {
+            border-color: rgba(59, 130, 246, 0.8);
+            background: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .pc-seat-icon {
+            font-size: 1.5rem;
+        }
+
+        .pc-seat.available .pc-seat-icon {
+            color: #86efac;
+        }
+
+        .pc-seat.occupied .pc-seat-icon {
+            color: #94a3b8;
+        }
+
+        .pc-seat.selected .pc-seat-icon {
+            color: #93c5fd;
+        }
+
+        .pc-seat-number {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .pc-seat-label {
+            font-size: 0.625rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pc-selector-actions {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(74, 222, 128, 0.15);
+        }
+
+        .pc-selector-actions button {
+            flex: 1;
+            padding: 0.875rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-confirm-seat {
+            background: linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 100%);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-confirm-seat:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-confirm-seat:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel-seat {
+            background: rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #cbd5e1;
+        }
+
+        .btn-cancel-seat:hover {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .pc-loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .pc-loading i {
+            font-size: 2rem;
+            color: #86efac;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .pc-error {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="app-shell student-portal">
@@ -644,6 +953,177 @@
             }, 4500);
         }
 
+        // PC Seat Selector Logic
+        let pcStations = [];
+        let selectedPC = null;
+        let currentAttendanceId = null;
+        let currentLaboratoryId = null;
+
+        function openPCSelector(attendanceId, laboratoryId) {
+            currentAttendanceId = attendanceId;
+            currentLaboratoryId = laboratoryId;
+            selectedPC = null;
+            
+            const modal = document.getElementById('pcSelectorModal');
+            modal.classList.add('open');
+            
+            fetchPCStations();
+        }
+
+        function closePCSelector() {
+            const modal = document.getElementById('pcSelectorModal');
+            modal.classList.remove('open');
+            selectedPC = null;
+            currentAttendanceId = null;
+            currentLaboratoryId = null;
+        }
+
+        async function fetchPCStations() {
+            const container = document.getElementById('pcGridContainer');
+            
+            try {
+                // Get current user's campus and laboratory from session
+                const user = window.__CURRENT_USER__ || {};
+                const campus = user.campus || 'Bongabong Campus';
+                const laboratory = currentLaboratoryId ? `Lab ${currentLaboratoryId}` : undefined;
+
+                // Build query params
+                let queryParams = '';
+                if (campus) queryParams += `campus=${encodeURIComponent(campus)}`;
+                if (laboratory) queryParams += (queryParams ? '&' : '') + `laboratory=${encodeURIComponent(laboratory)}`;
+
+                // Fetch available PCs for this laboratory
+                const response = await fetch(`/api/equipment/pc-availability?${queryParams}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load PC stations');
+                }
+
+                const data = await response.json();
+                pcStations = data.stations || [];
+                
+                renderPCGrid();
+            } catch (error) {
+                console.error('Error fetching PC stations:', error);
+                container.innerHTML = `
+                    <div class="pc-error">
+                        <i class="fas fa-exclamation-triangle mb-2"></i>
+                        <p>Unable to load PC stations. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPCGrid() {
+            const container = document.getElementById('pcGridContainer');
+            
+            if (!pcStations.length) {
+                container.innerHTML = `
+                    <div class="empty-state-card">
+                        <div class="empty-state-icon"><i class="fas fa-desktop"></i></div>
+                        <h4 class="text-lg font-semibold text-white">No PC stations available</h4>
+                        <p>Please contact your instructor or lab administrator.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const gridHTML = `
+                <div class="pc-grid-container">
+                    ${pcStations.map(pc => `
+                        <div class="pc-seat ${pc.isOccupied ? 'occupied' : 'available'}" 
+                             data-pc-id="${pc.equipmentId}"
+                             onclick="selectPC(${pc.id}, ${pc.isOccupied})">
+                            <i class="fas fa-desktop pc-seat-icon"></i>
+                            <div class="pc-seat-number">PC ${pc.stationNumber}</div>
+                            <div class="pc-seat-label">${pc.isOccupied ? 'In Use' : 'Free'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = gridHTML;
+        }
+
+        function selectPC(pcId, isOccupied) {
+            if (isOccupied) return; // Can't select occupied PC
+
+            // Remove previous selection
+            document.querySelectorAll('.pc-seat').forEach(seat => {
+                seat.classList.remove('selected');
+            });
+
+            // Add selection to clicked PC
+            const selectedSeat = document.querySelector(`[data-pc-id="${pcId}"]`);
+            if (selectedSeat) {
+                selectedSeat.classList.add('selected');
+                selectedPC = pcStations.find(pc => pc.id === pcId);
+                
+                // Enable confirm button
+                document.getElementById('confirmSeatBtn').disabled = false;
+            }
+        }
+
+        async function confirmPCSelection() {
+            if (!selectedPC || !currentAttendanceId) {
+                alert('Please select a PC station');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmSeatBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Confirming...';
+
+            try {
+                const user = window.__CURRENT_USER__ || {};
+                
+                const response = await fetch('/api/equipment/assign-pc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        attendanceId: currentAttendanceId,
+                        equipmentId: selectedPC.id,
+                        userId: user.id,
+                        campus: user.campus || selectedPC.campus,
+                        laboratory: selectedPC.laboratoryRoom
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to assign PC');
+                }
+
+                const result = await response.json();
+                
+                // Show success message
+                alert(`Successfully assigned to PC ${selectedPC.stationNumber}!`);
+                
+                // Close modal
+                closePCSelector();
+                
+                // Refresh attendance data
+                await fetchAttendanceRecords();
+                
+            } catch (error) {
+                console.error('Error confirming PC selection:', error);
+                alert(error.message || 'Failed to assign PC. Please try again.');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'Confirm Selection';
+            }
+        }
+
+        // Listen for attendance registration events
+        window.addEventListener('attendanceRegistered', function(event) {
+            const { attendanceId, laboratoryId } = event.detail;
+            // Open PC selector after attendance is registered
+            setTimeout(() => {
+                openPCSelector(attendanceId, laboratoryId);
+            }, 500);
+        });
+
         document.addEventListener('DOMContentLoaded', async function() {
             hydrateStudentProfile();
             await fetchAttendanceRecords();
@@ -662,6 +1142,63 @@
             startAttendanceUpdater();
         });
     </script>
+    <!-- PC Seat Selector Modal -->
+    <div class="pc-selector-backdrop" id="pcSelectorModal">
+        <div class="pc-selector-modal">
+            <div class="pc-selector-header">
+                <h3><i class="fas fa-desktop mr-2"></i>Select Your PC Station</h3>
+                <div class="pc-selector-close" onclick="closePCSelector()">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="pc-selector-body">
+                <div class="pc-selector-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="pc-selector-info-text">
+                        <h4>Choose Your Workstation</h4>
+                        <p>Select an available PC from the grid below. Green stations are available, gray stations are occupied.</p>
+                    </div>
+                </div>
+
+                <div class="pc-legend">
+                    <div class="pc-legend-item">
+                        <div class="pc-legend-box available"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="pc-legend-item">
+                        <div class="pc-legend-box occupied"></div>
+                        <span>Occupied</span>
+                    </div>
+                    <div class="pc-legend-item">
+                        <div class="pc-legend-box selected"></div>
+                        <span>Selected</span>
+                    </div>
+                </div>
+
+                <div id="pcGridContainer">
+                    <div class="pc-loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading PC stations...</p>
+                    </div>
+                </div>
+
+                <div class="pc-selector-actions">
+                    <button class="btn-cancel-seat" onclick="closePCSelector()">Cancel</button>
+                    <button class="btn-confirm-seat" id="confirmSeatBtn" disabled onclick="confirmPCSelection()">
+                        Confirm Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test button for PC Selector (can be removed in production) -->
+    <button 
+        onclick="openPCSelector(null, null)" 
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 20px; background: linear-gradient(135deg, #16A34A, #22C55E); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
+        <i class="fas fa-desktop mr-2"></i>Test PC Selector
+    </button>
+
     <script src="/js/sidebar-component.js" defer></script>
 </body>
 </html>

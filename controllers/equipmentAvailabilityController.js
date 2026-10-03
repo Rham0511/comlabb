@@ -119,7 +119,7 @@ export const listEquipmentAvailability = async (req, res) => {
     const response = equipment.map((item) => {
       const itemRecords = validRecords.filter((record) => isMatchingEquipmentReference(record, item));
       const status = String(item.status || "Serviceable");
-      const unavailable = status.toLowerCase() === "unserviceable" || status.toLowerCase() === "lost";
+      const unavailable = ["unserviceable", "lost", "missing", "under maintenance"].includes(status.toLowerCase());
       const currentlyBorrowed = !unavailable && itemRecords.some((record) => isCurrentlyBorrowed(record, now));
       return {
         equipmentId: item.equipmentId,

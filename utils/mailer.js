@@ -64,7 +64,9 @@ export const sendMail = async ({ to, subject, html, text }) => {
     throw error;
   }
 
-  const from = envFallback(smtpConfigKeys.from) || envFallback(smtpConfigKeys.user);
+  const fromEmail = envFallback(smtpConfigKeys.from) || envFallback(smtpConfigKeys.user);
+  const fromName = process.env.MAIL_FROM_NAME || '';
+  const from = fromName ? `"${fromName}" <${fromEmail}>` : fromEmail;
   console.log(`[mailer] SMTP sender: ${from}`);
 
   try {

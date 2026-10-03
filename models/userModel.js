@@ -47,5 +47,8 @@ export const User = sequelize.define("User", {
   otp_code: { type: DataTypes.STRING(6), allowNull: true },
   otp_expires_at: { type: DataTypes.DATE, allowNull: true },
   otp_purpose: { type: DataTypes.STRING, allowNull: true }  // 'registration' | 'password_reset'
+}, {
+  tableName: 'users',
+  timestamps: true
 });
 export { sequelize };  

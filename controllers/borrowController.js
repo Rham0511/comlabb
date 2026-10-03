@@ -103,7 +103,16 @@ function hasTimeOverlap(startA, endA, startB, endB) {
 
 function isUnavailableForBorrowing(status) {
   const normalizedStatus = String(status || "").trim().toLowerCase();
-  return normalizedStatus === "unserviceable" || normalizedStatus === "lost";
+  return ["unserviceable", "lost", "missing", "under maintenance"].includes(normalizedStatus);
+}
+
+function getUnavailableReason(status) {
+  const s = String(status || "").trim().toLowerCase();
+  if (s === "missing") return "Equipment is currently marked as Missing and cannot be borrowed.";
+  if (s === "under maintenance") return "Equipment is currently Under Maintenance and cannot be borrowed.";
+  if (s === "unserviceable") return "Equipment is Unserviceable and cannot be borrowed.";
+  if (s === "lost") return "Equipment is marked as Lost and cannot be borrowed.";
+  return `Equipment status '${status}' does not allow borrowing.`;
 }
 
 function canViewBorrowNotifications(role) {
@@ -303,7 +312,29 @@ export const createBorrowRecord = async (req, res) => {
     }
 
     if (isUnavailableForBorrowing(equipment.status)) {
-      return res.status(400).json({ error: `${equipment.status} equipment is not available for borrowing.` });
+      return res.status(400).json({ error: getUnavailableReason(equipment.status) });
+    }
+
+    // If equipment belongs to a PC Set, check if any sibling component is Missing
+    if (equipment.setId) {
+      const { Op: OpLocal } = await import("sequelize");
+      const { Equipment: EquipmentModel } = await import("../models/equipmentModel.js");
+      const missingComponents = await EquipmentModel.findAll({
+        where: {
+          setId: equipment.setId,
+          status: "Missing",
+          id: { [OpLocal.ne]: equipment.id }
+        },
+        attributes: ["equipmentId", "name", "serialNumber", "category"]
+      });
+      if (missingComponents.length > 0) {
+        const detail = missingComponents.map(c =>
+          `${c.name} (${c.equipmentId}${c.serialNumber ? `, SN: ${c.serialNumber}` : ''})`
+        ).join(', ');
+        return res.status(400).json({
+          error: `Cannot borrow equipment from ${equipment.setId} because the following component(s) are Missing: ${detail}.`
+        });
+      }
     }
 
     const duplicateRequest = await BorrowRecord.findOne({

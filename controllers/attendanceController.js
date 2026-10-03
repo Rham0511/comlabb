@@ -1,4 +1,5 @@
 import { Op } from "sequelize";
+import { sequelize } from "../models/db.js";
 import QRCode from "qrcode";
 import { logAuditEntry } from "./auditController.js";
 import { getUserCampusFromSession, canManageRecord } from "./campusAuthController.js";
@@ -779,24 +780,27 @@ const getInstructorAttendanceContext = async (req) => {
       where: { laboratoryScheduleId: { [Op.in]: scheduleIds } },
       attributes: ['laboratoryScheduleId']
     });
+    // Build set of scheduleIds that ALREADY have at least one session — do NOT create more
     const existingMap = new Set(existingSessions.map(s => String(s.laboratoryScheduleId)));
-    const toCreate = scheduleList.filter(s => !existingMap.has(String(s.id))).map((schedule) => ({
-      token: `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title: schedule.subject || "Attendance Session",
-      day: schedule.dayOfWeek || null,
-      time: [schedule.startTime, schedule.endTime].filter(Boolean).join(" - "),
-      room: schedule.laboratoryRoom || null,
-      courseSection: null,
-      status: schedule.status || "Confirmed",
-      laboratoryScheduleId: schedule.id,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-    }));
+    // Only create a session for schedules that have ZERO existing sessions ever
+    const toCreate = scheduleList
+      .filter(s => !existingMap.has(String(s.id)))
+      .map((schedule) => ({
+        token: `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        title: schedule.subject || "Attendance Session",
+        day: schedule.dayOfWeek || null,
+        time: [schedule.startTime, schedule.endTime].filter(Boolean).join(" - "),
+        room: schedule.laboratoryRoom || null,
+        courseSection: null,
+        status: schedule.status || "Confirmed",
+        laboratoryScheduleId: schedule.id,
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year — sessions never auto-expire
+      }));
 
     if (toCreate.length) {
       try {
         await AttendanceSession.bulkCreate(toCreate, { ignoreDuplicates: true });
       } catch (err) {
-        // Fallback: if bulkCreate fails for any reason, attempt individual creates
         for (const s of toCreate) {
           try { await AttendanceSession.create(s); } catch (e) { /* ignore */ }
         }
@@ -1095,22 +1099,34 @@ export const getAttendanceRecords = async (req, res) => {
 export const getAttendanceStats = async (req, res) => {
   try {
     const scope = await getInstructorScheduleScope(req);
+    const userCampus = await getUserCampusFromSession(req);
+    
+    // Get TODAY's date range (start and end of day in Manila timezone)
+    const now = new Date();
+    const today = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
     if (scope?.kind === "student") {
       const studentId = scope.studentId;
-      const userCampus = await getUserCampusFromSession(req);
       if (!userCampus) return res.status(403).json({ error: "Unauthorized: User campus not found." });
+      
       const campusSchedules = await LaboratorySchedule.findAll({
         where: buildAttendanceCampusWhere(userCampus),
         attributes: ["id"]
       });
+
+      // Get TODAY's attendance records only
       const records = await Attendance.findAll({
         where: {
           studentId,
-          laboratoryScheduleId: { [Op.in]: campusSchedules.map((schedule) => schedule.id) }
+          laboratoryScheduleId: { [Op.in]: campusSchedules.map((schedule) => schedule.id) },
+          createdAt: {
+            [Op.gte]: todayStart,
+            [Op.lte]: todayEnd
+          }
         },
-        order: [["createdAt", "DESC"]],
-        limit: 200
+        order: [["createdAt", "DESC"]]
       });
 
       const recordsWithDerivedStatus = await Promise.all(records.map(async (record) => {
@@ -1124,21 +1140,57 @@ export const getAttendanceStats = async (req, res) => {
       const present = studentRecords.filter((record) => String(record.status || "").toLowerCase() === "present").length;
       const late = studentRecords.filter((record) => String(record.status || "").toLowerCase() === "late").length;
       const absent = studentRecords.filter((record) => String(record.status || "").toLowerCase() === "absent").length;
-      const percentage = total ? Math.round((present / Math.max(total, 1)) * 100) : 0;
 
-      return res.json({ total, present, late, absent, percentage });
+      return res.json({ total, present, late, absent });
     }
 
-    const context = await getInstructorAttendanceContext(req);
-    const completedSessions = (context.sessions || []).filter((session) => String(session.attendanceStatus || "").toLowerCase() === "completed");
-    const total = completedSessions.length;
-    const present = completedSessions.reduce((sum, session) => sum + (session.studentsPresent || 0), 0);
-    const late = completedSessions.reduce((sum, session) => sum + (session.studentsLate || 0), 0);
-    const absent = completedSessions.reduce((sum, session) => sum + (session.studentsAbsent || 0), 0);
-    const percentage = total ? Math.round((present / Math.max(total, 1)) * 100) : 0;
+    // For instructors: Get TODAY's attendance across all sessions
+    const campusWhere = userCampus ? buildAttendanceCampusWhere(userCampus) : {};
+    
+    const schedules = await LaboratorySchedule.findAll({
+      where: campusWhere,
+      attributes: ["id"]
+    });
 
-    return res.json({ total, present, late, absent, percentage });
+    const scheduleIds = schedules.map(s => s.id);
+
+    // Count TODAY's attendance records by status
+    const todayAttendance = await Attendance.findAll({
+      where: {
+        laboratoryScheduleId: { [Op.in]: scheduleIds },
+        createdAt: {
+          [Op.gte]: todayStart,
+          [Op.lte]: todayEnd
+        }
+      },
+      attributes: ['status', [sequelize.fn('COUNT', sequelize.col('id')), 'count']],
+      group: ['status'],
+      raw: true
+    });
+
+    // Count completed sessions today
+    const context = await getInstructorAttendanceContext(req);
+    const todayCompletedSessions = (context.sessions || []).filter(session => {
+      const sessionDate = new Date(session.createdAt || session.date);
+      return sessionDate >= todayStart && 
+             sessionDate <= todayEnd && 
+             String(session.attendanceStatus || "").toLowerCase() === "completed";
+    });
+
+    const statusMap = {};
+    todayAttendance.forEach(row => {
+      const status = String(row.status || '').toLowerCase();
+      statusMap[status] = Number(row.count || 0);
+    });
+
+    return res.json({ 
+      total: todayCompletedSessions.length,
+      present: statusMap['present'] || 0,
+      late: statusMap['late'] || 0,
+      absent: statusMap['absent'] || 0
+    });
   } catch (error) {
+    console.error("[getAttendanceStats] Error:", error);
     return sendJsonError(res, 500, "Unable to load attendance stats.", error);
   }
 };
@@ -1385,16 +1437,23 @@ const recordAttendance = async (req, res, token, session) => {
     message: `Thank you, ${attendance.fullName}! Your attendance has been successfully recorded.`,
     detailRows: details,
     statusLabel: "✓ Attendance Recorded",
-    primaryLabel: "View My Attendance History",
-    primaryHref: "/student/dashboard#attendance",
-    secondaryLabel: "Return to Student Dashboard",
+    primaryLabel: "Select Your PC Station",
+    primaryHref: `/attendance/select-pc?attendanceId=${attendance.id}&scheduleId=${session?.laboratoryScheduleId || ''}`,
+    secondaryLabel: "Skip for Now",
     secondaryHref: "/student/dashboard",
     successVariant: true,
-    highlightMessage: "Your attendance has been successfully recorded."
+    highlightMessage: "Please select your PC station to complete check-in."
   });
 
   if (req.accepts("html")) return res.send(html);
-  return res.json({ success: true, attendance, message: "Attendance recorded successfully." });
+  return res.json({ 
+    success: true, 
+    attendance, 
+    message: "Attendance recorded successfully.",
+    requiresPCSelection: true,
+    attendanceId: attendance.id,
+    scheduleId: session?.laboratoryScheduleId
+  });
 };
 
 export const scanAttendance = async (req, res) => {

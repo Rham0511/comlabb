@@ -148,9 +148,11 @@ if (!process.env.ELECTRON) {
         await sequelize.authenticate();
         console.log("✅ Database connected");
 
+        // Database tables are managed via SQL migrations
+        // Sync is disabled to prevent schema conflicts
         try {
           await ensureClassListEntryTable();
-          await sequelize.sync({ force: false, alter: false, logging: false });
+          // await sequelize.sync({ force: false, alter: false, logging: false });
           console.log("✅ Database tables are ready");
         } catch (syncError) {
           console.warn("⚠️ Database schema sync skipped:", syncError.message);

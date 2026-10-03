@@ -24,7 +24,7 @@
     SOFTWARE.
     */
     
-import bcrypt from "bcrypt";
+import bcryptjs from "bcryptjs";
 import { Op } from "sequelize";
 import fs from "fs";
 import path from "path";
@@ -111,7 +111,7 @@ export const loginUser = async (req, res) => {
     return res.redirect("/login");
   }
 
-  const match = await bcrypt.compare(normalizedPassword, user.password);
+  const match = await bcryptjs.compare(normalizedPassword, user.password);
   if (!match) {
     await logAuditEntry(req, {
       action: "Failed Login",
@@ -200,7 +200,7 @@ export const registerUser = async (req, res) => {
     }
   }
 
-  const hashed         = await bcrypt.hash(password, 8);
+  const hashed         = await bcryptjs.hash(password, 8);
   const otp            = generateOtp();
   const otpExpiresAt   = new Date(Date.now() + OTP_TTL_MS);
 
@@ -474,7 +474,7 @@ export const resetPassword = async (req, res) => {
     return res.redirect('/forgot-password');
   }
 
-  const hashed = await bcrypt.hash(password, 8);
+  const hashed = await bcryptjs.hash(password, 8);
   await user.update({
     password: hashed,
     verification_token: null,

@@ -70,7 +70,7 @@ export const Equipment = sequelize.define("Equipment", {
     allowNull: true
   },
   status: {
-    type: DataTypes.ENUM("Serviceable", "Unserviceable", "Lost"),
+    type: DataTypes.ENUM("Serviceable", "Unserviceable", "Lost", "Missing", "Under Maintenance"),
     allowNull: false,
     defaultValue: "Serviceable"
   },
@@ -83,6 +83,80 @@ export const Equipment = sequelize.define("Equipment", {
     type: DataTypes.DATEONLY,
     allowNull: false,
     defaultValue: DataTypes.NOW
+  },
+  // NEW FIELDS - Equipment Management Enhancements
+  serialNumber: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+    comment: 'Unique serial number for equipment identification'
+  },
+  setId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: 'Groups equipment into sets (e.g., PC-SET-001)'
+  },
+  manufacturer: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: 'Equipment manufacturer'
+  },
+  model: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: 'Equipment model number'
+  },
+  purchaseDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    comment: 'Date equipment was purchased'
+  },
+  warrantyExpiry: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    comment: 'Warranty expiration date'
+  },
+  condition: {
+    type: DataTypes.ENUM('excellent', 'good', 'fair', 'poor', 'broken'),
+    defaultValue: 'good',
+    allowNull: true,
+    comment: 'Current physical condition'
+  },
+  location: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'Current physical location in lab'
+  },
+  remarks: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Additional notes about the equipment'
+  },
+  // MISSING EQUIPMENT TRACKING
+  missingReportedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'When equipment was reported missing'
+  },
+  missingReportedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'User ID who reported it missing'
+  },
+  missingReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Reason/notes for missing report'
+  },
+  foundAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'When missing equipment was marked as found'
+  },
+  foundBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'User ID who marked it as found'
   }
 }, {
   timestamps: false,
@@ -92,7 +166,10 @@ export const Equipment = sequelize.define("Equipment", {
       unique: true,
       fields: ["campus", "category", "equipmentId"],
       name: "equipment_campus_category_id_unique"
-    }
+    },
+    { fields: ["setId"], name: "idx_setId" },
+    { fields: ["status"], name: "idx_status" },
+    { fields: ["missingReportedAt"], name: "idx_missingReportedAt" }
   ]
 });
 

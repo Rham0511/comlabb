@@ -18,11 +18,14 @@ import { BorrowRecord } from "../models/borrowRecordModel.js";
 import { MaintenanceRequest } from "../models/maintenanceRequestModel.js";
 import { loginPage, registerPage, loginUser, registerUser, dashboardPage, logoutUser, forgotPasswordPage, forgotPassword, verifyOtpPage, verifyOtp, resendOtp, resetPasswordPage, resetPassword, verifyEmail, updateProfile, uploadStudentPhoto } from "../controllers/authController.js";
 import { homePage } from "../controllers/homeController.js";
-import { inventoryPage, viewEquipmentPage, getEquipment, getStudentEquipment, getEquipmentCampusTotals, createEquipment, updateEquipment, updateEquipmentStatus, deleteEquipment, getEquipmentQr, getEquipmentCategories, createEquipmentCategory, deleteEquipmentCategory } from "../controllers/equipmentController.js";
+import { inventoryPage, viewEquipmentPage, getEquipment, getStudentEquipment, getEquipmentCampusTotals, createEquipment, updateEquipment, updateEquipmentStatus, deleteEquipment, getEquipmentQr, getEquipmentCategories, createEquipmentCategory, deleteEquipmentCategory, reportEquipmentMissing, markEquipmentFound, transferEquipmentSet, getMissingEquipment, getEquipmentHistory } from "../controllers/equipmentController.js";
 import { listBorrowRecords, createBorrowRecord, returnBorrowRecord, getBorrowHistory, approveBorrowRecord, rejectBorrowRecord, listBorrowNotifications, markBorrowNotificationRead, markBorrowRecordLost } from "../controllers/borrowController.js";
 import { listEquipmentAvailability, getEquipmentBorrowingHistory } from "../controllers/equipmentAvailabilityController.js";
 import { getAttendanceRecords, getAttendanceStats, getInstructorAttendanceDashboard, getInstructorAttendanceSessionDetails, scanAttendance, createAttendanceSession } from "../controllers/attendanceController.js";
 import { getAuditLogs, logAuditEntry } from "../controllers/auditController.js";
+import { getAuditTrail } from "../controllers/auditTrailController.js";
+import { getPCAvailability, assignPC, endPCSession, getCurrentPCAssignment } from "../controllers/pcAssignmentController.js";
+import { getScheduleSeatingChart } from "../controllers/seatingChartController.js";
 import { getUserAuthContext, getUserCampusFromSession, canManageRecord, isAdminRole as isCampusAdminRole } from "../controllers/campusAuthController.js";
 import { LaboratorySchedule } from "../models/laboratoryScheduleModel.js";
 import { ClassListEntry } from "../models/classListEntryModel.js";
@@ -58,6 +61,8 @@ const staticHtmlPages = [
   "student-profile",
   "student-my-requests",
   "student-report-issue",
+  "student-report-equipment",
+  "my-pc-station",
   "technician-dashboard",
   "attendance",
   "maintenance-reports",
@@ -763,7 +768,7 @@ const pageConfigs = {
           </div>
         </div>
       </div>
-      <script src="/js/attendance-monitoring.js" defer></script>
+      <script src="/js/attendance-monitoring.js?v=20261003" defer></script>
     `
   },
   "laboratory-schedules": {
@@ -1301,17 +1306,122 @@ const pageConfigs = {
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-2">Campus</label>
-                  <input id="scheduleCampus" type="text" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" readonly required aria-readonly="true" />
+                  <select id="scheduleCampus" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required>
+                    <option value="">Select Campus</option>
+                    <option value="Bongabong">Bongabong</option>
+                    <option value="Calapan">Calapan</option>
+                    <option value="Victoria">Victoria</option>
+                  </select>
                 </div>
               </div>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-2">Start Time</label>
-                  <input id="scheduleStartTime" type="text" placeholder="9:00 AM" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                  <select id="scheduleStartTime" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required>
+                    <option value="">Select Start Time</option>
+                    <option value="12:00 AM">12:00 AM</option>
+                    <option value="12:30 AM">12:30 AM</option>
+                    <option value="1:00 AM">1:00 AM</option>
+                    <option value="1:30 AM">1:30 AM</option>
+                    <option value="2:00 AM">2:00 AM</option>
+                    <option value="2:30 AM">2:30 AM</option>
+                    <option value="3:00 AM">3:00 AM</option>
+                    <option value="3:30 AM">3:30 AM</option>
+                    <option value="4:00 AM">4:00 AM</option>
+                    <option value="4:30 AM">4:30 AM</option>
+                    <option value="5:00 AM">5:00 AM</option>
+                    <option value="5:30 AM">5:30 AM</option>
+                    <option value="6:00 AM">6:00 AM</option>
+                    <option value="6:30 AM">6:30 AM</option>
+                    <option value="7:00 AM">7:00 AM</option>
+                    <option value="7:30 AM">7:30 AM</option>
+                    <option value="8:00 AM">8:00 AM</option>
+                    <option value="8:30 AM">8:30 AM</option>
+                    <option value="9:00 AM">9:00 AM</option>
+                    <option value="9:30 AM">9:30 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="10:30 AM">10:30 AM</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="11:30 AM">11:30 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="12:30 PM">12:30 PM</option>
+                    <option value="1:00 PM">1:00 PM</option>
+                    <option value="1:30 PM">1:30 PM</option>
+                    <option value="2:00 PM">2:00 PM</option>
+                    <option value="2:30 PM">2:30 PM</option>
+                    <option value="3:00 PM">3:00 PM</option>
+                    <option value="3:30 PM">3:30 PM</option>
+                    <option value="4:00 PM">4:00 PM</option>
+                    <option value="4:30 PM">4:30 PM</option>
+                    <option value="5:00 PM">5:00 PM</option>
+                    <option value="5:30 PM">5:30 PM</option>
+                    <option value="6:00 PM">6:00 PM</option>
+                    <option value="6:30 PM">6:30 PM</option>
+                    <option value="7:00 PM">7:00 PM</option>
+                    <option value="7:30 PM">7:30 PM</option>
+                    <option value="8:00 PM">8:00 PM</option>
+                    <option value="8:30 PM">8:30 PM</option>
+                    <option value="9:00 PM">9:00 PM</option>
+                    <option value="9:30 PM">9:30 PM</option>
+                    <option value="10:00 PM">10:00 PM</option>
+                    <option value="10:30 PM">10:30 PM</option>
+                    <option value="11:00 PM">11:00 PM</option>
+                    <option value="11:30 PM">11:30 PM</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-2">End Time</label>
-                  <input id="scheduleEndTime" type="text" placeholder="11:00 AM" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required />
+                  <select id="scheduleEndTime" class="w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-white focus:border-green-500 focus:outline-none" required>
+                    <option value="">Select End Time</option>
+                    <option value="12:30 AM">12:30 AM</option>
+                    <option value="1:00 AM">1:00 AM</option>
+                    <option value="1:30 AM">1:30 AM</option>
+                    <option value="2:00 AM">2:00 AM</option>
+                    <option value="2:30 AM">2:30 AM</option>
+                    <option value="3:00 AM">3:00 AM</option>
+                    <option value="3:30 AM">3:30 AM</option>
+                    <option value="4:00 AM">4:00 AM</option>
+                    <option value="4:30 AM">4:30 AM</option>
+                    <option value="5:00 AM">5:00 AM</option>
+                    <option value="5:30 AM">5:30 AM</option>
+                    <option value="6:00 AM">6:00 AM</option>
+                    <option value="6:30 AM">6:30 AM</option>
+                    <option value="7:00 AM">7:00 AM</option>
+                    <option value="7:30 AM">7:30 AM</option>
+                    <option value="8:00 AM">8:00 AM</option>
+                    <option value="8:30 AM">8:30 AM</option>
+                    <option value="9:00 AM">9:00 AM</option>
+                    <option value="9:30 AM">9:30 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="10:30 AM">10:30 AM</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="11:30 AM">11:30 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="12:30 PM">12:30 PM</option>
+                    <option value="1:00 PM">1:00 PM</option>
+                    <option value="1:30 PM">1:30 PM</option>
+                    <option value="2:00 PM">2:00 PM</option>
+                    <option value="2:30 PM">2:30 PM</option>
+                    <option value="3:00 PM">3:00 PM</option>
+                    <option value="3:30 PM">3:30 PM</option>
+                    <option value="4:00 PM">4:00 PM</option>
+                    <option value="4:30 PM">4:30 PM</option>
+                    <option value="5:00 PM">5:00 PM</option>
+                    <option value="5:30 PM">5:30 PM</option>
+                    <option value="6:00 PM">6:00 PM</option>
+                    <option value="6:30 PM">6:30 PM</option>
+                    <option value="7:00 PM">7:00 PM</option>
+                    <option value="7:30 PM">7:30 PM</option>
+                    <option value="8:00 PM">8:00 PM</option>
+                    <option value="8:30 PM">8:30 PM</option>
+                    <option value="9:00 PM">9:00 PM</option>
+                    <option value="9:30 PM">9:30 PM</option>
+                    <option value="10:00 PM">10:00 PM</option>
+                    <option value="10:30 PM">10:30 PM</option>
+                    <option value="11:00 PM">11:00 PM</option>
+                    <option value="11:30 PM">11:30 PM</option>
+                    <option value="11:59 PM">11:59 PM</option>
+                  </select>
                 </div>
               </div>
               <div class="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] backdrop-blur-sm">
@@ -1320,8 +1430,8 @@ const pageConfigs = {
                     <i class="fas fa-file-upload"></i>
                   </div>
                   <div class="flex-1">
-                    <h4 class="text-lg font-semibold text-white">Student Class List</h4>
-                    <p class="mt-1 text-sm text-emerald-100/80">Upload the official class list for this laboratory schedule.</p>
+                    <h4 class="text-lg font-semibold text-white">Student Class List <span class="text-sm text-slate-400">(Optional)</span></h4>
+                    <p class="mt-1 text-sm text-emerald-100/80">Upload the official class list for this laboratory schedule. You can add this later if needed.</p>
                     <p class="mt-2 text-sm text-slate-300">Accepted file formats: .xlsx, .xls, .csv</p>
                     <p class="mt-2 text-xs text-slate-400">Columns: Last Name, First Name, Middle Initial. Course, Year, and Section are supported when available.</p>
                     <label class="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-emerald-500/40 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-emerald-200 hover:bg-slate-900">
@@ -1334,7 +1444,7 @@ const pageConfigs = {
                       <div id="scheduleClassListMeta" class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400"></div>
                     </div>
                     <div id="scheduleClassListValidation" class="mt-3 hidden rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                      Please upload the official class list before creating the laboratory schedule.
+                      Please upload the official class list (optional - can be added later).
                     </div>
                   </div>
                 </div>
@@ -1677,7 +1787,15 @@ const pageConfigs = {
               const row = document.createElement('tr');
               row.className = 'hover:bg-slate-900/70';
               const timeLabel = [session.startTime, session.endTime].filter(Boolean).join(' - ') || session.time || '—';
-              const countsLabel = 'P:' + (session.studentsPresent ?? 0) + ' • L:' + (session.studentsLate ?? 0) + ' • A:' + (session.studentsAbsent ?? 0);
+              const totalAttendance = (session.studentsPresent ?? 0) + (session.studentsLate ?? 0) + (session.studentsAbsent ?? 0);
+              const countsLabel = '<div class="flex flex-col gap-1">' +
+                '<div class="text-sm font-semibold text-white">' + totalAttendance + ' student' + (totalAttendance === 1 ? '' : 's') + '</div>' +
+                '<div class="text-xs text-slate-400">' +
+                'P:<span class="text-emerald-400 font-medium">' + (session.studentsPresent ?? 0) + '</span> • ' +
+                'L:<span class="text-amber-400 font-medium">' + (session.studentsLate ?? 0) + '</span> • ' +
+                'A:<span class="text-red-400 font-medium">' + (session.studentsAbsent ?? 0) + '</span>' +
+                '</div>' +
+                '</div>';
               row.innerHTML =
                 '<td class="px-4 py-4 text-white">' + (session.subject || '—') + '</td>' +
                 '<td class="px-4 py-4">' + (session.laboratory || '—') + '</td>' +
@@ -2024,7 +2142,8 @@ const pageConfigs = {
                 '<td class="px-4 py-4 text-slate-200">' + (item.instructor || 'No instructor') + '</td>' +
                 '<td class="px-4 py-4 text-slate-200">' + (item.campus || '—') + '</td>' +
                 '<td class="px-4 py-4 text-slate-200">' + rosterCount + ' student' + (rosterCount === 1 ? '' : 's') + '</td>' +
-                '<td class="min-w-[220px] px-4 py-4"><div class="flex flex-row items-center justify-end gap-2 whitespace-nowrap">' +
+                '<td class="min-w-[280px] px-4 py-4"><div class="flex flex-row items-center justify-end gap-2 whitespace-nowrap">' +
+                  '<button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg border border-purple-500/30 transition-all" onclick="openSeatingChartModal(' + (item.id ?? '') + ')"><i class="fas fa-chair"></i> View Seating</button>' +
                   '<button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg border border-emerald-500/30 transition-all" onclick="openQrModal(' + (item.id ?? '') + ')"><i class="fas fa-qrcode"></i> QR</button>' +
                   '<button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg border border-blue-500/30 transition-all" onclick="openEditScheduleModal(' + (item.id ?? '') + ')"><i class="fas fa-edit"></i> Edit</button>' +
                   '<button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/30 transition-all" onclick="confirmScheduleDeletion(' + (item.id ?? '') + ')"><i class="fas fa-trash"></i> Delete</button>' +
@@ -2124,7 +2243,9 @@ const pageConfigs = {
             if (form) form.reset();
             const campusField = document.getElementById('scheduleCampus');
             const authenticatedCampus = String(window.__CURRENT_USER_CAMPUS__ || '').trim().replace(/\s*Campus\s*$/i, '');
-            if (campusField) campusField.value = authenticatedCampus;
+            if (campusField && authenticatedCampus) {
+              campusField.value = authenticatedCampus;
+            }
             document.getElementById('scheduleModalTitle').textContent = 'Add Lab Schedule';
             document.getElementById('scheduleModalSubtitle').textContent = 'Create a new session and assign it to a weekday.';
             document.getElementById('scheduleSubmitButton').textContent = 'Create Schedule';
@@ -2323,7 +2444,7 @@ const pageConfigs = {
             const title = document.getElementById('scheduleTitle').value.trim();
             const instructor = document.getElementById('scheduleInstructor').value.trim();
             const room = document.getElementById('scheduleRoom').value.trim();
-            const campus = String(window.__CURRENT_USER_CAMPUS__ || '').trim().replace(/\s*Campus\s*$/i, '');
+            const campus = document.getElementById('scheduleCampus').value.trim();
             const statusElem = document.getElementById('scheduleStatus');
             const status = statusElem ? statusElem.value : 'Confirmed';
             const startTime = document.getElementById('scheduleStartTime').value.trim();
@@ -2339,12 +2460,7 @@ const pageConfigs = {
               return;
             }
 
-            if (!isEditing && !hasClassListSelection) {
-              classListValidation?.classList.remove('hidden');
-              alert('Please upload the official class list before creating the laboratory schedule.');
-              return;
-            }
-
+            // Class list is now optional - no validation required
             classListValidation?.classList.add('hidden');
 
             try {
@@ -2598,66 +2714,130 @@ const pageConfigs = {
 
               title.textContent = session.subject || 'Attendance Details';
               subtitle.textContent = [session.laboratory || session.room, session.instructor].filter(Boolean).join(' • ');
+              
+              // Enhanced UI with better visual hierarchy and modern card design
               const metaRows = [
-                '<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Subject</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + (session.subject || '—') + '</p>',
+                // Session Info Section - Compact 2-column layout
+                '<div class="space-y-4">',
+                '<div class="rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 to-slate-900/70 p-5">',
+                '<h4 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-4 flex items-center gap-2">',
+                '<i class="fas fa-info-circle"></i> Session Information',
+                '</h4>',
+                '<div class="grid gap-4 md:grid-cols-2">',
+                '<div class="flex items-start gap-3">',
+                '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">',
+                '<i class="fas fa-book-open"></i>',
                 '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Instructor</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + (session.instructor || '—') + '</p>',
-                '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Laboratory</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + (session.laboratory || '—') + '</p>',
-                '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Date</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + formatSessionDate(session.date || session.createdAt) + '</p>',
+                '<div class="flex-1 min-w-0">',
+                '<p class="text-xs text-slate-400 mb-1">Subject</p>',
+                '<p class="text-sm font-semibold text-white truncate">' + (session.subject || '—') + '</p>',
                 '</div>',
                 '</div>',
-                '<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Start Time</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + (session.startTime || '—') + '</p>',
+                '<div class="flex items-start gap-3">',
+                '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">',
+                '<i class="fas fa-chalkboard-teacher"></i>',
                 '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">End Time</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + (session.endTime || '—') + '</p>',
-                '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Total Students</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">' + records.length + '</p>',
-                '</div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">',
-                '<p class="text-sm text-slate-400">Status</p>',
-                '<p class="mt-2 text-lg font-semibold text-white">Completed</p>',
+                '<div class="flex-1 min-w-0">',
+                '<p class="text-xs text-slate-400 mb-1">Instructor</p>',
+                '<p class="text-sm font-semibold text-white truncate">' + (session.instructor || '—') + '</p>',
                 '</div>',
                 '</div>',
-                '<div class="grid gap-4 md:grid-cols-4">',
-                '<div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4"><p class="text-sm text-emerald-200">Present</p><p class="mt-2 text-2xl font-semibold text-white">' + present.length + '</p></div>',
-                '<div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4"><p class="text-sm text-amber-200">Late</p><p class="mt-2 text-2xl font-semibold text-white">' + late.length + '</p></div>',
-                '<div class="rounded-2xl border border-red-500/20 bg-red-500/10 p-4"><p class="text-sm text-red-200">Absent</p><p class="mt-2 text-2xl font-semibold text-white">' + absent.length + '</p></div>',
-                '<div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><p class="text-sm text-slate-400">Attendance Window</p><p class="mt-2 text-lg font-semibold text-white">' + (session.startTime || '—') + ' - ' + (session.endTime || '—') + '</p></div>',
+                '<div class="flex items-start gap-3">',
+                '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20 text-purple-400">',
+                '<i class="fas fa-flask"></i>',
                 '</div>',
-                '<div class="flex flex-wrap gap-2 attendance-filter-container">' + tabs.map(function(tab) {
-                  const activeClass = tab === filter ? 'bg-emerald-600 text-white' : 'bg-slate-900/70 text-slate-200';
-                  return '<button type="button" data-tab="' + tab + '" class="attendance-filter-btn rounded-full border border-slate-700 px-3 py-2 text-sm font-semibold ' + activeClass + '">' + tab + '</button>';
+                '<div class="flex-1 min-w-0">',
+                '<p class="text-xs text-slate-400 mb-1">Laboratory</p>',
+                '<p class="text-sm font-semibold text-white truncate">' + (session.laboratory || '—') + '</p>',
+                '</div>',
+                '</div>',
+                '<div class="flex items-start gap-3">',
+                '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">',
+                '<i class="fas fa-calendar-alt"></i>',
+                '</div>',
+                '<div class="flex-1 min-w-0">',
+                '<p class="text-xs text-slate-400 mb-1">Date</p>',
+                '<p class="text-sm font-semibold text-white">' + formatSessionDate(session.date || session.createdAt) + '</p>',
+                '</div>',
+                '</div>',
+                '</div>',
+                '</div>',
+                
+                // Stats Cards - Large prominent display
+                '<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">',
+                '<div class="relative overflow-hidden rounded-xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 to-emerald-900/30 p-5 shadow-lg shadow-emerald-500/10">',
+                '<div class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-emerald-500/20 blur-2xl"></div>',
+                '<div class="relative">',
+                '<div class="mb-2 flex items-center gap-2">',
+                '<i class="fas fa-check-circle text-lg text-emerald-400"></i>',
+                '<p class="text-xs font-medium uppercase tracking-wide text-emerald-300">Present</p>',
+                '</div>',
+                '<p class="text-4xl font-bold text-white">' + present.length + '</p>',
+                '<p class="mt-1 text-xs text-emerald-200/70">' + (records.length ? Math.round((present.length / records.length) * 100) : 0) + '% attendance</p>',
+                '</div>',
+                '</div>',
+                
+                '<div class="relative overflow-hidden rounded-xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-amber-900/30 p-5 shadow-lg shadow-amber-500/10">',
+                '<div class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-amber-500/20 blur-2xl"></div>',
+                '<div class="relative">',
+                '<div class="mb-2 flex items-center gap-2">',
+                '<i class="fas fa-clock text-lg text-amber-400"></i>',
+                '<p class="text-xs font-medium uppercase tracking-wide text-amber-300">Late</p>',
+                '</div>',
+                '<p class="text-4xl font-bold text-white">' + late.length + '</p>',
+                '<p class="mt-1 text-xs text-amber-200/70">' + (records.length ? Math.round((late.length / records.length) * 100) : 0) + '% tardy</p>',
+                '</div>',
+                '</div>',
+                
+                '<div class="relative overflow-hidden rounded-xl border-2 border-red-500/40 bg-gradient-to-br from-red-500/20 to-red-900/30 p-5 shadow-lg shadow-red-500/10">',
+                '<div class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-red-500/20 blur-2xl"></div>',
+                '<div class="relative">',
+                '<div class="mb-2 flex items-center gap-2">',
+                '<i class="fas fa-times-circle text-lg text-red-400"></i>',
+                '<p class="text-xs font-medium uppercase tracking-wide text-red-300">Absent</p>',
+                '</div>',
+                '<p class="text-4xl font-bold text-white">' + absent.length + '</p>',
+                '<p class="mt-1 text-xs text-red-200/70">' + (records.length ? Math.round((absent.length / records.length) * 100) : 0) + '% missed</p>',
+                '</div>',
+                '</div>',
+                
+                '<div class="relative overflow-hidden rounded-xl border-2 border-slate-700/40 bg-gradient-to-br from-slate-800/60 to-slate-900/80 p-5 shadow-lg">',
+                '<div class="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-slate-500/10 blur-2xl"></div>',
+                '<div class="relative">',
+                '<div class="mb-2 flex items-center gap-2">',
+                '<i class="fas fa-users text-lg text-slate-400"></i>',
+                '<p class="text-xs font-medium uppercase tracking-wide text-slate-300">Total</p>',
+                '</div>',
+                '<p class="text-4xl font-bold text-white">' + records.length + '</p>',
+                '<p class="mt-1 text-xs text-slate-400">students enrolled</p>',
+                '</div>',
+                '</div>',
+                '</div>',
+                
+                // Filter tabs
+                '<div class="flex flex-wrap gap-2">' + tabs.map(function(tab) {
+                  const activeClass = tab === filter ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20' : 'bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-700/60';
+                  const iconMap = { 'All': 'fa-list', 'Present': 'fa-check-circle', 'Late': 'fa-clock', 'Absent': 'fa-times-circle' };
+                  return '<button type="button" data-tab="' + tab + '" class="attendance-filter-btn inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all ' + activeClass + '"><i class="fas ' + iconMap[tab] + '"></i>' + tab + '</button>';
                 }).join('') + '</div>',
-                '<div class="overflow-x-auto rounded-2xl border border-slate-800">',
-                '<table class="min-w-full text-left divide-y divide-slate-800">',
-                '<thead class="bg-slate-900/60">',
+                
+                // Student table
+                '<div class="overflow-hidden rounded-xl border border-slate-700/50 shadow-xl">',
+                '<div class="overflow-x-auto">',
+                '<table class="min-w-full divide-y divide-slate-700/50">',
+                '<thead class="bg-gradient-to-r from-slate-900 to-slate-800">',
                 '<tr>',
-                '<th class="px-4 py-3 text-sm font-semibold text-slate-300">Student ID</th>',
-                '<th class="px-4 py-3 text-sm font-semibold text-slate-300">Full Name</th>',
-                '<th class="px-4 py-3 text-sm font-semibold text-slate-300">Status</th>',
-                '<th class="px-4 py-3 text-sm font-semibold text-slate-300">Time In</th>',
+                '<th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-300">Student ID</th>',
+                '<th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-300">Full Name</th>',
+                '<th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-300">Status</th>',
+                '<th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-300">Time In</th>',
                 '</tr>',
                 '</thead>',
-                '<tbody id="attendanceSessionRows" class="divide-y divide-slate-800 text-sm text-slate-200"></tbody>',
+                '<tbody id="attendanceSessionRows" class="divide-y divide-slate-700/30 bg-slate-900/40"></tbody>',
                 '</table>',
-                '<div id="attendanceSessionPagination" class="mt-4 flex flex-wrap items-center gap-2"></div>',
+                '</div>',
+                '<div id="attendanceSessionPagination" class="flex flex-wrap items-center justify-center gap-2 border-t border-slate-700/50 bg-slate-900/60 px-4 py-4"></div>',
+                '</div>',
                 '</div>'
               ];
               content.innerHTML = metaRows.join('');
@@ -2755,17 +2935,22 @@ const pageConfigs = {
 
                 rows.innerHTML = pageItems.length ? pageItems.map(function(row) {
                   const status = row.attendanceStatus || row.status || 'Absent';
-                  const statusClass = status === 'Late' ? 'bg-amber-500/10 text-amber-200' : status === 'Absent' ? 'bg-red-500/10 text-red-200' : 'bg-emerald-500/10 text-emerald-200';
+                  const statusConfig = {
+                    'Present': { class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', icon: 'fa-check-circle' },
+                    'Late': { class: 'bg-amber-500/20 text-amber-300 border-amber-500/30', icon: 'fa-clock' },
+                    'Absent': { class: 'bg-red-500/20 text-red-300 border-red-500/30', icon: 'fa-times-circle' }
+                  };
+                  const config = statusConfig[status] || statusConfig['Absent'];
                   const studentId = row.studentId || row.id || '—';
                   const name = row.studentName || row.fullName || '—';
                   const timeIn = row.timeIn || row.time || 'Not recorded';
-                  return '<tr class="hover:bg-slate-900/70">' +
-                    '<td class="px-4 py-3">' + studentId + '</td>' +
-                    '<td class="px-4 py-3">' + name + '</td>' +
-                    '<td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ' + statusClass + '">' + status + '</span></td>' +
-                    '<td class="px-4 py-3">' + timeIn + '</td>' +
+                  return '<tr class="hover:bg-slate-800/40 transition-colors">' +
+                    '<td class="px-5 py-4 text-sm font-medium text-slate-300">' + studentId + '</td>' +
+                    '<td class="px-5 py-4 text-sm font-medium text-white">' + name + '</td>' +
+                    '<td class="px-5 py-4"><span class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ' + config.class + '"><i class="fas ' + config.icon + '"></i>' + status + '</span></td>' +
+                    '<td class="px-5 py-4 text-sm text-slate-400">' + timeIn + '</td>' +
                     '</tr>';
-                }).join('') : '<tr><td colspan="4" class="px-4 py-4 text-center text-slate-400">No students in this group.</td></tr>';
+                }).join('') : '<tr><td colspan="4" class="px-5 py-8 text-center"><div class="flex flex-col items-center gap-2"><i class="fas fa-user-slash text-3xl text-slate-600"></i><p class="text-slate-400">No students in this group.</p></div></td></tr>';
 
                 renderAttendanceSessionPagination(filteredRows);
               };
@@ -2806,7 +2991,197 @@ const pageConfigs = {
             await fetchSchedules();
             startAttendanceRefresh();
           });
+
+          // ========================
+          // Seating Chart Modal
+          // ========================
+          window.openSeatingChartModal = async function(scheduleId) {
+            const modal = document.getElementById('seatingChartModal');
+            if (!modal) return;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const loadingDiv = document.getElementById('seatingChartLoading');
+            const contentDiv = document.getElementById('seatingChartContent');
+            const errorDiv = document.getElementById('seatingChartError');
+
+            loadingDiv.classList.remove('hidden');
+            contentDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+
+            try {
+              const response = await fetch(\`/api/laboratory-schedules/\${scheduleId}/seating-chart\`);
+              if (!response.ok) throw new Error('Failed to fetch seating chart');
+
+              const data = await response.json();
+              
+              // Update modal header with schedule info
+              document.getElementById('seatingScheduleSubject').textContent = data.schedule.subject || 'Lab Session';
+              document.getElementById('seatingScheduleTime').textContent = \`\${data.schedule.day} • \${data.schedule.time}\`;
+              document.getElementById('seatingScheduleRoom').textContent = data.schedule.room || 'N/A';
+              
+              // Update statistics
+              document.getElementById('statOccupiedPCs').textContent = data.statistics.occupiedPCs;
+              document.getElementById('statAvailablePCs').textContent = data.statistics.availablePCs;
+              document.getElementById('statAssignedStudents').textContent = data.statistics.assignedStudents;
+              document.getElementById('statUnassignedStudents').textContent = data.statistics.unassignedStudents;
+
+              // Render PC grid
+              const pcGrid = document.getElementById('pcSeatingGrid');
+              pcGrid.innerHTML = data.seatingChart.map(pc => {
+                const isOccupied = pc.status === 'occupied';
+                const bgClass = isOccupied ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-slate-700/30 border-slate-600/40';
+                const iconClass = isOccupied ? 'text-emerald-400' : 'text-slate-400';
+                
+                return \`
+                  <div class="pc-seat-item \${bgClass} rounded-xl border p-4 transition-all hover:scale-105 hover:shadow-lg">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-bold text-white">\${pc.setId}</span>
+                      <i class="fas fa-desktop \${iconClass}"></i>
+                    </div>
+                    \${isOccupied ? \`
+                      <div class="mt-2">
+                        <p class="text-sm font-semibold text-white truncate">\${pc.student.fullName}</p>
+                        <p class="text-xs text-slate-300 mt-1">Since \${new Date(pc.student.startTime).toLocaleTimeString()}</p>
+                        <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full \${pc.student.isActive ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'}">
+                          \${pc.student.isActive ? 'Active' : 'Ended'}
+                        </span>
+                      </div>
+                    \` : \`
+                      <p class="text-xs text-slate-400 mt-2">Available</p>
+                    \`}
+                  </div>
+                \`;
+              }).join('');
+
+              // Render unassigned students list
+              const unassignedList = document.getElementById('unassignedStudentsList');
+              if (data.unassignedStudents.length === 0) {
+                unassignedList.innerHTML = '<p class="text-sm text-slate-400 italic">All students are assigned to a PC station.</p>';
+              } else {
+                unassignedList.innerHTML = data.unassignedStudents.map(student => \`
+                  <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/40 border border-slate-700/40">
+                    <div class="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center">
+                      <i class="fas fa-user text-red-400 text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-white">\${student.fullName}</p>
+                      <p class="text-xs text-slate-400">\${student.email}</p>
+                    </div>
+                  </div>
+                \`).join('');
+              }
+
+              loadingDiv.classList.add('hidden');
+              contentDiv.classList.remove('hidden');
+
+            } catch (error) {
+              console.error('Error loading seating chart:', error);
+              loadingDiv.classList.add('hidden');
+              errorDiv.classList.remove('hidden');
+              document.getElementById('seatingChartErrorMessage').textContent = error.message || 'Failed to load seating chart';
+            }
+          };
+
+          window.closeSeatingChartModal = function() {
+            const modal = document.getElementById('seatingChartModal');
+            if (modal) {
+              modal.classList.add('hidden');
+              modal.classList.remove('flex');
+            }
+          };
         </script>
+
+        <!-- Seating Chart Modal -->
+        <div id="seatingChartModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div class="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-2xl border border-emerald-500/20 m-4">
+            <!-- Modal Header -->
+            <div class="sticky top-0 z-10 bg-gradient-to-r from-emerald-900/90 to-teal-900/90 backdrop-blur-sm border-b border-emerald-500/30 px-6 py-4">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <h3 id="seatingScheduleSubject" class="text-2xl font-bold text-white mb-1">Lab Session</h3>
+                  <div class="flex items-center gap-4 text-sm text-emerald-200">
+                    <span id="seatingScheduleTime" class="flex items-center gap-2">
+                      <i class="fas fa-clock"></i>
+                      <span>Loading...</span>
+                    </span>
+                    <span id="seatingScheduleRoom" class="flex items-center gap-2">
+                      <i class="fas fa-door-open"></i>
+                      <span>Loading...</span>
+                    </span>
+                  </div>
+                </div>
+                <button onclick="closeSeatingChartModal()" class="text-slate-300 hover:text-white transition-colors">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+
+              <!-- Statistics Bar -->
+              <div class="grid grid-cols-4 gap-3 mt-4">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+                  <p class="text-xs text-emerald-300 font-semibold uppercase tracking-wide">Occupied</p>
+                  <p id="statOccupiedPCs" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-slate-500/10 border border-slate-500/30 rounded-lg px-3 py-2">
+                  <p class="text-xs text-slate-300 font-semibold uppercase tracking-wide">Available</p>
+                  <p id="statAvailablePCs" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg px-3 py-2">
+                  <p class="text-xs text-blue-300 font-semibold uppercase tracking-wide">Assigned</p>
+                  <p id="statAssignedStudents" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                  <p class="text-xs text-red-300 font-semibold uppercase tracking-wide">Unassigned</p>
+                  <p id="statUnassignedStudents" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+              <!-- Loading State -->
+              <div id="seatingChartLoading" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                  <i class="fas fa-spinner fa-spin text-4xl text-emerald-400 mb-4"></i>
+                  <p class="text-slate-300">Loading seating chart...</p>
+                </div>
+              </div>
+
+              <!-- Error State -->
+              <div id="seatingChartError" class="hidden rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
+                <p id="seatingChartErrorMessage" class="text-red-200">Failed to load seating chart</p>
+              </div>
+
+              <!-- Content -->
+              <div id="seatingChartContent" class="hidden space-y-6">
+                <!-- PC Seating Grid -->
+                <div>
+                  <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-desktop text-emerald-400"></i>
+                    PC Station Assignments
+                  </h4>
+                  <div id="pcSeatingGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    <!-- PC seats will be rendered here -->
+                  </div>
+                </div>
+
+                <!-- Unassigned Students -->
+                <div>
+                  <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-slash text-red-400"></i>
+                    Students Without PC Assignment
+                  </h4>
+                  <div id="unassignedStudentsList" class="space-y-2">
+                    <!-- Unassigned students will be rendered here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
     `
   },
@@ -3018,7 +3393,8 @@ const pageConfigs = {
 
       <section class="page-hero-card" style="justify-content:space-between; align-items:center;">
         <div>
-          <h2 class="page-title">System Activity</h2>
+          <h2 class="page-title">Audits</h2>
+          <p class="mt-2 text-sm text-emerald-100/70">Review system logs or trace the complete history of equipment.</p>
         </div>
         <div class="ml-auto flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.12)]">
           <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[0.8rem] font-semibold text-emerald-200" id="adminBadgeAvatar">AD</div>
@@ -3029,7 +3405,16 @@ const pageConfigs = {
         </div>
       </section>
 
-      <section class="table-card mb-6">
+      <div class="mb-5 flex flex-wrap gap-2 rounded-2xl border border-emerald-800/50 bg-[#081910] p-2" role="tablist" aria-label="Audit views">
+        <button id="systemAuditTab" type="button" class="audit-view-tab rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-black" role="tab" aria-selected="true">
+          <i class="fas fa-list-check mr-2"></i>System Logs
+        </button>
+        <button id="equipmentTrailTab" type="button" class="audit-view-tab rounded-xl px-4 py-2 text-sm font-bold text-emerald-200 hover:bg-emerald-900/50" role="tab" aria-selected="false">
+          <i class="fas fa-timeline mr-2"></i>Equipment Audit Trail
+        </button>
+      </div>
+
+      <section id="systemAuditPanel" class="table-card mb-6">
         <div class="audit-filters-shell mb-4">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full mb-4">
             <div class="audit-filter-group min-w-[200px]">
@@ -3095,6 +3480,50 @@ const pageConfigs = {
         </div>
       </section>
 
+      <section id="equipmentAuditTrailPanel" class="table-card mb-6 hidden">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-bold text-white">Equipment Audit Trail</h3>
+            <p class="mt-1 text-sm text-emerald-100/65">Track registration, borrowing, returns, damage, repairs, status changes, and disposal activity.</p>
+          </div>
+          <button id="refreshEquipmentTrailBtn" type="button" class="audit-filter-btn audit-filter-btn-secondary !w-auto">
+            <i class="fas fa-rotate mr-2"></i>Refresh
+          </button>
+        </div>
+        <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <input id="equipmentTrailSearch" type="search" placeholder="Search equipment, serial, action, or actor..." class="audit-filter-field" />
+          <select id="equipmentTrailAction" class="audit-filter-field">
+            <option value="">All equipment actions</option>
+            <option value="created">Registration</option>
+            <option value="borrowed">Borrowed</option>
+            <option value="returned">Returned</option>
+            <option value="maintenance_started">Repair started</option>
+            <option value="maintenance_completed">Repair completed</option>
+            <option value="status_changed">Status changed</option>
+            <option value="condition_changed">Condition changed</option>
+            <option value="deleted">Disposed / deleted</option>
+          </select>
+          <button id="applyEquipmentTrailFiltersBtn" type="button" class="audit-filter-btn audit-filter-btn-primary">Filter trail</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-left divide-y divide-slate-700">
+            <thead class="bg-slate-950 border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3 text-sm font-semibold text-slate-300">Equipment</th>
+                <th class="px-4 py-3 text-sm font-semibold text-slate-300">Action</th>
+                <th class="px-4 py-3 text-sm font-semibold text-slate-300">What happened</th>
+                <th class="px-4 py-3 text-sm font-semibold text-slate-300">Performed by</th>
+                <th class="px-4 py-3 text-sm font-semibold text-slate-300">Date / Time</th>
+              </tr>
+            </thead>
+            <tbody id="equipmentAuditTrailBody" class="divide-y divide-slate-800 text-sm text-slate-200">
+              <tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">Select Equipment Audit Trail to load entries.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="equipmentAuditTrailSummary" class="mt-4 text-sm text-slate-400">No trail entries loaded.</div>
+      </section>
+
       <script>
         const hydrateAdminBadge = () => {
           const sourceName = window.__CURRENT_USER_NAME__ || window.__CURRENT_USER__?.name || 'Administrator';
@@ -3119,6 +3548,84 @@ const pageConfigs = {
         };
 
         const auditState = { page: 1, pageSize: 5, totalPages: 1, query: '', userId: '', campus: window.__CURRENT_USER_CAMPUS__ || '', dateRange: 'all', dateFrom: '', dateTo: '', entries: [], users: [], isLoading: false, loadError: false };
+
+        const equipmentTrailState = { loaded: false, loading: false, query: '', actionType: '' };
+        const escapeTrailHtml = (value) => String(value ?? '—')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+        const equipmentActionLabel = (action) => ({
+          created: 'Registration',
+          borrowed: 'Borrowed',
+          returned: 'Returned',
+          maintenance_started: 'Repair started',
+          maintenance_completed: 'Repair completed',
+          status_changed: 'Status changed',
+          condition_changed: 'Condition changed',
+          location_changed: 'Location changed',
+          assigned_to_set: 'Assigned to set',
+          removed_from_set: 'Removed from set',
+          deleted: 'Disposed / deleted',
+          updated: 'Updated'
+        })[action] || String(action || 'Equipment activity').replaceAll('_', ' ');
+        const loadEquipmentAuditTrail = async () => {
+          const body = document.getElementById('equipmentAuditTrailBody');
+          const summary = document.getElementById('equipmentAuditTrailSummary');
+          if (!body || equipmentTrailState.loading) return;
+          equipmentTrailState.loading = true;
+          body.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">Loading equipment audit trail...</td></tr>';
+          try {
+            const params = new URLSearchParams({ limit: '100' });
+            if (equipmentTrailState.actionType) params.set('actionType', equipmentTrailState.actionType);
+            const response = await fetch('/api/equipment-audit-trail?' + params.toString(), {
+              cache: 'no-store',
+              headers: { Accept: 'application/json' }
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.success !== true) throw new Error(payload?.message || 'Failed to load equipment audit trail.');
+            const query = equipmentTrailState.query.toLowerCase();
+            const entries = (Array.isArray(payload.auditTrail) ? payload.auditTrail : []).filter((entry) => {
+              if (!query) return true;
+              return [entry.serialNumber, entry.equipmentId, entry.actionType, entry.actionDescription, entry.performedByName, entry.userRole]
+                .some((value) => String(value ?? '').toLowerCase().includes(query));
+            });
+            body.innerHTML = entries.length ? entries.map((entry) => {
+              const equipment = entry.serialNumber || (entry.equipmentId ? 'Equipment #' + entry.equipmentId : 'Equipment record');
+              const actor = entry.performedByName || (entry.performedBy ? 'User #' + entry.performedBy : 'Unknown user');
+              return '<tr class="hover:bg-emerald-950/30">'
+                + '<td class="px-4 py-4 font-medium">' + escapeTrailHtml(equipment) + '</td>'
+                + '<td class="px-4 py-4"><span class="action-pill pill-action">' + escapeTrailHtml(equipmentActionLabel(entry.actionType)) + '</span></td>'
+                + '<td class="px-4 py-4">' + escapeTrailHtml(entry.actionDescription || 'Equipment activity recorded.') + '</td>'
+                + '<td class="px-4 py-4">' + escapeTrailHtml(actor) + '<div class="text-xs text-slate-400">' + escapeTrailHtml(entry.userRole || '') + '</div></td>'
+                + '<td class="px-4 py-4 whitespace-nowrap">' + escapeTrailHtml(formatDateTime(entry.actionTimestamp)) + '</td>'
+                + '</tr>';
+            }).join('') : '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">No equipment audit trail entries found.</td></tr>';
+            if (summary) summary.textContent = 'Showing ' + entries.length + ' equipment trail entr' + (entries.length === 1 ? 'y.' : 'ies.');
+            equipmentTrailState.loaded = true;
+          } catch (error) {
+            console.error('[Equipment Audit Trail] Load failed:', error);
+            body.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-rose-300">Unable to load equipment audit trail.</td></tr>';
+            if (summary) summary.textContent = 'Equipment audit trail could not be loaded.';
+          } finally {
+            equipmentTrailState.loading = false;
+          }
+        };
+        const setAuditView = (view) => {
+          const isTrail = view === 'trail';
+          document.getElementById('systemAuditPanel')?.classList.toggle('hidden', isTrail);
+          document.getElementById('equipmentAuditTrailPanel')?.classList.toggle('hidden', !isTrail);
+          ['systemAuditTab', 'equipmentTrailTab'].forEach((id) => {
+            const tab = document.getElementById(id);
+            const selected = id === (isTrail ? 'equipmentTrailTab' : 'systemAuditTab');
+            tab?.classList.toggle('bg-emerald-500', selected);
+            tab?.classList.toggle('text-black', selected);
+            tab?.classList.toggle('text-emerald-200', !selected);
+            tab?.setAttribute('aria-selected', String(selected));
+          });
+          if (isTrail && !equipmentTrailState.loaded) loadEquipmentAuditTrail();
+        };
 
         // Helper function to get elements with null checking
         const getAuditElements = () => ({
@@ -3619,6 +4126,27 @@ const pageConfigs = {
           } else {
             console.warn('[Audit Logs] applyAuditFiltersBtn not found');
           }
+
+          const systemAuditTab = document.getElementById('systemAuditTab');
+          const equipmentTrailTab = document.getElementById('equipmentTrailTab');
+          const trailSearch = document.getElementById('equipmentTrailSearch');
+          const trailAction = document.getElementById('equipmentTrailAction');
+          systemAuditTab?.addEventListener('click', () => setAuditView('logs'));
+          equipmentTrailTab?.addEventListener('click', () => setAuditView('trail'));
+          trailSearch?.addEventListener('input', () => {
+            equipmentTrailState.query = trailSearch.value.trim();
+            if (equipmentTrailState.loaded) loadEquipmentAuditTrail();
+          });
+          trailAction?.addEventListener('change', () => {
+            equipmentTrailState.actionType = trailAction.value;
+            loadEquipmentAuditTrail();
+          });
+          document.getElementById('applyEquipmentTrailFiltersBtn')?.addEventListener('click', () => {
+            equipmentTrailState.query = trailSearch?.value.trim() || '';
+            equipmentTrailState.actionType = trailAction?.value || '';
+            loadEquipmentAuditTrail();
+          });
+          document.getElementById('refreshEquipmentTrailBtn')?.addEventListener('click', () => loadEquipmentAuditTrail());
         };
         // refreshAuditLogs button removed from UI; keep function available
         // If you need a programmatic refresh, call loadAuditLogs()
@@ -3975,6 +4503,9 @@ const pageConfigs = {
           
           loadAuditLogs();
           console.log('[Audit Logs] Loading audit logs...');
+
+          const initialView = new URLSearchParams(window.location.search).get('view');
+          setAuditView(initialView === 'trail' ? 'trail' : 'logs');
         };
 
         if (document.readyState === 'loading') {
@@ -5683,6 +6214,9 @@ const serveHtmlPage = (req, res) => {
       JSON.stringify(currentUser)
     );
 
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.type("html").send(hydratedHtml);
   };
 
@@ -6090,7 +6624,11 @@ router.get("/maintenance-reports", serveHtmlPage);
 router.get("/student-dashboard", serveHtmlPage);
 router.get("/student-borrow-equipment", serveHtmlPage);
 router.get("/student-profile", serveHtmlPage);
-router.get("/student/report-issue", (req, res) => res.redirect("/student-report-issue"));
+router.get("/my-pc-station", serveHtmlPage);
+router.get("/student/scan-attendance", (req, res) => res.sendFile(path.join(__dirname, "../student-scan-attendance.html")));
+router.get("/student/report-issue", (req, res) => res.redirect("/student-report-equipment"));
+router.get("/student/report-damage", (req, res) => res.redirect("/student-report-equipment"));
+router.get("/report-equipment-issue", (req, res) => res.redirect("/student-report-equipment"));
 router.get("/student/my-requests", (req, res) => res.redirect("/student-my-requests"));
 router.get("/student/profile", (req, res) => res.redirect("/student-profile"));
 router.get("/student/dashboard", (req, res) => res.redirect("/student-dashboard"));
@@ -6129,6 +6667,7 @@ router.get("/student/borrow-equipment", async (req, res) => {
   }
 });
 router.get("/student-report-issue", serveHtmlPage);
+router.get("/student-report-equipment", serveHtmlPage);
 router.get("/student-my-requests", serveHtmlPage);
 router.get("/technician-dashboard", serveHtmlPage);
 router.get("/page/:page", serveFeaturePage);
@@ -6154,14 +6693,295 @@ router.get("/logout", logoutUser);
 router.get("/api/equipment", getEquipment);
 router.get("/api/student/equipment", getStudentEquipment);
 router.get("/api/equipment/campus-totals", getEquipmentCampusTotals);
+
+// --- NEW: Missing equipment list (must be before /:id routes) ---
+router.get("/api/equipment/missing", getMissingEquipment);
+
 router.get("/api/equipment/:id/qr", getEquipmentQr);
 router.post("/api/equipment", createEquipment);
 router.put("/api/equipment/:id", updateEquipment);
 router.put("/api/equipment/:id/status", updateEquipmentStatus);
 router.delete("/api/equipment/:id", deleteEquipment);
+
+// --- NEW: Missing / Found / Transfer / History ---
+router.post("/api/equipment/:id/report-missing", reportEquipmentMissing);
+router.post("/api/equipment/:id/mark-found", markEquipmentFound);
+router.post("/api/equipment/:id/transfer-set", transferEquipmentSet);
+router.get("/api/equipment/:id/history", getEquipmentHistory);
+
 router.get("/api/equipment-categories", getEquipmentCategories);
 router.post("/api/equipment-categories", createEquipmentCategory);
 router.delete("/api/equipment-categories/:id", deleteEquipmentCategory);
+
+// PC Assignment routes
+router.get("/api/equipment/pc-availability", getPCAvailability);
+router.post("/api/equipment/assign-pc", assignPC);
+router.post("/api/equipment/end-pc-session", endPCSession);
+router.get("/api/equipment/current-assignment/:userId", getCurrentPCAssignment);
+
+// PC Sets endpoint for inventory
+router.get("/api/equipment/pc-sets", async (req, res) => {
+  try {
+    const pcSets = await sequelize.query(
+      `SELECT 
+        e.setId,
+        e.campus,
+        MIN(e.status) as status,
+        MIN(DATE_FORMAT(e.dateAdded, '%Y-%m-%d')) as dateAdded,
+        GROUP_CONCAT(
+          CONCAT(e.category, ':', COALESCE(e.serialNumber, 'N/A'), ':', e.equipmentId)
+          ORDER BY e.category
+          SEPARATOR '|'
+        ) as componentsList
+      FROM equipment e
+      WHERE e.setId IS NOT NULL AND e.setId != ''
+      GROUP BY e.setId, e.campus
+      ORDER BY e.setId`,
+      { type: QueryTypes.SELECT }
+    );
+
+    const formatted = pcSets.map(set => {
+      const components = set.componentsList ? set.componentsList.split('|').map(c => {
+        const [category, serialNumber, equipmentId] = c.split(':');
+        return { category, serialNumber, equipmentId };
+      }) : [];
+
+      return {
+        setId: set.setId,
+        campus: set.campus,
+        status: set.status,
+        dateAdded: set.dateAdded,
+        components,
+        qrCode: null // Can add QR generation later
+      };
+    });
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Error fetching PC sets:', error);
+    res.status(500).json({ error: 'Failed to fetch PC sets' });
+  }
+});
+
+// PC Selection after attendance
+router.get("/attendance/select-pc", async (req, res) => {
+  const { attendanceId, scheduleId } = req.query;
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select PC Station | ComLab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      background: radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 24%), 
+                  radial-gradient(circle at bottom right, rgba(74,222,128,.10), transparent 28%),
+                  linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+      min-height: 100vh; 
+    }
+    .pc-card { 
+      transition: all 0.3s; 
+      background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));
+      border: 1px solid rgba(74,222,128,.16);
+    }
+    .pc-card:hover:not(.occupied) { 
+      transform: translateY(-4px); 
+      box-shadow: 0 18px 40px rgba(34,197,94,.18);
+      border-color: rgba(74,222,128,.3);
+    }
+    .pc-card.available { 
+      border-color: rgba(34,197,94,.3); 
+      cursor: pointer;
+    }
+    .pc-card.occupied { 
+      border-color: rgba(239,68,68,.3); 
+      opacity: 0.6; 
+      cursor: not-allowed; 
+    }
+    .component-tag {
+      background: rgba(74,222,128,.12);
+      border: 1px solid rgba(74,222,128,.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: #d1fae5;
+    }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rounded-2xl shadow-2xl p-8 border border-emerald-500/20" style="background: linear-gradient(180deg, rgba(15,36,27,.96), rgba(10,29,21,.96));">
+      <div class="text-center mb-8">
+        <div class="inline-block p-4 bg-emerald-500/20 rounded-full mb-4">
+          <i class="fas fa-desktop text-4xl text-emerald-400"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">Select Your PC Station</h1>
+        <p class="text-slate-300">Choose your workstation for this session</p>
+      </div>
+
+      <div id="pcGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="text-center text-slate-400 col-span-full">
+          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+          <p>Loading PC stations...</p>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a href="/student/dashboard" class="text-slate-400 hover:text-emerald-400 transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Skip for now
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const attendanceId = ${JSON.stringify(attendanceId)};
+    const scheduleId = ${JSON.stringify(scheduleId)};
+
+    async function loadPCStations() {
+      try {
+        // Fetch PC sets with detailed information
+        const setsResponse = await fetch('/api/equipment-sets');
+        const setsData = await setsResponse.json();
+        
+        if (!setsData.success || !setsData.sets || setsData.sets.length === 0) {
+          document.getElementById('pcGrid').innerHTML = 
+            '<div class="col-span-full text-center text-slate-400"><p>No PC stations available</p></div>';
+          return;
+        }
+
+        // Fetch availability status
+        const availResponse = await fetch('/api/equipment/pc-availability');
+        const availData = await availResponse.json();
+        
+        // Create availability map
+        const availMap = new Map();
+        if (availData.pcStations) {
+          availData.pcStations.forEach(pc => {
+            availMap.set(pc.setId, pc);
+          });
+        }
+
+        const grid = document.getElementById('pcGrid');
+        grid.innerHTML = setsData.sets
+          .filter(set => set.status === 'active') // Only show active sets
+          .map(set => {
+            const avail = availMap.get(set.setId);
+            const isAvailable = avail ? avail.status === 'available' : false;
+            const components = set.components ? set.components.split(', ') : [];
+            
+            return \`
+              <div class="pc-card \${isAvailable ? 'available' : 'occupied'} rounded-xl p-5" 
+                   onclick="\${isAvailable ? \`selectPC('\${set.setId}')\` : 'return false'}">
+                <!-- Header -->
+                <div class="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 class="font-bold text-lg text-emerald-400">\${set.setId}</h3>
+                    <p class="text-sm text-slate-300">\${set.setName}</p>
+                  </div>
+                  <span class="px-2 py-1 rounded-full text-xs font-semibold \${
+                    isAvailable 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                      : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                  }">
+                    \${isAvailable ? 'Available' : 'Occupied'}
+                  </span>
+                </div>
+
+                \${set.location ? \`
+                  <div class="text-xs text-slate-400 mb-3">
+                    <i class="fas fa-map-marker-alt mr-1"></i>\${set.location}
+                  </div>
+                \` : ''}
+
+                <!-- Components -->
+                <div class="bg-emerald-950/30 rounded-lg p-3">
+                  <div class="text-xs font-semibold text-white uppercase tracking-wide mb-2">
+                    <i class="fas fa-cube text-emerald-400 mr-1"></i>Components
+                  </div>
+                  <div class="space-y-1">
+                    \${components.slice(0, 4).map(comp => {
+                      const icon = getComponentIcon(comp);
+                      return \`
+                        <div class="flex items-center gap-2 text-xs text-slate-300">
+                          <i class="\${icon} text-emerald-400 w-3"></i>
+                          <span class="truncate">\${comp.split(' - ')[0]}</span>
+                        </div>
+                      \`;
+                    }).join('')}
+                    \${components.length > 4 ? \`
+                      <div class="text-xs text-slate-400 mt-1">
+                        +\${components.length - 4} more...
+                      </div>
+                    \` : ''}
+                  </div>
+                </div>
+
+                \${!isAvailable && avail?.occupiedByName ? \`
+                  <div class="mt-3 text-xs text-red-300">
+                    <i class="fas fa-user mr-1"></i>Used by \${avail.occupiedByName}
+                  </div>
+                \` : ''}
+              </div>
+            \`;
+          }).join('');
+      } catch (error) {
+        console.error('Error loading PCs:', error);
+        document.getElementById('pcGrid').innerHTML = 
+          '<div class="col-span-full text-center text-red-400"><p>Failed to load PC stations</p></div>';
+      }
+    }
+
+    function getComponentIcon(component) {
+      if (component.includes('CPU')) return 'fas fa-microchip';
+      if (component.includes('Monitor')) return 'fas fa-desktop';
+      if (component.includes('Keyboard')) return 'fas fa-keyboard';
+      if (component.includes('Mouse')) return 'fas fa-mouse';
+      if (component.includes('AVR')) return 'fas fa-plug';
+      return 'fas fa-cube';
+    }
+
+    async function selectPC(setId) {
+      try {
+        const response = await fetch('/api/equipment/assign-pc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            setId, 
+            attendanceId,
+            scheduleId 
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('PC station assigned successfully!');
+          window.location.href = '/student/dashboard';
+        } else {
+          alert(result.error || 'Failed to assign PC station');
+          loadPCStations(); // Reload to show updated status
+        }
+      } catch (error) {
+        console.error('Error assigning PC:', error);
+        alert('Failed to assign PC station');
+      }
+    }
+
+    loadPCStations();
+  </script>
+</body>
+</html>`;
+  
+  res.send(html);
+});
+
+// Laboratory Schedule Seating Chart
+router.get("/api/laboratory-schedules/:scheduleId/seating-chart", getScheduleSeatingChart);
+
 router.get("/api/borrow-records", listBorrowRecords);
 router.post("/api/borrow-records", createBorrowRecord);
 router.put("/api/borrow-records/:id/approve", approveBorrowRecord);
@@ -6175,6 +6995,7 @@ router.get("/api/admin/notifications", listBorrowNotifications);
 router.get("/api/borrow-notifications", listBorrowNotifications);
 router.put("/api/borrow-notifications/:id/read", markBorrowNotificationRead);
 router.get("/api/audit-logs", requireAdminForAudit, getAuditLogs);
+router.get("/api/equipment-audit-trail", requireAdminForAudit, getAuditTrail);
 router.get("/api/announcements", (req, res) => {
   res.json([]);
 });
@@ -6225,18 +7046,25 @@ router.get("/api/laboratory-schedules", async (req, res) => {
     });
 
     const scheduleIds = schedules.map((schedule) => schedule.id).filter(Boolean);
-    const classListCounts = scheduleIds.length
-      ? await ClassListEntry.findAll({
-          attributes: [
-            'laboratoryScheduleId',
-            [sequelize.fn('COUNT', sequelize.col('id')), 'count']
-          ],
-          where: { laboratoryScheduleId: { [Op.in]: scheduleIds } },
-          group: ['laboratoryScheduleId']
-        })
+    
+    // Get ACTUAL attendance count (students who actually showed up) instead of class list enrollment
+    // This shows real attendance, not theoretical enrollment
+    const attendanceCounts = scheduleIds.length
+      ? await sequelize.query(
+          `SELECT 
+            laboratoryScheduleId,
+            COUNT(DISTINCT studentId) as count
+          FROM attendance
+          WHERE laboratoryScheduleId IN (?)
+          GROUP BY laboratoryScheduleId`,
+          {
+            replacements: [scheduleIds],
+            type: QueryTypes.SELECT
+          }
+        )
       : [];
 
-    const countMap = new Map(classListCounts.map((entry) => [String(entry.laboratoryScheduleId), Number(entry.get('count') || 0)]));
+    const countMap = new Map(attendanceCounts.map((entry) => [String(entry.laboratoryScheduleId), Number(entry.count || 0)]));
 
     res.json(schedules.map((schedule) => {
       const item = schedule.toJSON();
@@ -6268,9 +7096,7 @@ router.post("/api/laboratory-schedules", upload.single("classListFile"), async (
     if (!subject || !laboratoryRoom || !campus || !dayOfWeek || !startTime || !endTime) {
       return res.status(400).json({ error: "All schedule fields are required" });
     }
-    if (!hasClassListInput) {
-      return res.status(400).json({ error: "An official class list is required when creating a laboratory schedule." });
-    }
+    // Class list is now optional - removed validation
 
     // Campus-based authorization check
     const userCampus = await getUserCampusFromSession(req);
@@ -6762,9 +7588,18 @@ router.get('/api/attendance-sessions', async (req, res) => {
       await reconcileClassListIdentities(rosterEntries, s.campus);
       const total = rosterEntries.length;
       const session = await AttendanceSession.findOne({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'DESC']] });
-      const attendanceRecords = session
-        ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
-        : await Attendance.findAll({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'ASC']] });
+      // Always query by laboratoryScheduleId OR any session token for this schedule
+      // to avoid the token-mismatch bug where scans are stored against an older token
+      const allSessionTokens = (await AttendanceSession.findAll({
+        where: { laboratoryScheduleId: id },
+        attributes: ['token']
+      })).map(s => s.token).filter(Boolean);
+      const attendanceRecords = await Attendance.findAll({
+        where: allSessionTokens.length
+          ? { [Op.or]: [{ laboratoryScheduleId: id }, { sessionToken: { [Op.in]: allSessionTokens } }] }
+          : { laboratoryScheduleId: id },
+        order: [['createdAt', 'ASC']]
+      });
       const latestStatusByStudent = new Map();
       attendanceRecords.forEach((record) => {
         const studentId = String(record.studentId || '').trim();
@@ -6861,14 +7696,23 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
 
     const students = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id }, order: [['fullName', 'ASC']] });
     await reconcileClassListIdentities(students, schedule.campus);
-    const attendance = session && session.token
-      ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
-      : await Attendance.findAll({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'ASC']] });
+    // Collect ALL session tokens for this schedule to avoid token-mismatch bug
+    const allTokensForSchedule = (await AttendanceSession.findAll({
+      where: { laboratoryScheduleId: id },
+      attributes: ['token']
+    })).map(s => s.token).filter(Boolean);
+    const attendance = await Attendance.findAll({
+      where: allTokensForSchedule.length
+        ? { [Op.or]: [{ laboratoryScheduleId: id }, { sessionToken: { [Op.in]: allTokensForSchedule } }] }
+        : { laboratoryScheduleId: id },
+      order: [['createdAt', 'ASC']]
+    });
 
     // Map attendance by studentId
     const attendanceMap = new Map(attendance.map(a => [String(a.studentId), a]));
 
-    const rows = students.map((c) => {
+    // Build rows from class list + fill in actual scans
+    const classListRows = students.map((c) => {
       const a = c.studentId ? attendanceMap.get(String(c.studentId)) : null;
       const sessionCompleted = isAttendanceSessionCompleted(session);
       return {
@@ -6879,6 +7723,21 @@ router.get('/api/attendance-sessions/:id', async (req, res) => {
         remarks: c.matchStatus === 'review' ? 'Multiple registered students match this name.' : c.matchStatus === 'incomplete_id' ? 'Registered student matched, but the official Student ID is not provided.' : c.studentId ? (a?.remarks || (a ? '' : 'Automatically marked absent')) : 'No registered student matched this name.'
       };
     });
+
+    // If class list is empty, fall back to showing actual scan records directly
+    // This handles schedules where students scanned QR but are not in the class list
+    const classListStudentIds = new Set(students.map(s => String(s.studentId || '')).filter(Boolean));
+    const extraScanRows = attendance
+      .filter(a => !classListStudentIds.has(String(a.studentId || '')))
+      .map(a => ({
+        studentId: a.studentId || 'Unknown',
+        fullName: a.fullName || 'Unknown',
+        status: a.status || 'Present',
+        timeIn: a.timeIn || null,
+        remarks: 'Scanned attendance (not in class list)'
+      }));
+
+    const rows = [...classListRows, ...extraScanRows];
 
     const format = (req.query.format || 'json').toLowerCase();
     if (format === 'excel') {
@@ -6948,9 +7807,16 @@ router.get('/api/attendance-sessions/:id/export', async (req, res) => {
     const session = await AttendanceSession.findOne({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'DESC']] });
     const students = await ClassListEntry.findAll({ where: { laboratoryScheduleId: id }, order: [['fullName', 'ASC']] });
     await reconcileClassListIdentities(students, schedule.campus);
-    const attendance = session && session.token
-      ? await Attendance.findAll({ where: { sessionToken: session.token }, order: [['createdAt', 'ASC']] })
-      : await Attendance.findAll({ where: { laboratoryScheduleId: id }, order: [['createdAt', 'ASC']] });
+    const allExportTokens = (await AttendanceSession.findAll({
+      where: { laboratoryScheduleId: id },
+      attributes: ['token']
+    })).map(s => s.token).filter(Boolean);
+    const attendance = await Attendance.findAll({
+      where: allExportTokens.length
+        ? { [Op.or]: [{ laboratoryScheduleId: id }, { sessionToken: { [Op.in]: allExportTokens } }] }
+        : { laboratoryScheduleId: id },
+      order: [['createdAt', 'ASC']]
+    });
     const attendanceMap = new Map(attendance.map(a => [String(a.studentId), a]));
 
     const rows = students.map((c) => {
@@ -7711,6 +8577,43 @@ router.get("/download/reports-summary", async (req, res) => {
     console.error(error);
     res.status(500).send('Failed to generate report CSV.');
   }
+});
+
+// ============================================
+// PC SET MANAGEMENT ROUTES
+// ============================================
+import * as equipmentSetController from '../controllers/equipmentSetController.js';
+
+// Get all PC sets
+router.get('/api/equipment-sets', equipmentSetController.getAllPCSets);
+
+// Get single PC set with details
+router.get('/api/equipment-sets/:setId', equipmentSetController.getPCSetDetails);
+
+// Create new PC set
+router.post('/api/equipment-sets', equipmentSetController.createPCSet);
+
+// Update PC set
+router.put('/api/equipment-sets/:setId', equipmentSetController.updatePCSet);
+
+// Delete PC set
+router.delete('/api/equipment-sets/:setId', equipmentSetController.deletePCSet);
+
+// Get available equipment (not in any set)
+router.get('/api/equipment/available-for-sets', equipmentSetController.getAvailableEquipment);
+
+// Add components to set
+router.post('/api/equipment-sets/:setId/components', equipmentSetController.addComponentToSet);
+
+// Remove component from set
+router.delete('/api/equipment-sets/:setId/components/:equipmentId', equipmentSetController.removeComponentFromSet);
+
+// Get PC set statistics
+router.get('/api/equipment-sets/stats/overview', equipmentSetController.getPCSetStatistics);
+
+// PC Set Management Page
+router.get('/pc-set-management', (req, res) => {
+  res.sendFile(path.join(__dirname, '../pc-set-management.html'));
 });
 
 export default router;

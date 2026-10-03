@@ -1382,6 +1382,59 @@
             <div id="dashboard-view" class="page-view active">
                 <!-- Dashboard Cards -->
                 <div class="dashboard-cards">
+                    <!-- Equipment Statistics Cards -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <p class="card-title text-emerald-300">Total</p>
+                                <h3 class="text-slate-100 text-sm font-semibold mb-1">Total Equipment</h3>
+                            </div>
+                            <div class="card-icon blue">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                        <p id="dashboardTotalCount" class="text-4xl font-bold text-white">0</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <p class="card-title text-emerald-300">Available</p>
+                                <h3 class="text-slate-100 text-sm font-semibold mb-1">Serviceable</h3>
+                            </div>
+                            <div class="card-icon green">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <p id="dashboardServiceableCount" class="text-4xl font-bold text-white">0</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <p class="card-title text-emerald-300">Inactive</p>
+                                <h3 class="text-slate-100 text-sm font-semibold mb-1">Unserviceable</h3>
+                            </div>
+                            <div class="card-icon orange">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <p id="dashboardUnserviceableCount" class="text-4xl font-bold text-white">0</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <p class="card-title text-emerald-300">Unavailable</p>
+                                <h3 class="text-slate-100 text-sm font-semibold mb-1">Lost</h3>
+                            </div>
+                            <div class="card-icon purple">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                        <p id="dashboardLostCount" class="text-4xl font-bold text-white">0</p>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Total Laboratory Sessions</h3>
@@ -1925,6 +1978,15 @@
         function renderSummary(summary) {
             setSummaryValue('totalLaboratorySessionsCount', summary.totalLaboratorySessions ?? summary.totalSessions ?? 0);
             setSummaryValue('attendanceSessionsConductedCount', summary.attendanceSessionsConducted ?? 0);
+            
+            // Update equipment stats cards on dashboard
+            const equipmentTotal = (dashboardState.equipment.serviceableCount || 0) + 
+                                   (dashboardState.equipment.unserviceableCount || 0) + 
+                                   (dashboardState.equipment.lostCount || 0);
+            setSummaryValue('dashboardTotalCount', equipmentTotal);
+            setSummaryValue('dashboardServiceableCount', dashboardState.equipment.serviceableCount || 0);
+            setSummaryValue('dashboardUnserviceableCount', dashboardState.equipment.unserviceableCount || 0);
+            setSummaryValue('dashboardLostCount', dashboardState.equipment.lostCount || 0);
         }
 
         function renderAnalyticsSummary() {

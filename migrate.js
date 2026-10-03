@@ -37,7 +37,7 @@ import { User } from "./models/userModel.js";
 import inquirer from "inquirer";
 
 // Server-level connection (no database selected)
-const rootSequelize = new Sequelize("mysql://root:@localhost:3306/");
+const rootSequelize = new Sequelize("mysql://comlab:@localhost:3306/");
 
 const { createDb } = await inquirer.prompt([
   {

@@ -8,6 +8,7 @@ const defaultSidebarItems = [
   { label: 'Laboratory Schedules', href: '/page/laboratory-schedules', icon: 'fas fa-calendar-alt' },
   { label: 'Reports', href: '/page/reports', icon: 'fas fa-file-pdf' },
   { label: 'Audit Logs', href: '/page/audit-logs', icon: 'fas fa-shield-halved' },
+  { label: 'Equipment Audit Trail', href: '/page/audit-logs?view=trail', icon: 'fas fa-timeline' },
   { label: 'Logout', href: '/logout', icon: 'fas fa-right-from-bracket' }
 ];
 
@@ -31,11 +32,13 @@ function getSidebarItems() {
   const isStudent = config.role === 'student' || document.body.classList.contains('student-portal');
   if (isStudent) {
     return [
-      { label: 'Dashboard', href: '#dashboard', icon: 'fas fa-house' },
-      { label: 'My Schedule', href: '#schedule', icon: 'fas fa-calendar-days' },
-      { label: 'QR Check-in', href: '#qr-checkin', icon: 'fas fa-qrcode' },
-      { label: 'Announcements', href: '#announcements', icon: 'fas fa-bullhorn' },
-      { label: 'My Profile', href: '#profile', icon: 'fas fa-user' },
+      { label: 'Dashboard', href: '/student-dashboard', icon: 'fas fa-house' },
+      { label: 'Attendance', href: '/attendance', icon: 'fas fa-clipboard-check' },
+      { label: 'My PC Station', href: '/my-pc-station', icon: 'fas fa-desktop' },
+      { label: 'Borrow Equipment', href: '/student-borrow-equipment', icon: 'fas fa-box' },
+      { label: 'My Requests', href: '/student-my-requests', icon: 'fas fa-list-check' },
+      { label: 'Report Issue', href: '/student-report-issue', icon: 'fas fa-triangle-exclamation' },
+      { label: 'My Profile', href: '/student-profile', icon: 'fas fa-user' },
       { label: 'Logout', href: '/logout', icon: 'fas fa-right-from-bracket' }
     ];
   }
@@ -78,6 +81,10 @@ function getActivePath() {
   const hash = window.location.hash ? window.location.hash.toLowerCase() : '';
   const aliases = getRouteAliases();
   const aliasedPath = aliases[pathname] || pathname;
+
+  if (pathname === '/page/audit-logs' && new URLSearchParams(window.location.search).get('view') === 'trail') {
+    return `${aliasedPath}?view=trail`;
+  }
 
   if (hash) {
     return `${aliasedPath}${hash}`;
