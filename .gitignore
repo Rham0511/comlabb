@@ -5,3 +5,27 @@
 
 # Runtime uploads and generated files
 public/uploads/
+
+# Database files - NEVER commit these
+*.sql
+!migrations/*.sql
+backups/
+db-exports/
+
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
