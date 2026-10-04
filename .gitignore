@@ -1,0 +1,28 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime uploads and generated files
+public/uploads/
+
+# Temporary and test files
+test-*.mjs
+test-*.js
+check-*.mjs
+temp-*.mjs
+temp-*.js
+temp_*.js
+tmp_*.js
+tmp_*.html
+tmp_*.cjs
+*-backup.html
+
+# Utility files
+cookies.txt
+headers.txt
+users_list.txt
+
+# Import/export temporary files
+inserts-only.sql
+import-*.bat

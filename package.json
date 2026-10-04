@@ -1,0 +1,35 @@
+{
+  "name": "ComLab",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "xian-start": "node index.js",
+    "xian": "nodemon index.js",
+    "migrate": "node migrate.js",
+    "migrate:borrow-equipment-reference": "node migrate-borrow-equipment-reference.mjs",
+    "create:model": "node create.js model",
+    "create:controller": "node create.js controller"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-flash": "^0.1.1",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "hbs": "^4.2.0",
+    "inquirer": "^9.2.15",
+    "multer": "^2.2.0",
+    "mysql2": "^3.9.2",
+    "nodemailer": "^9.0.3",
+    "qrcode": "^1.5.4",
+    "sequelize": "^6.37.3",
+    "xlsx": "^0.18.5"
+  },
+  "allowScripts": {
+    "bcrypt@5.1.1": true
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

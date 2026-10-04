@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Attendance | ComLab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css?v=3">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); 
+            min-height: 100vh; 
+        }
+        .schedule-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .schedule-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3);
+        }
+        .schedule-card.active {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+        }
+        .schedule-card.closed {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .schedule-card.not-yet-open {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        }
+    </style>
+</head>
+<body class="app-shell">
+    <div id="shared-sidebar"></div>
+    
+    <div class="main-container">
+        <div class="page-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-900/90 to-teal-900/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-emerald-500/20 mb-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="bg-emerald-500/20 p-4 rounded-full">
+                        <i class="fas fa-qrcode text-4xl text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-1">Scan Attendance</h1>
+                        <p class="text-emerald-200">Select a schedule to record your attendance</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-5xl text-emerald-400 mb-4"></i>
+                <p class="text-white text-lg">Loading available schedules...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden bg-red-900/40 backdrop-blur-sm rounded-2xl p-8 border border-red-500/30 text-center">
+                <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-4"></i>
+                <p id="errorMessage" class="text-red-200 text-lg"></p>
+            </div>
+
+            <!-- Schedules Grid -->
+            <div id="schedulesGrid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Schedules will be rendered here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-12">
+                <i class="fas fa-calendar-times text-6xl text-slate-500 mb-4"></i>
+                <p class="text-slate-300 text-lg">No active schedules available at this time</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/student-sidebar-config.js?v=5"></script>
+    <script>
+        async function loadSchedules() {
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const schedulesGrid = document.getElementById('schedulesGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            try {
+                // Get current user session
+                const response = await fetch('/api/laboratory-schedules');
+                if (!response.ok) throw new Error('Failed to load schedules');
+
+                const schedules = await response.json();
+                
+                loadingState.classList.add('hidden');
+
+                if (!schedules || schedules.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Filter to today's schedules
+                const today = new Date().toLocaleLowerString('en-US', { weekday: 'long' });
+                const todaySchedules = schedules.filter(s => 
+                    s.dayOfWeek?.toLowerCase() === today.toLowerCase()
+                );
+
+                if (todaySchedules.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                schedulesGrid.classList.remove('hidden');
+                schedulesGrid.innerHTML = todaySchedules.map(schedule => {
+                    const status = getScheduleStatus(schedule);
+                    const statusConfig = {
+                        active: { 
+                            icon: 'fa-circle-check', 
+                            color: 'text-emerald-400', 
+                            label: 'Open Now',
+                            class: 'active'
+                        },
+                        'not-yet-open': { 
+                            icon: 'fa-clock', 
+                            color: 'text-amber-400', 
+                            label: 'Not Yet Open',
+                            class: 'not-yet-open'
+                        },
+                        closed: { 
+                            icon: 'fa-lock', 
+                            color: 'text-slate-400', 
+                            label: 'Closed',
+                            class: 'closed'
+                        }
+                    };
+
+                    const config = statusConfig[status] || statusConfig.closed;
+                    const clickable = status === 'active' || status === 'not-yet-open';
+
+                    return `
+                        <div class="schedule-card ${config.class} bg-slate-900/80 backdrop-blur-sm rounded-xl border-2 p-6 ${!clickable ? 'closed' : ''}"
+                             ${clickable ? `onclick="selectSchedule(${schedule.id})"` : ''}>
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-white mb-2">${schedule.subject || 'Lab Session'}</h3>
+                                    <p class="text-slate-300 text-sm mb-1">
+                                        <i class="fas fa-user-tie mr-2"></i>${schedule.instructor || 'No instructor'}
+                                    </p>
+                                    <p class="text-slate-300 text-sm">
+                                        <i class="fas fa-door-open mr-2"></i>${schedule.laboratoryRoom || 'N/A'}
+                                    </p>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.color} bg-slate-800/60">
+                                        <i class="fas ${config.icon}"></i>
+                                        ${config.label}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 text-sm text-slate-400 pt-4 border-t border-slate-700">
+                                <span><i class="fas fa-clock mr-2"></i>${schedule.startTime} - ${schedule.endTime}</span>
+                                <span><i class="fas fa-calendar mr-2"></i>${schedule.dayOfWeek}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading schedules:', error);
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = error.message || 'Failed to load schedules';
+            }
+        }
+
+        function getScheduleStatus(schedule) {
+            // Simplified status check - you can make this more sophisticated
+            const now = new Date();
+            const currentTime = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+
+            // Very basic time comparison - assumes times are in same format
+            if (schedule.startTime && schedule.endTime) {
+                // For demo purposes, consider most schedules "active"
+                return 'active';
+            }
+
+            return 'active';
+        }
+
+        async function selectSchedule(scheduleId) {
+            try {
+                // Redirect to attendance recording with schedule ID
+                window.location.href = `/attendance/record?scheduleId=${scheduleId}`;
+            } catch (error) {
+                console.error('Error selecting schedule:', error);
+                alert('Failed to record attendance. Please try again.');
+            }
+        }
+
+        // Load schedules on page load
+        document.addEventListener('DOMContentLoaded', loadSchedules);
+    </script>
+</body>
+</html>

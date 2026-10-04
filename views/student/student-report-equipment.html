@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Equipment Issue | ComLab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        :root { --bg: #07150F; --bg-secondary: #0A1D15; }
+        body {
+            background: radial-gradient(circle at top left, rgba(34,197,94,.12), transparent 28%), linear-gradient(180deg, #07150F 0%, #0A1D15 100%);
+            color: #f8fafc; min-height: 100vh;
+        }
+        .main-container {
+            min-height: 100vh;
+            margin-left: calc(var(--sidebar-width, 280px) + 0.75rem);
+            width: calc(100% - var(--sidebar-width, 280px) - 0.75rem);
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(10,31,19,.95), rgba(8,25,16,.9));
+            border: 1px solid rgba(74,222,128,.16);
+            border-radius: 1.5rem;
+            box-shadow: 0 18px 40px rgba(2,10,8,.24);
+        }
+        .radio-card {
+            border: 2px solid rgba(74,222,128,.15);
+            background: rgba(10,30,20,.4);
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .radio-card:hover { border-color: rgba(74,222,128,.35); background: rgba(15,45,30,.5); }
+        .radio-card.selected { border-color: #22c55e; background: rgba(34,197,94,.08); }
+        .form-input, .form-select {
+            width: 100%; border-radius: 0.875rem;
+            border: 1px solid rgba(74,222,128,.18); background: rgba(5,15,10,.8);
+            color: #f8fafc; padding: 0.875rem 1rem; outline: none;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: rgba(74,222,128,.4);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.1);
+        }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: linear-gradient(135deg, #16a34a, #22c55e); color: white;
+            border-radius: 999px; padding: 0.8rem 1.6rem; font-weight: 700;
+            box-shadow: 0 8px 20px rgba(34,197,94,.2);
+        }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+        @media (max-width: 1023px) { .main-container { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body class="app-shell student-portal">
+    <div id="shared-sidebar"></div>
+
+    <div class="main-container">
+        <header class="sticky top-0 z-30 pt-2">
+            <div class="px-3">
+                <div class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/80 to-emerald-900/60">
+                    <div class="flex items-center gap-3 flex-1">
+                        <button onclick="toggleSidebar()" class="lg:hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 p-2.5">
+                            <i class="fas fa-bars text-lg text-emerald-200"></i>
+                        </button>
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Report Equipment Issue</h1>
+                            <p class="text-xs text-emerald-400/70 mt-1">Report damaged or malfunctioning equipment</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-full border border-emerald-800/60 bg-[#06100b] px-3 py-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-xs font-bold text-emerald-200" data-user-initials>ST</div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-200" data-user-role>Student</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="px-3 pt-4 pb-8">
+            <section class="glass-card p-6">
+                <h2 class="text-lg font-bold text-white mb-1">Submit Equipment Report</h2>
+                <p class="text-sm text-slate-400 mb-6">Choose how you want to report</p>
+
+                <!-- STEP 1: Choose Report Method -->
+                <div id="step1" class="mb-5">
+                    <p class="text-sm font-semibold text-white mb-3">How do you want to report?</p>
+                    <div class="space-y-2">
+                        <label class="radio-card flex items-start gap-3" id="methodCard1">
+                            <input type="radio" name="reportMethod" value="by-equipment" onchange="onMethodChange()" style="margin-top:2px;accent-color:#22c55e;">
+                            <div>
+                                <p class="text-sm font-semibold text-white">By Equipment ID</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Enter equipment ID directly</p>
+                            </div>
+                        </label>
+                        <label class="radio-card flex items-start gap-3" id="methodCard2">
+                            <input type="radio" name="reportMethod" value="by-pc-station" onchange="onMethodChange()" style="margin-top:2px;accent-color:#22c55e;">
+                            <div>
+                                <p class="text-sm font-semibold text-white">By PC Station</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Select a PC station, then pick what to report</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 2a: Equipment ID Entry -->
+                <div id="equipmentIdPanel" style="display:none;" class="mb-5">
+                    <label class="text-sm font-semibold text-emerald-400 block mb-2">Equipment ID</label>
+                    <div class="flex gap-2">
+                        <input id="equipmentInput" class="form-input flex-1" placeholder="e.g. KBD-PC-001" />
+                        <button onclick="searchEquipment()" class="btn-primary" style="border-radius:0.875rem;padding:0.875rem 1.2rem;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="searchStatus" class="mt-2 text-xs" style="display:none;"></div>
+                    <div id="equipmentInfo" style="display:none;" class="mt-3 p-4 rounded-xl border border-emerald-500/10 bg-emerald-950/20">
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Equipment Found</p>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div><span class="text-slate-500 text-xs">Name:</span> <span id="eqName" class="text-white font-semibold">—</span></div>
+                            <div><span class="text-slate-500 text-xs">ID:</span> <span id="eqId" class="text-emerald-400 font-mono font-semibold">—</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2b: PC Station Picker -->
+                <div id="pcStationPanel" style="display:none;" class="mb-5">
+                    <label class="text-sm font-semibold text-emerald-400 block mb-2">Select PC Station</label>
+                    <select id="pcStationSelect" class="form-select" onchange="onPCStationSelect()">
+                        <option value="">— Choose PC Station —</option>
+                    </select>
+                    <div id="pcStationStatus" class="mt-2 text-xs" style="display:none;"></div>
+                </div>
+
+                <!-- PC Set Scope (after selecting PC Station) -->
+                <div id="pcSetScopePanel" style="display:none;" class="mb-5">
+                    <p class="text-sm font-semibold text-white mb-3">What do you want to report?</p>
+                    <div class="space-y-2">
+                        <label class="radio-card flex items-start gap-3" id="scopeCard1">
+                            <input type="radio" name="pcSetScope" value="component" onchange="onPCSetScopeChange()" style="margin-top:2px;accent-color:#22c55e;">
+                            <div>
+                                <p class="text-sm font-semibold text-white">One specific component</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Select a single item</p>
+                            </div>
+                        </label>
+                        <label class="radio-card flex items-start gap-3" id="scopeCard2">
+                            <input type="radio" name="pcSetScope" value="entire" onchange="onPCSetScopeChange()" style="margin-top:2px;accent-color:#22c55e;">
+                            <div>
+                                <p class="text-sm font-semibold text-white">Entire PC Station</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Report all components</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Component picker -->
+                    <div id="pcComponentPicker" style="display:none;" class="mt-3">
+                        <label class="text-sm font-semibold text-emerald-400 block mb-2">Select Component</label>
+                        <select id="pcComponentSelect" class="form-select" onchange="onPCComponentSelect()">
+                            <option value="">— Choose component —</option>
+                        </select>
+                    </div>
+
+                    <!-- Entire station summary -->
+                    <div id="pcEntireSummary" style="display:none;" class="mt-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                        <p class="text-xs font-bold text-amber-400 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>All components will be reported</p>
+                        <div id="pcEntireList" class="text-xs text-slate-300 space-y-1"></div>
+                    </div>
+                </div>
+
+                <!-- Issue Description -->
+                <div class="mb-5">
+                    <label class="text-sm font-semibold text-emerald-400 block mb-2">Describe the Issue <span class="text-red-400">*</span></label>
+                    <textarea id="issueDescription" rows="4" class="form-input resize-none" placeholder="Describe what's wrong with the equipment..." required></textarea>
+                </div>
+
+                <div id="submitStatus" style="display:none;" class="mb-4 p-3 rounded-xl text-sm"></div>
+
+                <button id="submitBtn" onclick="submitReport()" class="btn-primary w-full justify-center" disabled>
+                    <i class="fas fa-paper-plane"></i> Submit Report
+                </button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        window.__CURRENT_USER__ = __CURRENT_USER_JSON__;
+        const user = window.__CURRENT_USER__ || {};
+        const name = user.name || '';
+        const initials = name.split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join('') || 'ST';
+        document.querySelectorAll('[data-user-initials]').forEach(el => el.textContent = user.initials || initials);
+        document.querySelectorAll('[data-user-role]').forEach(el => el.textContent = (user.role||'student').charAt(0).toUpperCase() + (user.role||'student').slice(1));
+
+        let currentEquipmentId = null;
+        let pcSetComponents = [];
+
+        function onMethodChange() {
+            const selected = document.querySelector('input[name="reportMethod"]:checked');
+            if (!selected) return;
+
+            document.getElementById('methodCard1').classList.toggle('selected', selected.value === 'by-equipment');
+            document.getElementById('methodCard2').classList.toggle('selected', selected.value === 'by-pc-station');
+
+            if (selected.value === 'by-equipment') {
+                document.getElementById('equipmentIdPanel').style.display = '';
+                document.getElementById('pcStationPanel').style.display = 'none';
+                document.getElementById('pcSetScopePanel').style.display = 'none';
+            } else {
+                document.getElementById('equipmentIdPanel').style.display = 'none';
+                document.getElementById('pcStationPanel').style.display = '';
+                document.getElementById('pcSetScopePanel').style.display = 'none';
+                loadPCStations();
+            }
+            document.getElementById('submitBtn').disabled = true;
+        }
+
+        async function loadPCStations() {
+            const select = document.getElementById('pcStationSelect');
+            select.innerHTML = '<option value="">Loading PC Stations...</option>';
+            try {
+                const res = await fetch('/api/equipment-sets');
+                const data = await res.json().catch(() => ({}));
+                const sets = data.sets || [];
+                select.innerHTML = '<option value="">— Choose PC Station —</option>' +
+                    sets.map(s => `<option value="${s.setId}">${s.setName || s.setId}</option>`).join('');
+            } catch(e) {
+                select.innerHTML = '<option value="">Failed to load</option>';
+            }
+        }
+
+        async function onPCStationSelect() {
+            const setId = document.getElementById('pcStationSelect').value;
+            if (!setId) {
+                document.getElementById('pcSetScopePanel').style.display = 'none';
+                document.getElementById('submitBtn').disabled = true;
+                return;
+            }
+
+            document.getElementById('pcStationStatus').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Loading components...';
+            document.getElementById('pcStationStatus').style.display = '';
+
+            try {
+                const res = await fetch(`/api/equipment-sets/${encodeURIComponent(setId)}`);
+                const data = await res.json().catch(() => ({}));
+                pcSetComponents = (data.components || []).filter(c => c.status !== 'Missing');
+
+                const compSelect = document.getElementById('pcComponentSelect');
+                compSelect.innerHTML = '<option value="">— Choose component —</option>' +
+                    pcSetComponents.map(c => `<option value="${c.equipmentId}">${c.name} — ${c.serialNumber || 'N/A'} (${c.category})</option>`).join('');
+
+                document.getElementById('pcEntireList').innerHTML = pcSetComponents.map(c => `<div>• ${c.name} — ${c.serialNumber || 'N/A'}</div>`).join('');
+
+                document.getElementById('pcStationStatus').style.display = 'none';
+                document.getElementById('pcSetScopePanel').style.display = '';
+
+            } catch(e) {
+                document.getElementById('pcStationStatus').innerHTML = '<span class="text-red-400">Failed to load components</span>';
+            }
+        }
+
+        function onPCSetScopeChange() {
+            const selected = document.querySelector('input[name="pcSetScope"]:checked');
+            if (!selected) return;
+
+            document.getElementById('scopeCard1').classList.toggle('selected', selected.value === 'component');
+            document.getElementById('scopeCard2').classList.toggle('selected', selected.value === 'entire');
+
+            if (selected.value === 'component') {
+                document.getElementById('pcComponentPicker').style.display = '';
+                document.getElementById('pcEntireSummary').style.display = 'none';
+                document.getElementById('submitBtn').disabled = !document.getElementById('pcComponentSelect').value;
+            } else {
+                document.getElementById('pcComponentPicker').style.display = 'none';
+                document.getElementById('pcEntireSummary').style.display = '';
+                document.getElementById('submitBtn').disabled = pcSetComponents.length === 0;
+                currentEquipmentId = 'ENTIRE_SET:' + document.getElementById('pcStationSelect').value;
+            }
+        }
+
+        function onPCComponentSelect() {
+            currentEquipmentId = document.getElementById('pcComponentSelect').value;
+            document.getElementById('submitBtn').disabled = !currentEquipmentId;
+        }
+
+        async function searchEquipment() {
+            const eqId = document.getElementById('equipmentInput').value.trim();
+            if (!eqId) return;
+
+            const status = document.getElementById('searchStatus');
+            status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Searching...';
+            status.style.display = '';
+            status.className = 'mt-2 text-xs text-slate-400';
+
+            document.getElementById('equipmentInfo').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                const res = await fetch(`/api/student/maintenance-context?equipmentId=${encodeURIComponent(eqId)}`);
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok || data.error) {
+                    status.innerHTML = '<i class="fas fa-times-circle mr-1"></i>' + (data.error || 'Equipment not found');
+                    status.className = 'mt-2 text-xs text-red-400';
+                    return;
+                }
+
+                const eq = data.equipmentMeta || {};
+                document.getElementById('eqName').textContent = eq.name || eqId;
+                document.getElementById('eqId').textContent = eq.equipmentId || eqId;
+                document.getElementById('equipmentInfo').style.display = '';
+
+                currentEquipmentId = eqId;
+
+                if (!data.canSubmitReport) {
+                    status.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>' + (data.attendanceMessage || 'Not allowed to report');
+                    status.className = 'mt-2 text-xs text-amber-400';
+                    return;
+                }
+
+                status.innerHTML = '<i class="fas fa-check-circle mr-1"></i>' + (data.attendanceMessage || 'Attendance verified');
+                status.className = 'mt-2 text-xs text-emerald-400';
+                document.getElementById('submitBtn').disabled = false;
+
+            } catch(err) {
+                status.innerHTML = '<i class="fas fa-wifi mr-1"></i>Connection error';
+                status.className = 'mt-2 text-xs text-red-400';
+            }
+        }
+
+        async function submitReport() {
+            const desc = document.getElementById('issueDescription').value.trim();
+            if (!desc) {
+                showStatus('Please describe the issue', 'error');
+                alert('⚠️ Please describe the issue before submitting.');
+                return;
+            }
+
+            if (!currentEquipmentId) {
+                showStatus('No equipment selected', 'error');
+                alert('⚠️ Please select equipment first.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            try {
+                const isEntireSet = currentEquipmentId && currentEquipmentId.startsWith('ENTIRE_SET:');
+
+                if (isEntireSet) {
+                    let failedCount = 0;
+                    let failedItems = [];
+                    
+                    for (const comp of pcSetComponents) {
+                        try {
+                            const res = await fetch('/api/maintenance', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ 
+                                    equipmentId: comp.equipmentId, 
+                                    description: desc + ' (Entire PC Station reported)',
+                                    issueTitle: 'Equipment Issue',
+                                    category: 'Equipment Damage'
+                                })
+                            });
+                            
+                            if (!res.ok) {
+                                const errorData = await res.json().catch(() => ({}));
+                                console.error('Failed to report', comp.name, errorData);
+                                failedCount++;
+                                failedItems.push(comp.name + ': ' + (errorData.error || 'Unknown error'));
+                            }
+                        } catch(err) {
+                            console.error('Network error for', comp.name, err);
+                            failedCount++;
+                            failedItems.push(comp.name + ': Network error');
+                        }
+                    }
+
+                    if (failedCount === pcSetComponents.length) {
+                        throw new Error('All components failed to report:\n' + failedItems.join('\n'));
+                    } else if (failedCount > 0) {
+                        alert('⚠️ Some components failed:\n\n' + failedItems.join('\n') + '\n\nOther components were reported successfully.');
+                    }
+
+                    showStatus('✓ Report submitted successfully!', 'success');
+                    alert('✅ Report submitted successfully!\n\n' + (pcSetComponents.length - failedCount) + ' out of ' + pcSetComponents.length + ' components reported.');
+                    setTimeout(() => location.reload(), 2000);
+
+                } else {
+                    const res = await fetch('/api/maintenance', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            equipmentId: currentEquipmentId, 
+                            description: desc,
+                            issueTitle: 'Equipment Issue',
+                            category: 'Equipment Damage'
+                        })
+                    });
+                    
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({}));
+                        console.error('Submit error:', errorData);
+                        throw new Error(errorData.error || 'Server returned error: ' + res.status);
+                    }
+
+                    const responseData = await res.json().catch(() => ({}));
+                    console.log('Submit success:', responseData);
+
+                    showStatus('✓ Report submitted successfully!', 'success');
+                    alert('✅ Report submitted successfully!');
+                    setTimeout(() => location.reload(), 2000);
+                }
+
+            } catch(err) {
+                console.error('Submit error:', err);
+                const errorMsg = err.message || 'Unknown error occurred';
+                showStatus(errorMsg, 'error');
+                alert('❌ Failed to submit report:\n\n' + errorMsg + '\n\nPlease check the console for details or contact support.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+            }
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('submitStatus');
+            el.textContent = msg;
+            el.className = 'mb-4 p-3 rounded-xl text-sm ' + (type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20');
+            el.style.display = '';
+        }
+
+        document.getElementById('equipmentInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchEquipment(); });
+    </script>
+    <script src="/js/student-sidebar-config.js?v=5" defer></script>
+    <script src="/js/sidebar-component.js?v=4" defer></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+{{> head}}
+<body class="min-h-screen relative overflow-hidden bg-[#07150F] text-slate-100">
+  <style>
+    .register-bg {
+      background-image: url('/images/minsu-bg.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(2, 40, 20, 0.45);
+      border-radius: 9999px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(52, 211, 153, 0.6);
+      border-radius: 9999px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(52, 211, 153, 0.8);
+    }
+  </style>
+
+  <header class="fixed left-0 top-0 z-50 w-full border-b border-white/5 bg-slate-950/40 px-8 py-4 backdrop-blur-md">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <img src="/images/minsu-logo.png.jpg" alt="Mindoro State University Logo" class="h-14 w-14 rounded-xl border border-white/10 bg-white/5 object-contain p-1" />
+        <div class="flex flex-col leading-tight">
+          <span class="text-lg font-bold text-white">Mindoro State University</span>
+          <span class="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-400">College of Computer Studies</span>
+        </div>
+      </div>
+
+      <nav class="hidden items-center gap-8 md:flex" aria-label="Main navigation">
+        <a href="/" class="text-base font-semibold text-slate-200 transition hover:text-emerald-400">Home</a>
+        <a href="/#features" class="text-base font-semibold text-slate-200 transition hover:text-emerald-400">Features</a>
+        <a href="/#about" class="text-base font-semibold text-slate-200 transition hover:text-emerald-400">About</a>
+        <a href="/#contact" class="text-base font-semibold text-slate-200 transition hover:text-emerald-400">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="register-bg relative flex min-h-screen items-center justify-center pt-24 pb-12">
+    <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(6,20,14,0.90),rgba(10,29,21,0.82))]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.10),transparent_24%)]"></div>
+
+    <div class="relative z-10 w-full max-w-xl px-4">
+      <div class="max-h-[calc(100vh-140px)] overflow-hidden rounded-2xl border-2 border-emerald-400 bg-[#003400]/90 p-6 shadow-[0_0_25px_rgba(52,211,153,0.35)] backdrop-blur-xl">
+        <div class="custom-scrollbar h-full max-h-[calc(100vh-180px)] overflow-y-auto pr-2">
+          <div class="mb-6 flex justify-center">
+            <img src="/images/ccs-logo.png" alt="CCS Logo" class="h-16 w-16 object-contain drop-shadow-[0_0_18px_rgba(34,197,94,0.35)]" />
+          </div>
+
+          <div class="mb-8 text-center">
+            <h1 class="text-2xl font-extrabold text-white">Welcome to ComLab</h1>
+            <p class="mt-3 text-sm text-slate-200">Create your account to continue to ComLab and access your dashboard.</p>
+          </div>
+
+          {{#if error_msg}}
+            <div class="mb-6 rounded-2xl border border-red-400/25 bg-red-500/10 px-5 py-4 text-sm text-red-200 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm">{{error_msg}}</div>
+          {{/if}}
+          {{#if success_msg}}
+            <div class="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm">{{success_msg}}</div>
+          {{/if}}
+
+          <form class="space-y-4 pb-6" autocomplete="off" method="POST" action="/register">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block text-sm font-semibold text-slate-200">
+                Name
+                <input autocomplete="off" type="text" name="name" placeholder="Your Name" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" required />
+              </label>
+              <label class="block text-sm font-semibold text-slate-200">
+                Role
+                <select name="role" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300">
+                  <option value="admin">Administrator</option>
+                  <option value="technician">Technician</option>
+                  <option value="student">Student</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="block text-sm font-semibold text-slate-200">
+              Email address
+              <input autocomplete="off" type="email" name="email" placeholder="Enter your email" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" required />
+            </label>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block text-sm font-semibold text-slate-200">
+                Password
+                <input autocomplete="off" type="password" name="password" placeholder="Create a password" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" required />
+              </label>
+              <label class="block text-sm font-semibold text-slate-200">
+                Confirm Password
+                <input autocomplete="off" type="password" name="confirmPassword" placeholder="Repeat password" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" required />
+              </label>
+            </div>
+
+            <label class="block text-sm font-semibold text-slate-200">
+              Campus
+              <select name="campus" required class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300">
+                <option value="" selected disabled>Select Campus</option>
+                <option value="Bongabong">Bongabong</option>
+                <option value="Victoria">Victoria</option>
+                <option value="Calapan">Calapan</option>
+              </select>
+            </label>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block text-sm font-semibold text-slate-200">
+                Student ID
+                <input id="studentIdInput" autocomplete="off" type="text" name="student_number" placeholder="e.g. 2023-0001" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" />
+              </label>
+              <label class="block text-sm font-semibold text-slate-200">
+                Program
+                <input autocomplete="off" type="text" name="program" placeholder="e.g. BS Computer Science" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" />
+              </label>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block text-sm font-semibold text-slate-200">
+                Year
+                <input autocomplete="off" type="text" name="year" placeholder="e.g. 3rd Year" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" />
+              </label>
+              <label class="block text-sm font-semibold text-slate-200">
+                Section
+                <input autocomplete="off" type="text" name="section" placeholder="e.g. A" class="mt-2 w-full rounded-xl border border-emerald-400/40 bg-[#022814]/60 px-4 py-2.5 text-white placeholder-emerald-200/50 transition-all focus:border-emerald-300 focus:bg-[#022814]/80 focus:outline-none focus:ring-1 focus:ring-emerald-300" />
+              </label>
+            </div>
+
+            <div class="mt-4">
+              <button id="registerButton" type="submit" class="w-full rounded-xl bg-emerald-500 px-6 py-3 text-base font-extrabold text-black shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400" aria-label="Create Account">Create Account</button>
+            </div>
+          </form>
+
+          <div id="registerLoading" class="hidden mt-5 rounded-2xl border border-cyan-400/10 bg-slate-800/70 p-4 text-sm text-cyan-100 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+            <span class="font-semibold">Processing...</span> Please wait while we create your account.
+          </div>
+
+          <div class="space-y-3 pb-2 text-center text-sm text-white/70">
+            <p>Already have an account? <a href="/login" class="font-semibold text-emerald-300 hover:text-emerald-100">Log in</a></p>
+            <p><a href="/" class="font-semibold text-slate-300 hover:text-white hover:underline">Back to landing</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const form = document.querySelector('form[action="/register"]');
+    const button = document.getElementById('registerButton');
+    const loading = document.getElementById('registerLoading');
+    const roleField = form?.querySelector('[name="role"]');
+    const studentIdInput = document.getElementById('studentIdInput');
+
+    function updateStudentIdRequirement() {
+      if (!studentIdInput || !roleField) return;
+      const isStudent = roleField.value === 'student';
+      studentIdInput.required = isStudent;
+      studentIdInput.setAttribute('aria-required', String(isStudent));
+    }
+
+    roleField?.addEventListener('change', updateStudentIdRequirement);
+    updateStudentIdRequirement();
+
+    if (form) {
+      form.addEventListener('submit', () => {
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Creating account...';
+          button.classList.add('opacity-70', 'cursor-not-allowed');
+        }
+        if (loading) {
+          loading.classList.remove('hidden');
+        }
+      });
+    }
+  </script>
+{{> footer }}

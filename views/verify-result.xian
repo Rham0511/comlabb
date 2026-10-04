@@ -1,0 +1,14 @@
+<section class="page-hero-card">
+  <div class="page-hero-meta">
+    <h2 class="page-title">Email Verification</h2>
+  </div>
+</section>
+<div class="card mt-6 p-6">
+  {{#if success}}
+    <p class="text-emerald-200">{{message}}</p>
+    <div class="mt-4"><a href="/login" class="btn-primary">Proceed to Login</a></div>
+  {{else}}
+    <p class="text-red-300">{{message}}</p>
+    <div class="mt-4"><a href="/register" class="btn-secondary">Back to Register</a></div>
+  {{/if}}
+</div>
