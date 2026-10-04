@@ -5,6 +5,22 @@
 
 # Runtime uploads and generated files
 public/uploads/
+backups/
+db-exports/
+node_modules/
+
+# Database files; only versioned migrations are committed
+*.sql
+!migrations/*.sql
+
+# Logs and local tooling
+logs/
+*.log
+npm-debug.log*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
 # Temporary and test files
 test-*.mjs
