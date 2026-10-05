@@ -145,8 +145,13 @@ body.student-portal.sidebar-open {
 }
 
 .sidebar-header {
+    position: relative;
     padding: 1.4rem 1.2rem;
     border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-close-btn {
+    display: none;
 }
 
 /* Profile block removed from sidebar */
@@ -1153,4 +1158,3 @@ body, .main-container, .page-content {
 .filter-control select:focus { background: var(--card-bg) !important; color: var(--text) !important; }
 
 .details-modal { background: rgba(2,6,6,0.72) !important; }
-

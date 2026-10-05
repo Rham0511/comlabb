@@ -229,6 +229,9 @@ function renderSidebarComponent() {
     <div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
     <div class="sidebar mobile-closed" id="sidebar">
       <div class="sidebar-header">
+        <button class="sidebar-close-btn" type="button" aria-label="Collapse navigation" title="Collapse navigation" onclick="closeSidebar()">
+          <i class="fas fa-xmark" aria-hidden="true"></i>
+        </button>
         <div class="sidebar-logo">
           <i class="${header.iconClass}"></i>
           <span class="sidebar-logo-text">${header.logoText}</span>
