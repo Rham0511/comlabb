@@ -6682,7 +6682,7 @@ router.get("/student/borrow-equipment", async (req, res) => {
       initials: (user.name || "Student").split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join("") || "ST"
     } : null;
 
-    const html = await fs.promises.readFile(path.join(process.cwd(), "views", "student", "student-borrow-equipment.html"), "utf8");
+    const html = await fs.promises.readFile(path.join(__dirname, "../views/student/student-borrow-equipment.html"), "utf8");
     const hydratedHtml = html.replaceAll("__CURRENT_USER_JSON__", JSON.stringify(currentUser));
     res.type("html").send(hydratedHtml.replace("window.__CURRENT_USER__ = __CURRENT_USER_JSON__;", `window.__CURRENT_USER__ = ${JSON.stringify(currentUser)};`));
   } catch (error) {
