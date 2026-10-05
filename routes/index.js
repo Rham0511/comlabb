@@ -6747,6 +6747,25 @@ router.get("/api/equipment/usage-history/:userId", async (req, res) => {
     const userId = req.session?.userId;
     if (!userId) return res.status(401).json({ success: false, error: "Authentication required." });
 
+    await sequelize.query(
+      `UPDATE equipment_usage_logs eul
+       INNER JOIN attendance a ON a.id = eul.attendanceId
+       INNER JOIN attendance_sessions ats ON ats.token = a.sessionToken
+       SET eul.usageEndTime = GREATEST(eul.usageStartTime, ats.expiresAt),
+           eul.durationMinutes = GREATEST(
+             TIMESTAMPDIFF(
+               MINUTE,
+               eul.usageStartTime,
+               GREATEST(eul.usageStartTime, ats.expiresAt)
+             ),
+             0
+           )
+       WHERE eul.userId = ?
+         AND eul.usageEndTime IS NULL
+         AND ats.expiresAt <= NOW()`,
+      { replacements: [userId] }
+    );
+
     const history = await sequelize.query(
       `SELECT eul.id as usageLogId, eul.equipmentId, eul.serialNumber,
               eul.usageStartTime, eul.usageEndTime, eul.durationMinutes,
