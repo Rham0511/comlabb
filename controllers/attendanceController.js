@@ -1116,15 +1116,11 @@ export const getAttendanceStats = async (req, res) => {
         attributes: ["id"]
       });
 
-      // Get TODAY's attendance records only
+      // Student dashboard cards summarize the same full history shown in attendance records.
       const records = await Attendance.findAll({
         where: {
           studentId,
-          laboratoryScheduleId: { [Op.in]: campusSchedules.map((schedule) => schedule.id) },
-          createdAt: {
-            [Op.gte]: todayStart,
-            [Op.lte]: todayEnd
-          }
+          laboratoryScheduleId: { [Op.in]: campusSchedules.map((schedule) => schedule.id) }
         },
         order: [["createdAt", "DESC"]]
       });
