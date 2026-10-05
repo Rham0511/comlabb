@@ -857,10 +857,6 @@ body.app-shell .page-content .text-gray-600 {
         padding: 1rem;
     }
 
-    .menu-toggle {
-        display: block;
-    }
-
     .search-box input {
         width: 130px;
     }

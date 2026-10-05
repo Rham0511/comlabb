@@ -352,7 +352,17 @@ window.addEventListener('DOMContentLoaded', () => {
   window.closeSidebarOnMobile = closeSidebarOnMobile;
   // inject a mobile menu toggle into the page header if missing
   const ensureMobileToggle = () => {
-    const existingToggle = document.getElementById('mobileMenuToggle') || document.querySelector('.menu-toggle');
+    const isStudentPortal = document.body.classList.contains('student-portal');
+    const toggleButtons = Array.from(document.querySelectorAll('#mobileMenuToggle, .menu-toggle'))
+      .filter(element => element instanceof HTMLButtonElement);
+    const existingToggle = document.getElementById('mobileMenuToggle') || toggleButtons[0];
+
+    if (isStudentPortal) {
+      toggleButtons.forEach(button => {
+        if (button !== existingToggle) button.remove();
+      });
+    }
+
     if (existingToggle) {
       existingToggle.id = existingToggle.id || 'mobileMenuToggle';
       existingToggle.type = existingToggle.type || 'button';
@@ -363,6 +373,11 @@ window.addEventListener('DOMContentLoaded', () => {
       existingToggle.classList.add('lg:hidden');
       if (!existingToggle.hasAttribute('onclick')) {
         existingToggle.setAttribute('onclick', 'toggleSidebar()');
+      }
+      if (isStudentPortal) {
+        existingToggle.className = 'menu-toggle';
+        existingToggle.innerHTML = '<i class="fas fa-bars" aria-hidden="true"></i>';
+        document.body.appendChild(existingToggle);
       }
       return;
     }
@@ -376,6 +391,10 @@ window.addEventListener('DOMContentLoaded', () => {
     btn.setAttribute('aria-expanded', 'false');
     btn.setAttribute('onclick', 'toggleSidebar()');
     btn.innerHTML = '<i class="fas fa-bars"></i>';
+    if (isStudentPortal) {
+      document.body.appendChild(btn);
+      return;
+    }
     if (header && header.parentElement) {
       // try to insert into header area
       try { header.insertBefore(btn, header.firstChild); return; } catch (e) { /* fallthrough */ }
