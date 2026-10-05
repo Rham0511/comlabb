@@ -6649,7 +6649,7 @@ router.get("/student-dashboard", serveHtmlPage);
 router.get("/student-borrow-equipment", serveHtmlPage);
 router.get("/student-profile", serveHtmlPage);
 router.get("/my-pc-station", serveHtmlPage);
-router.get("/student/scan-attendance", (req, res) => res.sendFile(path.join(__dirname, "../student-scan-attendance.html")));
+router.get("/student/scan-attendance", (req, res) => res.sendFile(path.join(__dirname, "../views/student/student-scan-attendance.html")));
 router.get("/student/report-issue", (req, res) => res.redirect("/student-report-equipment"));
 router.get("/student/report-damage", (req, res) => res.redirect("/student-report-equipment"));
 router.get("/report-equipment-issue", (req, res) => res.redirect("/student-report-equipment"));
